@@ -14,6 +14,7 @@ struct MediaItem
     int height = 0;
     QString caption;
     bool animated = false;
+    QString fallbackUrl; // another copy to try if `url` fails (e.g. the reading server's thumbnail)
 };
 
 // A Reddit "t3" thing (a link / post), reduced to what the UI needs.
@@ -46,6 +47,7 @@ struct Post
 
     Kind kind = Kind::Link;
     QString previewUrl;  // best-fit preview image (or video poster)
+    QString previewFallbackUrl; // another copy to try if previewUrl fails to load
     int previewWidth = 0;
     int previewHeight = 0;
     QString videoUrl;    // HLS stream when kind == Video

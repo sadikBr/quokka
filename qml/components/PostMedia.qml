@@ -6,6 +6,7 @@ Item {
     id: root
     property int kind
     property string previewUrl
+    property string previewFallbackUrl
     property int previewWidth
     property int previewHeight
     property int galleryCount
@@ -27,6 +28,7 @@ Item {
         id: image
         anchors.fill: parent
         source: root.previewUrl
+        fallbackSource: root.previewFallbackUrl
         backgroundColor: root.backgroundColor
         fillMode: root.ratio > root.maxRatio ? Image.PreserveAspectCrop : Image.PreserveAspectFit
         placeholderColor: Theme.dark ? "#0E0C13" : "#F4E3D2"

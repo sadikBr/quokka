@@ -237,6 +237,7 @@ Page {
             backgroundColor: Theme.bg
             kind: page.post.kind || 0
             previewUrl: big ? page.post.previewUrl : ""
+            previewFallbackUrl: big ? (page.post.previewFallbackUrl || "") : ""
             previewWidth: page.post.previewWidth || 0
             previewHeight: page.post.previewHeight || 0
             galleryCount: page.post.galleryCount || 0

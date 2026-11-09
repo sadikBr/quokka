@@ -82,6 +82,7 @@ QVariant PostListModel::postRoleData(const Post &p, int role)
     case LockedRole: return p.locked;
     case KindRole: return postKindValue(p.kind);
     case PreviewUrlRole: return p.previewUrl;
+    case PreviewFallbackUrlRole: return p.previewFallbackUrl;
     case PreviewWidthRole: return p.previewWidth;
     case PreviewHeightRole: return p.previewHeight;
     case VideoUrlRole: return p.videoUrl;
@@ -118,6 +119,7 @@ QHash<int, QByteArray> PostListModel::postRoleNames()
         {LockedRole, "locked"},
         {KindRole, "kind"},
         {PreviewUrlRole, "previewUrl"},
+        {PreviewFallbackUrlRole, "previewFallbackUrl"},
         {PreviewWidthRole, "previewWidth"},
         {PreviewHeightRole, "previewHeight"},
         {VideoUrlRole, "videoUrl"},

@@ -100,9 +100,13 @@ private slots:
         QCOMPARE(image.kind, Post::Kind::Image);
         QCOMPARE(image.previewWidth, 1600);
         QCOMPARE(image.previewHeight, 1200);
+        // The reading server's thumbnail first, the origin server's image as the fallback.
+        QVERIFY(image.previewUrl.startsWith("https://lemmy.world/pictrs/image/desk_thumb.webp"));
         QVERIFY(image.previewUrl.contains("thumbnail=640"));
+        QVERIFY(image.previewFallbackUrl.startsWith("https://lemmynsfw.example/pictrs/image/desk.jpeg"));
         QCOMPARE(image.media.size(), 1);
-        QCOMPARE(image.media.first().url, QStringLiteral("https://lemmy.world/pictrs/image/desk.jpeg"));
+        QCOMPARE(image.media.first().url, QStringLiteral("https://lemmynsfw.example/pictrs/image/desk.jpeg"));
+        QCOMPARE(image.media.first().fallbackUrl, QStringLiteral("https://lemmy.world/pictrs/image/desk_thumb.webp"));
         QCOMPARE(image.media.first().caption, QStringLiteral("A tidy desk"));
 
         const Post &text = byId(listing.posts, "103");

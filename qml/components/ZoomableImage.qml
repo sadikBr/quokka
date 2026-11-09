@@ -4,11 +4,20 @@ import QtQuick
 Flickable {
     id: flick
     property url source
+    property url fallbackSource   // tried when `source` fails (e.g. the server's own thumbnail)
+    property bool useFallback: false
+    onSourceChanged: useFallback = false
+    readonly property url effectiveSource: useFallback ? fallbackSource : source
+    readonly property bool broken: status === Image.Error && (useFallback || fallbackSource.toString() === "")
     property bool animated: false
     property real zoom: 1
     readonly property real maxZoom: 6
     readonly property bool zoomed: zoom > 1.01
     readonly property int status: content.item ? content.item.status : Image.Null
+    onStatusChanged: {
+        if (status === Image.Error && !useFallback && fallbackSource.toString() !== "")
+            useFallback = true
+    }
     signal tapped()
 
     clip: true
@@ -36,7 +45,7 @@ Flickable {
     Component {
         id: staticImage
         Image {
-            source: flick.source
+            source: flick.effectiveSource
             asynchronous: true
             fillMode: Image.PreserveAspectFit
             sourceSize.width: 2560
@@ -47,7 +56,7 @@ Flickable {
     Component {
         id: animatedImage
         AnimatedImage {
-            source: flick.source
+            source: flick.effectiveSource
             asynchronous: true
             fillMode: Image.PreserveAspectFit
             playing: true

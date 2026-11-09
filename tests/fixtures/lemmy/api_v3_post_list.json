@@ -82,9 +82,10 @@
     "language_id": 0,
     "featured_community": false,
     "featured_local": false,
-    "url": "https://lemmy.world/pictrs/image/desk.jpeg",
+    "url": "https://lemmynsfw.example/pictrs/image/desk.jpeg",
     "url_content_type": "image/jpeg",
-    "alt_text": "A tidy desk"
+    "alt_text": "A tidy desk",
+    "thumbnail_url": "https://lemmy.world/pictrs/image/desk_thumb.webp"
    },
    "creator": {
     "id": 8281,

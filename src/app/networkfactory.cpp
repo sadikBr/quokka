@@ -35,6 +35,9 @@ protected:
             const auto error = reply->error();
             if (error == QNetworkReply::NoError || error == QNetworkReply::OperationCanceledError)
                 return;
+            // Images that fail are already reported by QML (and fall back to another copy).
+            if (!reply->url().path().contains(QLatin1String("/api/")))
+                return;
             qCWarning(lcNetwork).noquote()
                 << "Request failed:" << reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt()
                 << reply->operation() << reply->url().toString(QUrl::RemoveUserInfo)

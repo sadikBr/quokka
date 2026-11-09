@@ -27,6 +27,7 @@ QVariantMap postToVariantMap(const quokka::Post &p)
             {QStringLiteral("height"), m.height},
             {QStringLiteral("caption"), m.caption},
             {QStringLiteral("animated"), m.animated},
+            {QStringLiteral("fallbackUrl"), m.fallbackUrl},
         });
     }
     return {
@@ -52,6 +53,7 @@ QVariantMap postToVariantMap(const quokka::Post &p)
         {QStringLiteral("locked"), p.locked},
         {QStringLiteral("kind"), postKindValue(p.kind)},
         {QStringLiteral("previewUrl"), p.previewUrl},
+        {QStringLiteral("previewFallbackUrl"), p.previewFallbackUrl},
         {QStringLiteral("previewWidth"), p.previewWidth},
         {QStringLiteral("previewHeight"), p.previewHeight},
         {QStringLiteral("videoUrl"), p.videoUrl},
@@ -93,6 +95,7 @@ quokka::Post postFromVariantMap(const QVariantMap &m)
     default: p.kind = K::Link; break;
     }
     p.previewUrl = m.value(QStringLiteral("previewUrl")).toString();
+    p.previewFallbackUrl = m.value(QStringLiteral("previewFallbackUrl")).toString();
     p.previewWidth = m.value(QStringLiteral("previewWidth")).toInt();
     p.previewHeight = m.value(QStringLiteral("previewHeight")).toInt();
     p.videoUrl = m.value(QStringLiteral("videoUrl")).toString();
@@ -104,7 +107,8 @@ quokka::Post postFromVariantMap(const QVariantMap &m)
                         mm.value(QStringLiteral("width")).toInt(),
                         mm.value(QStringLiteral("height")).toInt(),
                         mm.value(QStringLiteral("caption")).toString(),
-                        mm.value(QStringLiteral("animated")).toBool()});
+                        mm.value(QStringLiteral("animated")).toBool(),
+                        mm.value(QStringLiteral("fallbackUrl")).toString()});
     }
     return p;
 }

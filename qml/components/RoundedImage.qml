@@ -4,7 +4,9 @@ import QtQuick
 // surrounding colour covers the corners: cheap, and works with every Qt version and GPU backend.
 Item {
     id: root
-    property alias source: img.source
+    property url source
+    property url fallbackSource      // tried when `source` fails to load
+    property bool showBroken: true   // show an "image unavailable" mark when nothing loads
     property alias fillMode: img.fillMode
     property alias status: img.status
     property int radius: Theme.radiusMedia
@@ -13,6 +15,11 @@ Item {
     // height / width of the loaded picture, 0 until it has loaded
     readonly property real naturalRatio: img.status === Image.Ready && img.implicitWidth > 0
                                          ? img.implicitHeight / img.implicitWidth : 0
+    readonly property bool broken: img.status === Image.Error
+                                   && (useFallback || fallbackSource.toString() === "")
+
+    property bool useFallback: false
+    onSourceChanged: useFallback = false
 
     Rectangle {
         anchors.fill: parent
@@ -45,12 +52,36 @@ Item {
     Image {
         id: img
         anchors.fill: parent
+        source: root.useFallback ? root.fallbackSource : root.source
+        onStatusChanged: {
+            if (status === Image.Error && !root.useFallback && root.fallbackSource.toString() !== "")
+                root.useFallback = true
+        }
         asynchronous: true
         cache: true
         fillMode: Image.PreserveAspectCrop
         sourceSize.width: Math.max(1, Math.ceil(root.width * Screen.devicePixelRatio))
         opacity: status === Image.Ready ? 1 : 0
         Behavior on opacity { NumberAnimation { duration: Theme.smooth } }
+    }
+
+    Column {
+        anchors.centerIn: parent
+        visible: root.broken && root.showBroken
+        spacing: 4
+        Icon {
+            anchors.horizontalCenter: parent.horizontalCenter
+            name: "image-off"
+            size: Math.max(16, Math.min(32, root.width / 6))
+            color: Theme.textMuted
+        }
+        Text {
+            anchors.horizontalCenter: parent.horizontalCenter
+            visible: root.width > 140
+            text: qsTr("Image unavailable")
+            color: Theme.textMuted
+            font.pixelSize: Theme.fontSmall
+        }
     }
 
     // Corner cover: inner edge of this border is a rounded rect matching `root`. The image

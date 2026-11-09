@@ -134,11 +134,19 @@ Post postFromView(const QJsonObject &pv, const QString &webBase)
         post.media.append({post.videoUrl, post.previewWidth, post.previewHeight, {}, true});
     } else if (isImage) {
         post.kind = Post::Kind::Image;
-        if (gif || post.url.contains(QLatin1String("/pictrs/image/")))
-            post.previewUrl = gif ? post.url : sizedImage(post.url, 640);
-        else
-            post.previewUrl = thumb.isEmpty() ? post.url : sizedImage(thumb, 640);
-        post.media.append({post.url, post.previewWidth, post.previewHeight, str(p, "alt_text"), gif});
+        // Prefer the thumbnail: for posts from other servers it is usually a copy kept by the
+        // server we read from, which is faster and more reliable than the post's origin server.
+        // The original is the fallback (and the other way round for GIFs, to keep them animated).
+        const QString original = gif ? post.url : sizedImage(post.url, 640);
+        const QString local = thumb.isEmpty() ? QString() : sizedImage(thumb, 640);
+        if (!local.isEmpty() && !gif) {
+            post.previewUrl = local;
+            post.previewFallbackUrl = original;
+        } else {
+            post.previewUrl = original;
+            post.previewFallbackUrl = local;
+        }
+        post.media.append({post.url, post.previewWidth, post.previewHeight, str(p, "alt_text"), gif, thumb});
     } else {
         post.kind = Post::Kind::Link;
         post.previewUrl = sizedImage(thumb, 320);

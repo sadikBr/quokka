@@ -74,6 +74,7 @@ Page {
                 id: imageComp
                 ZoomableImage {
                     source: slot.modelData.url
+                    fallbackSource: slot.modelData.fallbackUrl || ""
                     animated: /\.gif(\?|$)/i.test(slot.modelData.url)
                     onTapped: page.chrome = !page.chrome
                     Connections {
@@ -83,6 +84,18 @@ Page {
                     LoadingDots {
                         anchors.centerIn: parent
                         visible: parent.status === Image.Loading
+                    }
+                    Column {
+                        anchors.centerIn: parent
+                        visible: parent.broken
+                        spacing: 8
+                        Icon { anchors.horizontalCenter: parent.horizontalCenter; name: "image-off"; size: 40; color: "white" }
+                        Text {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            text: qsTr("This image couldn't be loaded. Its server may be down.")
+                            color: "white"
+                            font.pixelSize: Theme.fontBody
+                        }
                     }
                 }
             }

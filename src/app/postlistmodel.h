@@ -56,6 +56,7 @@ public:
         LockedRole,
         KindRole,
         PreviewUrlRole,
+        PreviewFallbackUrlRole,
         PreviewWidthRole,
         PreviewHeightRole,
         VideoUrlRole,

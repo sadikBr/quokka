@@ -25,6 +25,7 @@ Item {
     required property bool locked
     required property int kind
     required property string previewUrl
+    required property string previewFallbackUrl
     required property int previewWidth
     required property int previewHeight
     required property int galleryCount
@@ -159,6 +160,8 @@ Item {
                         anchors.fill: parent
                         radius: 14
                         source: parent.visible ? card.previewUrl : ""
+                        fallbackSource: parent.visible ? card.previewFallbackUrl : ""
+                        showBroken: false
                     }
                     Rectangle {
                         visible: card.kind === PostListModel.VideoPost || card.kind === PostListModel.GalleryPost
@@ -208,6 +211,7 @@ Item {
                 Layout.preferredHeight: visible ? implicitHeight : 0
                 kind: card.kind
                 previewUrl: card.hasBigMedia ? card.previewUrl : ""
+                previewFallbackUrl: card.hasBigMedia ? card.previewFallbackUrl : ""
                 previewWidth: card.previewWidth
                 previewHeight: card.previewHeight
                 galleryCount: card.galleryCount
@@ -234,6 +238,7 @@ Item {
                         Layout.preferredHeight: 56
                         radius: 12
                         source: card.kind === PostListModel.LinkPost ? card.previewUrl : ""
+                        showBroken: false
                         backgroundColor: Theme.surfaceAlt
                         placeholderColor: Theme.border
                     }

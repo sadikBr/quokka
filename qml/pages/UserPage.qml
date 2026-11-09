@@ -210,6 +210,7 @@ Page {
                     locked: m.locked
                     kind: m.kind
                     previewUrl: m.previewUrl
+                    previewFallbackUrl: m.previewFallbackUrl
                     previewWidth: m.previewWidth
                     previewHeight: m.previewHeight
                     galleryCount: m.galleryCount
