@@ -16,6 +16,8 @@ public:
     static QString cacheDirectory();
     // Checked local copies of animated GIFs (see MediaResolver::prepareAnimation).
     static QString animationDirectory();
+    // First frames of videos without a picture (see VideoFrames).
+    static QString frameDirectory();
 
 private:
     QString m_userAgent;

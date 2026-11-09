@@ -69,6 +69,12 @@ QString NetworkFactory::animationDirectory()
         + QStringLiteral("/animations");
 }
 
+QString NetworkFactory::frameDirectory()
+{
+    return QStandardPaths::writableLocation(QStandardPaths::CacheLocation)
+        + QStringLiteral("/frames");
+}
+
 QNetworkAccessManager *NetworkFactory::create(QObject *parent)
 {
     auto *nam = new UserAgentNam(m_userAgent, parent);

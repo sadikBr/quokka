@@ -287,6 +287,7 @@ void Library::clearImageCache()
 {
     QDir(NetworkFactory::cacheDirectory()).removeRecursively();
     QDir(NetworkFactory::animationDirectory()).removeRecursively();
+    QDir(NetworkFactory::frameDirectory()).removeRecursively();
 }
 
 QList<quokka::Post> Library::loadPosts(const QString &table) const

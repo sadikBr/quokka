@@ -37,7 +37,30 @@ Page {
         if (w) w.visibility = w.visibility === Window.FullScreen ? Window.Windowed : Window.FullScreen
     }
 
-    background: Rectangle { color: "#0B0A0F" }
+    // Swipe down (or up) to close: the picture follows the finger and the background fades.
+    property real dragY: 0
+    readonly property real dragProgress: Math.min(1, Math.abs(dragY) / (height * 0.35))
+    background: Rectangle { color: "#0B0A0F"; opacity: 1 - page.dragProgress * 0.85 }
+    NumberAnimation { id: settle; target: page; property: "dragY"; to: 0; duration: 180; easing.type: Easing.OutCubic }
+    DragHandler {
+        id: swipeClose
+        target: null
+        xAxis.enabled: false
+        enabled: !(pager.currentItem && pager.currentItem.zoomed)
+        acceptedDevices: PointerDevice.TouchScreen | PointerDevice.Mouse
+        onTranslationChanged: if (active) page.dragY = translation.y
+        onActiveChanged: {
+            if (active) {
+                settle.stop()
+                page.chrome = false
+            } else if (Math.abs(page.dragY) > Math.min(160, page.height * 0.18)) {
+                page.close()
+            } else {
+                settle.start()
+                page.chrome = true
+            }
+        }
+    }
 
     Shortcut { sequences: ["Right", "L"]; enabled: page.active; onActivated: pager.incrementCurrentIndex() }
     Shortcut { sequences: ["Left", "H"]; enabled: page.active; onActivated: pager.decrementCurrentIndex() }
@@ -53,6 +76,9 @@ Page {
     ListView {
         id: pager
         anchors.fill: parent
+        transform: Translate { y: page.dragY }
+        scale: 1 - page.dragProgress * 0.12
+        clip: true   // while it shrinks, don't let the neighbouring gallery items peek in
         orientation: ListView.Horizontal
         snapMode: ListView.SnapOneItem
         highlightRangeMode: ListView.StrictlyEnforceRange

@@ -101,6 +101,7 @@ qt_add_qml_module(quokka
         src/app/library.h src/app/library.cpp
         src/app/mediaresolver.h src/app/mediaresolver.cpp
         src/app/safearea.h src/app/safearea.cpp
+        src/app/videoframes.h src/app/videoframes.cpp
     RESOURCES
         resources/logo.svg
         resources/fonts/Inter-Regular.ttf

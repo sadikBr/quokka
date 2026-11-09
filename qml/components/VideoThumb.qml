@@ -1,7 +1,7 @@
 import QtQuick
 
-// A still for a video: its poster (e.g. the post's thumbnail) or, for redgifs, the poster redgifs
-// publishes next to the file. A dark tile with a play button when there is no picture.
+// A still for a video: its poster (e.g. the post's thumbnail); for redgifs, the poster redgifs
+// publishes next to the file; otherwise the video's first frame (VideoFrames). A dark tile with a play button when there is no picture.
 Item {
     id: root
     property var item: ({})            // media map: url, resolve, poster, ...
@@ -21,23 +21,50 @@ Item {
         const m = String(mediaUrl).match(/^(https:\/\/[^\/]*redgifs\.com\/[^?]+?)(-mobile|-silent)?\.mp4(\?.*)?$/i)
         return m ? m[1] + "-poster.jpg" : ""
     }
-    function lookUp() {
-        if (!item || item.poster || fallbackPoster || item.resolve !== "redgifs")
-            return
-        const hit = MediaResolver.cached(item.url)
+    // No picture at all: look one up (redgifs publishes posters), else grab the first frame.
+    property string grabbedFrom: ""   // the video file VideoFrames was asked about
+    function grab(fileUrl) {
+        grabbedFrom = String(fileUrl)
+        const hit = VideoFrames.frameFor(grabbedFrom)
         if (hit !== "")
-            lookedUp = posterFromVideo(hit)
+            lookedUp = hit
         else
-            MediaResolver.resolve(item.url, item.resolve)
+            VideoFrames.request(grabbedFrom)
+    }
+    function useFile(mediaUrl) {
+        if (item.resolve === "redgifs") {
+            const p = posterFromVideo(mediaUrl)
+            if (p !== "") { lookedUp = p; return }
+        }
+        grab(mediaUrl)
+    }
+    function lookUp() {
+        if (!item || !item.url || item.poster || fallbackPoster)
+            return
+        if (item.resolve) {
+            const hit = MediaResolver.cached(item.url)
+            if (hit !== "")
+                useFile(hit)
+            else
+                MediaResolver.resolve(item.url, item.resolve)
+            return
+        }
+        grab(item.url)
     }
     Component.onCompleted: lookUp()
-    onItemChanged: { lookedUp = ""; lookUp() }
+    onItemChanged: { lookedUp = ""; grabbedFrom = ""; lookUp() }
     Connections {
-        target: root.item && root.item.resolve === "redgifs" && !root.item.poster && !root.fallbackPoster
-                ? MediaResolver : null
+        target: root.item && root.item.resolve && !root.item.poster && !root.fallbackPoster ? MediaResolver : null
         function onResolved(pageUrl, mediaUrl) {
             if (pageUrl === String(root.item.url))
-                root.lookedUp = root.posterFromVideo(mediaUrl)
+                root.useFile(mediaUrl)
+        }
+    }
+    Connections {
+        target: root.grabbedFrom !== "" ? VideoFrames : null
+        function onFrameReady(videoUrl, fileUrl) {
+            if (videoUrl === root.grabbedFrom)
+                root.lookedUp = fileUrl
         }
     }
 
