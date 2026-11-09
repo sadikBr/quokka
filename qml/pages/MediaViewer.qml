@@ -72,22 +72,31 @@ Page {
             }
             Component {
                 id: imageComp
-                ZoomableImage {
-                    source: slot.modelData.url
-                    fallbackSource: slot.modelData.fallbackUrl || ""
-                    animated: /\.gif(\?|$)/i.test(slot.modelData.url)
-                    onTapped: page.chrome = !page.chrome
+                // Overlays are siblings of the zoomable view (children of a Flickable get a different
+                // parent, so `parent.` lookups there silently fail).
+                Item {
+                    readonly property alias zoomed: zoom.zoomed
+                    function reset() { zoom.reset() }
+
+                    ZoomableImage {
+                        id: zoom
+                        anchors.fill: parent
+                        source: slot.modelData.url
+                        fallbackSource: slot.modelData.fallbackUrl || ""
+                        animated: /\.gif(\?|$)/i.test(slot.modelData.url)
+                        onTapped: page.chrome = !page.chrome
+                    }
                     Connections {
                         target: slot
-                        function onIsCurrentChanged() { if (!slot.isCurrent) parent.reset() }
+                        function onIsCurrentChanged() { if (!slot.isCurrent) zoom.reset() }
                     }
                     LoadingDots {
                         anchors.centerIn: parent
-                        visible: parent.status === Image.Loading
+                        visible: zoom.status === Image.Loading
                     }
                     Column {
                         anchors.centerIn: parent
-                        visible: parent.broken
+                        visible: zoom.broken
                         spacing: 8
                         Icon { anchors.horizontalCenter: parent.horizontalCenter; name: "image-off"; size: 40; color: "white" }
                         Text {
