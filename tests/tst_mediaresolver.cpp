@@ -19,6 +19,7 @@ private slots:
     void skipsDeadImages()
     {
         MediaResolver r;
+        r.setConverterEnabled(false);
         const QString a = "https://down.example/pictrs/image/a.jpeg?thumbnail=640&format=jpg";
         QCOMPARE(r.imageSources(a).size(), 4);
         r.reportImage(a, false);
@@ -33,6 +34,27 @@ private slots:
         for (int i = 0; i < 8; ++i)
             r.reportImage(QStringLiteral("https://ok.example/%1.png").arg(i), false);
         QCOMPARE(r.imageSources("https://ok.example/new.png").size(), 1);
+    }
+
+    void converter()
+    {
+        QCOMPARE(MediaResolver::convertedUrl("https://i.ibb.co/cS9JXXCG/1000032992.png"),
+                 QStringLiteral("https://wsrv.nl/?url=https%3A%2F%2Fi.ibb.co%2FcS9JXXCG%2F1000032992.png&w=1600&we&output=jpg"));
+        // pict-rs resizing options are dropped: the service converts the original.
+        QVERIFY(MediaResolver::convertedUrl("https://a.org/pictrs/image/x.png?thumbnail=640&format=jpg")
+                    .startsWith("https://wsrv.nl/?url=https%3A%2F%2Fa.org%2Fpictrs%2Fimage%2Fx.png&"));
+
+        MediaResolver r;
+        const bool was = r.converterEnabled();
+        r.setConverterEnabled(true);
+        const QStringList s = r.imageSources("https://i.ibb.co/a.png");
+        QCOMPARE(s.size(), 2);
+        QVERIFY(s.last().startsWith("https://wsrv.nl/"));
+        // Conversion failures never write the service off.
+        for (int i = 0; i < 10; ++i)
+            r.reportImage(MediaResolver::convertedUrl(QStringLiteral("https://gone.example/%1.png").arg(i)), false);
+        QCOMPARE(r.imageSources("https://i.ibb.co/b.png").size(), 2);
+        r.setConverterEnabled(was);
     }
 
     void messages()

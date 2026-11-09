@@ -8,12 +8,46 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
+#include <QSettings>
 #include <QUrl>
+#include <QUrlQuery>
+
+namespace {
+// A server whose images failed this many times without a single success is treated as down.
+constexpr int kDeadHostFailures = 6;
+const QString kConverterHost = QStringLiteral("wsrv.nl");
+const QString kConverterKey = QStringLiteral("media/imageConverter");
+} // namespace
 
 MediaResolver::MediaResolver(QObject *parent)
     : QObject(parent)
     , m_nam(new QNetworkAccessManager(this))
+    , m_converter(QSettings().value(kConverterKey, true).toBool())
 {
+}
+
+void MediaResolver::setConverterEnabled(bool on)
+{
+    if (on == m_converter)
+        return;
+    m_converter = on;
+    QSettings().setValue(kConverterKey, on);
+    emit converterEnabledChanged();
+}
+
+QString MediaResolver::convertedUrl(const QString &url)
+{
+    QUrl original(url);
+    if (original.path().contains(QLatin1String("/pictrs/image/")))
+        original.setQuery(QString()); // let the service work from the untouched file
+    QUrlQuery q;
+    q.addQueryItem(QStringLiteral("url"), QString::fromUtf8(QUrl::toPercentEncoding(original.toString())));
+    q.addQueryItem(QStringLiteral("w"), QStringLiteral("1600"));
+    q.addQueryItem(QStringLiteral("we"), QString());           // never enlarge
+    q.addQueryItem(QStringLiteral("output"), QStringLiteral("jpg"));
+    QUrl out(QStringLiteral("https://wsrv.nl/"));
+    out.setQuery(q);
+    return out.toString(QUrl::FullyEncoded);
 }
 
 QNetworkReply *MediaResolver::get(const QUrl &url, const QByteArray &bearer)
@@ -137,10 +171,6 @@ void MediaResolver::resolveRedgifs(const QString &pageUrl, bool retried)
     });
 }
 
-namespace {
-// A server whose images failed this many times without a single success is treated as down.
-constexpr int kDeadHostFailures = 6;
-}
 
 QStringList MediaResolver::imageSources(const QString &primary, const QString &fallback) const
 {
@@ -151,6 +181,15 @@ QStringList MediaResolver::imageSources(const QString &primary, const QString &f
             || (!m_hostsOk.contains(host) && m_hostFailures.value(host) >= kDeadHostFailures))
             continue;
         out.append(u);
+    }
+    if (m_converter) {
+        for (const QString &u : {primary, fallback}) {
+            if (u.isEmpty() || QUrl(u).host() == kConverterHost)
+                continue;
+            const QString converted = convertedUrl(u);
+            if (!out.contains(converted) && !m_deadUrls.contains(converted))
+                out.append(converted);
+        }
     }
     return out;
 }
@@ -165,7 +204,8 @@ void MediaResolver::reportImage(const QString &url, bool ok)
         m_deadUrls.remove(url);
     } else if (!m_deadUrls.contains(url)) {
         m_deadUrls.insert(url);
-        m_hostFailures[host] += 1;
+        if (host != kConverterHost) // it fails when the original is gone, which says nothing about it
+            m_hostFailures[host] += 1;
     }
 }
 

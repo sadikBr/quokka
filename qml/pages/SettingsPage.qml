@@ -233,6 +233,12 @@ Page {
                     checked: AppSettings.videoMuted
                     onToggled: (on) => AppSettings.videoMuted = on
                 }
+                SwitchRow {
+                    text: qsTr("Rescue pictures that won't open")
+                    detail: qsTr("When a picture fails to load or is in a format Qt can't read, ask wsrv.nl to convert it. This sends the picture's address to wsrv.nl.")
+                    checked: MediaResolver.converterEnabled
+                    onToggled: (on) => MediaResolver.converterEnabled = on
+                }
                 Item {
                     Layout.fillWidth: true
                     implicitHeight: 64

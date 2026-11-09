@@ -17,9 +17,17 @@ class MediaResolver : public QObject
     Q_OBJECT
     QML_ELEMENT
     QML_SINGLETON
+    // Last resort for pictures that fail everywhere or can't be decoded (AVIF/HEIC under a
+    // .png name, slightly broken files): a JPEG made by the wsrv.nl conversion service. Saved.
+    Q_PROPERTY(bool converterEnabled READ converterEnabled WRITE setConverterEnabled NOTIFY converterEnabledChanged)
 
 public:
     explicit MediaResolver(QObject *parent = nullptr);
+
+    bool converterEnabled() const { return m_converter; }
+    void setConverterEnabled(bool on);
+    // The converted (JPEG) copy of an image URL.
+    static QString convertedUrl(const QString &url);
 
     Q_INVOKABLE void resolve(const QString &pageUrl, const QString &kind);
     // Copies of a picture to try in turn (see quokka::media::imageSources), minus the ones that
@@ -40,6 +48,7 @@ public:
     static QString parseStreamable(const QByteArray &json);
 
 signals:
+    void converterEnabledChanged();
     void resolved(const QString &pageUrl, const QString &mediaUrl);
     void failed(const QString &pageUrl, const QString &message);
 
@@ -54,4 +63,5 @@ private:
     QSet<QString> m_deadUrls;
     QHash<QString, int> m_hostFailures;
     QSet<QString> m_hostsOk;
+    bool m_converter = true;
 };
