@@ -1,5 +1,7 @@
 #pragma once
 
+#include <map>
+
 #include <QObject>
 #include <QQmlEngine>
 #include <QUrl>
@@ -68,6 +70,7 @@ private:
     void install(std::unique_ptr<quokka::ApiClient> client, std::unique_ptr<quokka::Backend> backend,
                  const QString &instance);
     std::unique_ptr<quokka::Transport> makeTransport(const QUrl &base, const QString &suffix);
+    quokka::Backend *source(const QString &name);   // see services::backendFor()
 
     NetworkFactory *m_network;
     QString m_fixtures;
@@ -75,4 +78,9 @@ private:
     std::unique_ptr<quokka::ApiClient> m_client;
     std::unique_ptr<quokka::Backend> m_backend;
     QString m_instance;
+    struct Extra {
+        std::unique_ptr<quokka::ApiClient> client;
+        std::unique_ptr<quokka::Backend> backend;
+    };
+    std::map<QString, Extra> m_sources;
 };

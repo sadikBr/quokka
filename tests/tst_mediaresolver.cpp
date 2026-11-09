@@ -79,6 +79,23 @@ private slots:
         QVERIFY(MediaResolver::describePlaybackError("Could not open file", "https://lemmynsfw.com/a.mp4").contains("lemmynsfw.com"));
     }
 
+    void eporner()
+    {
+        // Four base-36 numbers from the hash's 8-digit groups (as yt-dlp does).
+        QCOMPARE(MediaResolver::epornerHash("0123456789abcdef0123456789abcdef"), QStringLiteral("bd4yv1275p7zbd4yv1275p7z"));
+        QVERIFY(MediaResolver::epornerHash("tooshort").isEmpty());
+        const QByteArray files =
+            "{\"available\":true,\"sources\":{\"mp4\":{"
+            "\"240p\":{\"labelShort\":\"240p\",\"src\":\"https://x/240.mp4\"},"
+            "\"1080p(HD)\":{\"labelShort\":\"1080p\",\"src\":\"https://x/1080.mp4\"},"
+            "\"2160p(4K)\":{\"labelShort\":\"2160p\",\"src\":\"https://x/2160.mp4\"},"
+            "\"720p(HD)\":{\"labelShort\":\"720p\",\"src\":\"https://x/720.mp4\"}}}}";
+        QCOMPARE(MediaResolver::parseEporner(files), QStringLiteral("https://x/1080.mp4"));
+        QString error;
+        QVERIFY(MediaResolver::parseEporner("{\"available\":false}", &error).isEmpty());
+        QVERIFY(error.contains("deleted"));
+    }
+
     void parsing()
     {
         QCOMPARE(MediaResolver::parseRedgifs("{\"gif\":{\"urls\":{\"sd\":\"https://media.redgifs.com/a-mobile.mp4\",\"hd\":\"https://media.redgifs.com/a.mp4\"}}}"),

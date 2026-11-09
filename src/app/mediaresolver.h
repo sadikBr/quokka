@@ -11,7 +11,7 @@ class QNetworkReply;
 // Finds the playable file behind a video page (QML: `MediaResolver`).
 //   MediaResolver.resolve("https://www.redgifs.com/watch/xyz", "redgifs")
 // answers with resolved(pageUrl, mediaUrl) or failed(pageUrl, message). Results are cached.
-// Supported: "redgifs" (public API with a temporary token), "streamable".
+// Supported: "redgifs" (public API with a temporary token), "streamable", "eporner".
 class MediaResolver : public QObject
 {
     Q_OBJECT
@@ -56,6 +56,10 @@ public:
     static QString streamableCode(const QString &pageUrl);
     static QString parseRedgifs(const QByteArray &json);
     static QString parseStreamable(const QByteArray &json);
+    // eporner: the page's player hash (32 hex digits) as the video endpoint wants it (four
+    // base-36 numbers), and the best MP4 (at most 1080p) from that endpoint's answer.
+    static QString epornerHash(const QString &hex);
+    static QString parseEporner(const QByteArray &json, QString *error = nullptr);
 
 signals:
     void converterEnabledChanged();
@@ -67,6 +71,7 @@ signals:
 private:
     QNetworkReply *get(const QUrl &url, const QByteArray &bearer = {});
     void resolveRedgifs(const QString &pageUrl, bool retried);
+    void resolveEporner(const QString &pageUrl);
     void finish(const QString &pageUrl, const QString &mediaUrl, const QString &error);
 
     QNetworkAccessManager *m_nam;

@@ -33,7 +33,9 @@ bool uncheckable(const QString &url)
         return true;
     const QString host = u.host().toLower();
     // Pages looked up through their own API first (see MediaResolver).
-    return host.endsWith(QLatin1String("redgifs.com")) || host.endsWith(QLatin1String("streamable.com"));
+    // (redgifs files too: unsure how its media servers answer a bare ranged request.)
+    return host.endsWith(QLatin1String("redgifs.com")) || host.endsWith(QLatin1String("streamable.com"))
+        || host.endsWith(QLatin1String("eporner.com"));
 }
 } // namespace
 

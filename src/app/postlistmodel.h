@@ -25,6 +25,9 @@ class PostListModel : public QAbstractListModel
     // When false, nothing is fetched (e.g. a search page with an empty query).
     Q_PROPERTY(bool enabled READ enabled WRITE setEnabled NOTIFY enabledChanged)
     Q_PROPERTY(bool showNsfw READ showNsfw WRITE setShowNsfw NOTIFY showNsfwChanged)
+    // Where posts come from: empty for the server being read, else see services::backendFor()
+    // ("redgifs", "eporner", "servers:lemmy.world,lemmynsfw.com", "lemmynsfw.com").
+    Q_PROPERTY(QString source READ source WRITE setSource NOTIFY sourceChanged)
     // Only NSFW items (the "Show only NSFW" setting).
     Q_PROPERTY(bool nsfwOnly READ nsfwOnly WRITE setNsfwOnly NOTIFY nsfwOnlyChanged)
     // Only posts with pictures or videos (the swipe-through media feed).
@@ -71,6 +74,9 @@ public:
         VideoUrlRole,
         GalleryCountRole,
         MediaRole,
+        SourceRole,
+        OriginRole,
+        TagsRole,
     };
 
     explicit PostListModel(QObject *parent = nullptr);
@@ -94,6 +100,8 @@ public:
     bool nsfwOnly() const { return m_nsfwOnly; }
     void setNsfwOnly(bool on);
     void setShowNsfw(bool show);
+    QString source() const { return m_source; }
+    void setSource(const QString &source);
     bool mediaOnly() const { return m_mediaOnly; }
     void setMediaOnly(bool on);
     bool hideBroken() const { return m_hideBroken; }
@@ -135,6 +143,7 @@ signals:
     void showNsfwChanged();
     void nsfwOnlyChanged();
     void mediaOnlyChanged();
+    void sourceChanged();
     void animatedOnlyChanged();
     void hideBrokenChanged();
     void searchQueryChanged();
@@ -151,6 +160,7 @@ private:
     void scheduleReload();
 
     bool m_mediaOnly = false;
+    QString m_source;
     bool m_animatedOnly = false;
     bool m_hideBroken = false;
     // Drops known-dead media from `posts` (and posts left without any).

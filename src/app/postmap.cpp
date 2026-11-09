@@ -94,6 +94,9 @@ QVariantMap postToVariantMap(const quokka::Post &p)
         {QStringLiteral("galleryCount"), p.galleryCount},
         {QStringLiteral("media"), media},
         {QStringLiteral("bodyMedia"), bodyMedia},
+        {QStringLiteral("source"), p.source},
+        {QStringLiteral("origin"), p.origin},
+        {QStringLiteral("tags"), p.tags},
     };
 }
 
@@ -136,6 +139,9 @@ quokka::Post postFromVariantMap(const QVariantMap &m)
     p.videoUrl = m.value(QStringLiteral("videoUrl")).toString();
     p.videoFallbackUrl = m.value(QStringLiteral("videoFallbackUrl")).toString();
     p.galleryCount = m.value(QStringLiteral("galleryCount")).toInt();
+    p.source = m.value(QStringLiteral("source")).toString();
+    p.origin = m.value(QStringLiteral("origin")).toString();
+    p.tags = m.value(QStringLiteral("tags")).toStringList();
     for (const QVariant &v : m.value(QStringLiteral("media")).toList()) {
         const QVariantMap mm = v.toMap();
         quokka::MediaItem item{mm.value(QStringLiteral("url")).toString(),

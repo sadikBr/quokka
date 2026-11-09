@@ -128,6 +128,15 @@ void CommentTreeModel::setFocusCommentId(const QString &id)
     scheduleReload();
 }
 
+void CommentTreeModel::setSource(const QString &source)
+{
+    if (source == m_source)
+        return;
+    m_source = source;
+    emit sourceChanged();
+    scheduleReload();
+}
+
 void CommentTreeModel::setSort(const QString &sort)
 {
     const QString s = kSorts.contains(sort) ? sort : QStringLiteral("confidence");
@@ -159,7 +168,7 @@ void CommentTreeModel::setError(const QString &e)
 
 void CommentTreeModel::refresh()
 {
-    auto *backend = services::backend();
+    auto *backend = services::backendFor(m_source);
     if (!backend || m_postId.isEmpty())
         return;
     if (m_reply)
@@ -173,14 +182,16 @@ void CommentTreeModel::refresh()
         if (reply != m_reply)
             return;
         m_reply = nullptr;
-        auto *backend = services::backend();
+        auto *backend = services::backendFor(m_source);
         if (!backend)
             return;
         const auto page = backend->parseThread(body);
         if (!page.ok) {
             setError(page.error);
         } else {
-            m_post = postToVariantMap(page.post);
+            quokka::Post post = page.post;
+            post.origin = m_source;   // keep links into its own server
+            m_post = postToVariantMap(post);
             emit postChanged();
             setComments(page.comments, page.post.author);
             m_loaded = true;
@@ -298,7 +309,7 @@ int CommentTreeModel::nextTopLevel(int row, int direction) const
 
 void CommentTreeModel::loadMore(int row)
 {
-    auto *backend = services::backend();
+    auto *backend = services::backendFor(m_source);
     if (!backend || row < 0 || row >= m_visible.size())
         return;
     const int i = m_visible.at(row);
@@ -315,7 +326,7 @@ void CommentTreeModel::loadMore(int row)
 
     const QString moreName = more.fullname;
     connect(reply, &quokka::ApiReply::finished, this, [this, more](const QByteArray &body) {
-        auto *backend = services::backend();
+        auto *backend = services::backendFor(m_source);
         QString err;
         const QList<Comment> rows = backend ? backend->parseMoreComments(body, more, m_linkAuthor, &err)
                                             : QList<Comment>{};

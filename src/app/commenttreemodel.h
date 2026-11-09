@@ -18,6 +18,8 @@ class CommentTreeModel : public QAbstractListModel
     Q_PROPERTY(QString postId READ postId WRITE setPostId NOTIFY postIdChanged)
     Q_PROPERTY(QString focusCommentId READ focusCommentId WRITE setFocusCommentId NOTIFY focusCommentIdChanged)
     Q_PROPERTY(QString sort READ sort WRITE setSort NOTIFY sortChanged)
+    // The server the post lives on, when it isn't the one being read (combined feed).
+    Q_PROPERTY(QString source READ source WRITE setSource NOTIFY sourceChanged)
     Q_PROPERTY(QVariantMap post READ post NOTIFY postChanged)
     Q_PROPERTY(bool loading READ loading NOTIFY loadingChanged)
     Q_PROPERTY(bool loaded READ loaded NOTIFY loadingChanged)
@@ -63,6 +65,8 @@ public:
     void setPostId(const QString &id);
     QString focusCommentId() const { return m_focus; }
     void setFocusCommentId(const QString &id);
+    QString source() const { return m_source; }
+    void setSource(const QString &source);
     QString sort() const { return m_sort; }
     void setSort(const QString &sort);
     QVariantMap post() const { return m_post; }
@@ -89,6 +93,7 @@ signals:
     void postIdChanged();
     void focusCommentIdChanged();
     void sortChanged();
+    void sourceChanged();
     void postChanged();
     void loadingChanged();
     void errorChanged();
@@ -115,6 +120,7 @@ private:
     QString m_postId;
     QString m_focus;
     QString m_sort = QStringLiteral("confidence");
+    QString m_source;
     QString m_linkAuthor;
     QVariantMap m_post;
     QList<Node> m_all;

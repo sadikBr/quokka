@@ -1,5 +1,7 @@
 #include "apiinfo.h"
 
+#include "mediasites.h"
+
 #include "apiclient.h"
 #include "backend.h"
 #include "networkfactory.h"
@@ -19,12 +21,14 @@ ApiInfo::ApiInfo(NetworkFactory *network, QString fixturesDir, QObject *parent)
     , m_fixtures(std::move(fixturesDir))
 {
     g_api = this;
+    services::setSourceFactory([this](const QString &name) { return source(name); });
 }
 
 ApiInfo::~ApiInfo()
 {
     if (services::backend() == m_backend.get())
         services::setBackend(nullptr);
+    services::setSourceFactory({});
     if (g_api == this)
         g_api = nullptr;
 }
@@ -54,10 +58,58 @@ void ApiInfo::install(std::unique_ptr<quokka::ApiClient> client, std::unique_ptr
     // Requests still running on the old client are cancelled when it is destroyed; models drop
     // their reply pointers (QPointer) and reload on changed().
     services::setBackend(backend.get());
+    m_sources.clear(); // combined feeds may point at the old server
     m_backend = std::move(backend);
     m_client = std::move(client);
     m_instance = instance;
     emit changed();
+}
+
+quokka::Backend *ApiInfo::source(const QString &name)
+{
+    const QString key = name.trimmed().toLower();
+    if (key.isEmpty() || key == m_instance)
+        return m_backend.get();
+    if (auto it = m_sources.find(key); it != m_sources.end())
+        return it->second.backend.get();
+
+    Extra e;
+    if (key == QLatin1String("redgifs")) {
+        e.client = std::make_unique<quokka::ApiClient>(makeTransport(QUrl(QStringLiteral("https://api.redgifs.com")), {}));
+        e.client->setServiceName(QStringLiteral("Redgifs"));
+        e.backend = std::make_unique<quokka::RedgifsBackend>(e.client.get());
+    } else if (key == QLatin1String("eporner")) {
+        e.client = std::make_unique<quokka::ApiClient>(makeTransport(QUrl(QStringLiteral("https://www.eporner.com")), {}));
+        e.client->setServiceName(QStringLiteral("Eporner"));
+        e.backend = std::make_unique<quokka::EpornerBackend>(e.client.get());
+    } else if (key.startsWith(QLatin1String("servers:"))) {
+        QStringList hosts;
+        QHash<QString, quokka::Backend *> servers;
+        for (const QString &part : key.mid(8).split(QLatin1Char(','), Qt::SkipEmptyParts)) {
+            const QString h = normalizeHost(part);
+            if (h.isEmpty() || hosts.contains(h))
+                continue;
+            if (quokka::Backend *b = source(h)) {
+                hosts.append(h);
+                servers.insert(h, b);
+            }
+        }
+        if (hosts.isEmpty())
+            return m_backend.get();
+        e.backend = std::make_unique<quokka::MultiLemmyBackend>(hosts, servers);
+    } else {
+        const QString h = normalizeHost(key);
+        if (h.isEmpty())
+            return m_backend.get();
+        if (h == m_instance)
+            return m_backend.get();
+        e.client = std::make_unique<quokka::ApiClient>(makeTransport(QUrl(QStringLiteral("https://") + h), {}));
+        e.client->setServiceName(h);
+        e.backend = std::make_unique<quokka::LemmyBackend>(e.client.get(), h);
+    }
+    quokka::Backend *b = e.backend.get();
+    m_sources.emplace(key, std::move(e));
+    return b;
 }
 
 void ApiInfo::useLemmy(const QString &host)

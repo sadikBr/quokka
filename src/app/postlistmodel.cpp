@@ -92,6 +92,9 @@ QVariant PostListModel::postRoleData(const Post &p, int role)
     case VideoUrlRole: return p.videoUrl;
     case GalleryCountRole: return p.galleryCount;
     case MediaRole: return mediaToVariantList(p.media);
+    case SourceRole: return p.source;
+    case OriginRole: return p.origin;
+    case TagsRole: return p.tags;
     default: return {};
     }
 }
@@ -130,6 +133,9 @@ QHash<int, QByteArray> PostListModel::postRoleNames()
         {VideoUrlRole, "videoUrl"},
         {GalleryCountRole, "galleryCount"},
         {MediaRole, "media"},
+        {SourceRole, "source"},
+        {OriginRole, "origin"},
+        {TagsRole, "tags"},
     };
 }
 
@@ -186,6 +192,15 @@ void PostListModel::setShowNsfw(bool show)
         return;
     m_showNsfw = show;
     emit showNsfwChanged();
+    scheduleReload();
+}
+
+void PostListModel::setSource(const QString &source)
+{
+    if (source == m_source)
+        return;
+    m_source = source;
+    emit sourceChanged();
     scheduleReload();
 }
 
@@ -404,7 +419,7 @@ void PostListModel::loadMore()
 
 void PostListModel::request(bool reset)
 {
-    auto *backend = services::backend();
+    auto *backend = services::backendFor(m_source);
     if (!backend)
         return;
 
@@ -445,7 +460,7 @@ void PostListModel::request(bool reset)
         if (reply != m_reply)
             return;
         m_reply = nullptr;
-        auto *backend = services::backend();
+        auto *backend = services::backendFor(m_source);
         if (!backend)
             return;
         const auto listing = backend->parsePosts(body, feedRequest);

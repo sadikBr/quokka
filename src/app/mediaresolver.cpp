@@ -11,6 +11,7 @@
 #include <QImageReader>
 #include <QJsonDocument>
 #include <QPointer>
+#include <QRegularExpression>
 #include <QSaveFile>
 #include <QStandardPaths>
 #include <QThreadPool>
@@ -145,6 +146,8 @@ void MediaResolver::resolve(const QString &pageUrl, const QString &kind)
             finish(pageUrl, reply->error() == QNetworkReply::NoError ? parseStreamable(reply->readAll()) : QString(),
                    describeFailure(status, pageUrl));
         });
+    } else if (kind == QLatin1String("eporner")) {
+        resolveEporner(pageUrl);
     } else {
         QMetaObject::invokeMethod(this, [this, pageUrl] { finish(pageUrl, {}, tr("Unsupported video page.")); },
                                   Qt::QueuedConnection);
@@ -359,6 +362,118 @@ void MediaResolver::prepareAnimation(const QString &url)
                     emit self->animationReady(url, file);
                 }
             }, Qt::QueuedConnection);
+        });
+    });
+}
+
+QString MediaResolver::epornerHash(const QString &hex)
+{
+    if (hex.size() != 32)
+        return {};
+    QString out;
+    for (int i = 0; i < 32; i += 8) {
+        bool ok = false;
+        const qulonglong n = hex.mid(i, 8).toULongLong(&ok, 16);
+        if (!ok)
+            return {};
+        out += QString::number(n, 36);
+    }
+    return out;
+}
+
+QString MediaResolver::parseEporner(const QByteArray &json, QString *error)
+{
+    const QJsonObject root = QJsonDocument::fromJson(json).object();
+    if (root.contains(QLatin1String("available")) && !root.value(QLatin1String("available")).toBool()) {
+        if (error)
+            *error = tr("This video was deleted from eporner.com.");
+        return {};
+    }
+    const QJsonObject sources = root.value(QLatin1String("sources")).toObject();
+    const QJsonObject mp4 = sources.value(QLatin1String("mp4")).toObject();
+    QString best;
+    int bestHeight = -1;
+    for (auto it = mp4.begin(); it != mp4.end(); ++it) {
+        const QJsonObject s = it.value().toObject();
+        const QString src = s.value(QLatin1String("src")).toString();
+        if (src.isEmpty())
+            continue;
+        static const QRegularExpression num(QStringLiteral("(\\d{3,4})"));
+        const auto m = num.match(s.value(QLatin1String("labelShort")).toString() + QLatin1Char(' ') + it.key());
+        const int h = m.hasMatch() ? m.captured(1).toInt() : 0;
+        // The highest up to 1080p; bigger ones only if that's all there is.
+        const bool better = bestHeight < 0
+            || (h <= 1080 && (bestHeight > 1080 || h > bestHeight))
+            || (h > 1080 && bestHeight > 1080 && h < bestHeight);
+        if (better) {
+            best = src;
+            bestHeight = h;
+        }
+    }
+    if (best.isEmpty()) {
+        const QJsonObject hls = sources.value(QLatin1String("hls")).toObject();
+        for (auto it = hls.begin(); it != hls.end() && best.isEmpty(); ++it)
+            best = it.value().toObject().value(QLatin1String("src")).toString();
+    }
+    if (best.startsWith(QLatin1String("//")))
+        best.prepend(QLatin1String("https:"));
+    if (best.isEmpty() && error && error->isEmpty())
+        *error = tr("Couldn't find the video on that page.");
+    return best;
+}
+
+void MediaResolver::resolveEporner(const QString &pageUrl)
+{
+    // Same steps as yt-dlp: the page names a player hash and video id; the video endpoint, given
+    // the hash in base 36, lists the files.
+    const QByteArray browser = "Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0";
+    QNetworkRequest req{QUrl(pageUrl)};
+    req.setRawHeader("User-Agent", browser);
+    req.setTransferTimeout(20000);
+    QNetworkReply *page = m_nam->get(req);
+    connect(page, &QNetworkReply::finished, this, [this, page, pageUrl, browser] {
+        page->deleteLater();
+        const int status = page->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        if (page->error() != QNetworkReply::NoError) {
+            finish(pageUrl, {}, describeFailure(status, pageUrl));
+            return;
+        }
+        const QString html = QString::fromUtf8(page->readAll());
+        static const QRegularExpression hashRe(QStringLiteral("EP\\.video\\.player\\.hash\\s*=\\s*['\"]([0-9a-fA-F]{32})['\"]"));
+        static const QRegularExpression vidRe(QStringLiteral("EP\\.video\\.player\\.vid\\s*=\\s*['\"]([^'\"]+)['\"]"));
+        static const QRegularExpression urlId(QStringLiteral("/(?:hd-porn|video-)?([0-9A-Za-z]{8,})/"));
+        const QString hash = epornerHash(hashRe.match(html).captured(1).toLower());
+        QString vid = vidRe.match(html).captured(1);
+        if (vid.isEmpty())
+            vid = urlId.match(QUrl(pageUrl).path()).captured(1);
+        if (hash.isEmpty() || vid.isEmpty()) {
+            finish(pageUrl, {}, tr("Couldn't find the video on that page (eporner may have changed it)."));
+            return;
+        }
+        QUrl xhr(QStringLiteral("https://www.eporner.com/xhr/video/") + vid);
+        QUrlQuery q;
+        q.addQueryItem(QStringLiteral("hash"), hash);
+        q.addQueryItem(QStringLiteral("domain"), QStringLiteral("www.eporner.com"));
+        q.addQueryItem(QStringLiteral("fallback"), QStringLiteral("false"));
+        q.addQueryItem(QStringLiteral("embed"), QStringLiteral("false"));
+        q.addQueryItem(QStringLiteral("supportedFormats"), QStringLiteral("dash,mp4"));
+        xhr.setQuery(q);
+        QNetworkRequest r(xhr);
+        r.setRawHeader("User-Agent", browser);
+        r.setRawHeader("Referer", pageUrl.toUtf8());
+        r.setRawHeader("Accept", "application/json");
+        r.setTransferTimeout(20000);
+        QNetworkReply *files = m_nam->get(r);
+        connect(files, &QNetworkReply::finished, this, [this, files, pageUrl] {
+            files->deleteLater();
+            const int status = files->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+            if (files->error() != QNetworkReply::NoError) {
+                finish(pageUrl, {}, describeFailure(status, pageUrl));
+                return;
+            }
+            QString error;
+            const QString file = parseEporner(files->readAll(), &error);
+            finish(pageUrl, file, error);
         });
     });
 }
