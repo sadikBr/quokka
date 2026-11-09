@@ -46,7 +46,7 @@ void AppSettings::setShowNsfw(bool show)
 
 QString AppSettings::lastFeed() const
 {
-    return m_settings.value(kLastFeed, QStringLiteral("popular")).toString();
+    return m_settings.value(kLastFeed, QStringLiteral("all")).toString();
 }
 
 void AppSettings::setLastFeed(const QString &feed)

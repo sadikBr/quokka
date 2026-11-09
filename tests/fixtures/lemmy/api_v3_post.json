@@ -1,0 +1,91 @@
+{
+ "post_view": {
+  "post": {
+   "id": 103,
+   "name": "Ask: favourite distro?",
+   "creator_id": 58,
+   "community_id": 2883,
+   "removed": false,
+   "locked": false,
+   "published": "2025-11-09T08:00:00.123456Z",
+   "deleted": false,
+   "nsfw": false,
+   "ap_id": "https://lemmy.world/post/103",
+   "local": true,
+   "language_id": 0,
+   "featured_community": false,
+   "featured_local": false,
+   "body": "What do you use and **why**?\n\n::: spoiler my answer\nArch, btw\n:::"
+  },
+  "creator": {
+   "id": 58,
+   "name": "carol",
+   "banned": false,
+   "published": "2023-06-01T10:00:00.000000Z",
+   "actor_id": "https://programming.dev/u/carol",
+   "local": false,
+   "deleted": false,
+   "bot_account": false,
+   "instance_id": 1
+  },
+  "community": {
+   "id": 2883,
+   "name": "technology",
+   "title": "Technology",
+   "removed": false,
+   "published": "2023-06-01T10:00:00.000000Z",
+   "deleted": false,
+   "nsfw": false,
+   "actor_id": "https://lemmy.world/c/technology",
+   "local": true,
+   "hidden": false,
+   "posting_restricted_to_mods": false,
+   "instance_id": 1,
+   "visibility": "Public"
+  },
+  "creator_banned_from_community": false,
+  "banned_from_community": false,
+  "creator_is_moderator": false,
+  "creator_is_admin": false,
+  "counts": {
+   "post_id": 103,
+   "comments": 3,
+   "score": 80,
+   "upvotes": 85,
+   "downvotes": 5,
+   "published": "2025-11-09T08:00:00.123456Z",
+   "newest_comment_time": "2025-11-09T08:00:00.123456Z"
+  },
+  "subscribed": "NotSubscribed",
+  "saved": false,
+  "read": false,
+  "hidden": false,
+  "creator_blocked": false,
+  "unread_comments": 0
+ },
+ "community_view": {
+  "community": {
+   "id": 2883,
+   "name": "technology",
+   "title": "Technology",
+   "removed": false,
+   "published": "2023-06-01T10:00:00.000000Z",
+   "deleted": false,
+   "nsfw": false,
+   "actor_id": "https://lemmy.world/c/technology",
+   "local": true,
+   "hidden": false,
+   "posting_restricted_to_mods": false,
+   "instance_id": 1,
+   "visibility": "Public"
+  },
+  "subscribed": "NotSubscribed",
+  "blocked": false,
+  "counts": {
+   "subscribers": 1000
+  },
+  "banned_from_community": false
+ },
+ "moderators": [],
+ "cross_posts": []
+}

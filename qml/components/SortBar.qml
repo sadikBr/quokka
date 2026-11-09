@@ -15,7 +15,7 @@ ColumnLayout {
         { key: "hot", label: qsTr("Hot"), icon: "hot", color: Theme.berry },
         { key: "new", label: qsTr("New"), icon: "new", color: Theme.caramel },
         { key: "top", label: qsTr("Top"), icon: "top", color: Theme.mint },
-        { key: "rising", label: qsTr("Rising"), icon: "rising", color: Theme.sky },
+        { key: "active", label: qsTr("Active"), icon: "rising", color: Theme.sky },
         { key: "controversial", label: qsTr("Spicy"), icon: "controversial", color: Theme.grape }
     ]
     readonly property var ranges: [

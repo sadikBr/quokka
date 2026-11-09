@@ -1,7 +1,16 @@
-# Reddit Client: Project Plan
+# Quokka: Project Plan
 
 A read-only Reddit client for **desktop (Linux, Windows, macOS)** and **Android**, built with
 **Qt 6 / QML** and Reddit's public JSON endpoints (add `.json` to a Reddit URL).
+
+> **Update (Nov 2026): Quokka now reads Lemmy.** Reddit started refusing anonymous `.json` requests
+> (HTTP 403) in mid-2026, and new Reddit API credentials need Reddit's approval. The plan below was written
+> for Reddit; the architecture carried over unchanged: a `Backend` interface (`src/core/backend.h`) with a
+> `LemmyBackend` (default, v3 API, any server) and the original `RedditBackend` kept for if API access
+> becomes available. Lemmy specifics: Markdown bodies (rendered with Qt's Markdown importer), community and
+> user names qualified with their server (`linux@lemmy.ml`), comment trees rebuilt from `path` with
+> "load more" rows from `child_count`, and a Home feed merged client-side from several communities
+> (Lemmy only offers a subscribed feed to logged-in users).
 
 ---
 
@@ -298,5 +307,6 @@ Each milestone ends with something runnable on **both** desktop and Android.
 - [x] **M5**: local library (subscriptions + Home feed, saved posts, history), compact cards, settings
 - [x] **M6**: desktop sidebar on wide windows, keyboard shortcuts, tooltips, remembered window size,
       About & licenses page; releases are published only for tags v1.0.0 and later
-- [ ] **Road to 1.0.0**: real-world testing against live Reddit on Linux and Android, fix what comes up,
+- [x] **Lemmy**: backend interface, Lemmy v3 support, server picker, Markdown, `c/` names (Nov 2026)
+- [ ] **Road to 1.0.0**: real-world testing against live Lemmy servers on Linux and Android, fix what comes up,
       choose a license, set up a stable APK signing key, write release notes

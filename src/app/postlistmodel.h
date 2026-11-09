@@ -1,7 +1,8 @@
 #pragma once
 
 #include "post.h"
-#include "redditclient.h"
+#include "apiclient.h"
+#include "backend.h"
 
 #include <QAbstractListModel>
 #include <QPointer>
@@ -99,8 +100,8 @@ public:
     // Everything about one post as a map (role names as keys), for the post page.
     Q_INVOKABLE QVariantMap get(int row) const;
 
-    // Builds the API path for the current mode, e.g. "/r/pics/top" or "/search".
-    QString apiPath() const;
+    // What to ask the backend for, given the current properties (exposed for tests).
+    quokka::FeedRequest feedRequest() const;
 
 signals:
     void feedChanged();

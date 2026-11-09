@@ -1,10 +1,11 @@
 #include "commenttreemodel.h"
 
+#include "backend.h"
 #include "parsers.h"
 #include "postmap.h"
 #include "services.h"
 
-#include <QUrlQuery>
+#include <algorithm>
 
 using quokka::Comment;
 
@@ -12,7 +13,6 @@ namespace {
 const QStringList kSorts = {QStringLiteral("confidence"), QStringLiteral("top"),
                             QStringLiteral("new"), QStringLiteral("controversial"),
                             QStringLiteral("old"), QStringLiteral("qa")};
-constexpr int kMoreBatch = 100; // /api/morechildren accepts up to 100 ids per call
 
 int rowKind(Comment::Kind k)
 {
@@ -157,30 +157,24 @@ void CommentTreeModel::setError(const QString &e)
 
 void CommentTreeModel::refresh()
 {
-    auto *client = services::reddit();
-    if (!client || m_postId.isEmpty())
+    auto *backend = services::backend();
+    if (!backend || m_postId.isEmpty())
         return;
     if (m_reply)
         m_reply->abort();
     setError({});
 
-    QString path = QStringLiteral("/comments/") + m_postId;
-    if (!m_focus.isEmpty())
-        path += QStringLiteral("/_/") + m_focus;
-    QUrlQuery q;
-    q.addQueryItem(QStringLiteral("sort"), m_sort);
-    q.addQueryItem(QStringLiteral("limit"), QStringLiteral("200"));
-    if (!m_focus.isEmpty())
-        q.addQueryItem(QStringLiteral("context"), QStringLiteral("0"));
-
-    auto *reply = client->get(path, q);
+    auto *reply = backend->thread(m_postId, m_focus, m_sort);
     m_reply = reply;
     emit loadingChanged();
     connect(reply, &quokka::ApiReply::finished, this, [this, reply](const QByteArray &body) {
         if (reply != m_reply)
             return;
         m_reply = nullptr;
-        const auto page = quokka::parsers::parseCommentsPage(body);
+        auto *backend = services::backend();
+        if (!backend)
+            return;
+        const auto page = backend->parseThread(body);
         if (!page.ok) {
             setError(page.error);
         } else {
@@ -302,96 +296,122 @@ int CommentTreeModel::nextTopLevel(int row, int direction) const
 
 void CommentTreeModel::loadMore(int row)
 {
-    auto *client = services::reddit();
-    if (!client || row < 0 || row >= m_visible.size())
+    auto *backend = services::backend();
+    if (!backend || row < 0 || row >= m_visible.size())
         return;
     const int i = m_visible.at(row);
     Node &n = m_all[i];
     if (n.c.kind != Comment::Kind::More || n.loadingMore)
         return;
 
-    const QStringList batch = n.c.moreChildren.mid(0, kMoreBatch);
-    const QStringList rest = n.c.moreChildren.mid(kMoreBatch);
-    const QString moreName = n.c.fullname;
-    const int baseDepth = n.c.depth;
+    const Comment more = n.c;
     n.loadingMore = true;
     emit dataChanged(index(row), index(row), {LoadingMoreRole});
 
-    QUrlQuery q;
-    q.addQueryItem(QStringLiteral("api_type"), QStringLiteral("json"));
-    q.addQueryItem(QStringLiteral("link_id"), QStringLiteral("t3_") + m_postId);
-    q.addQueryItem(QStringLiteral("children"), batch.join(QLatin1Char(',')));
-    q.addQueryItem(QStringLiteral("sort"), m_sort);
-    q.addQueryItem(QStringLiteral("limit_children"), QStringLiteral("false"));
-    auto *reply = client->get(QStringLiteral("/api/morechildren"), q);
+    auto *reply = backend->moreComments(m_postId, more, m_sort);
     m_moreReplies.append(reply);
 
-    auto finish = [this, moreName](const QList<Comment> &replacement, bool failed) {
-        if (failed) {
-            for (int j = 0; j < m_all.size(); ++j) {
-                if (m_all[j].c.fullname == moreName && m_all[j].c.kind == Comment::Kind::More) {
-                    m_all[j].loadingMore = false;
-                    const int r = int(m_visible.indexOf(j));
-                    if (r >= 0)
-                        emit dataChanged(index(r), index(r), {LoadingMoreRole});
-                }
-            }
-            return;
-        }
-        insertMore(moreName, replacement);
-    };
-    connect(reply, &quokka::ApiReply::finished, this,
-            [this, baseDepth, rest, moreName, finish](const QByteArray &body) {
+    const QString moreName = more.fullname;
+    connect(reply, &quokka::ApiReply::finished, this, [this, more](const QByteArray &body) {
+        auto *backend = services::backend();
         QString err;
-        QList<Comment> rows = quokka::parsers::parseMoreChildren(body, m_linkAuthor, baseDepth, &err);
-        if (!err.isEmpty()) {
-            finish({}, true);
-            return;
-        }
-        if (!rest.isEmpty()) {
-            Comment more;
-            more.kind = Comment::Kind::More;
-            more.fullname = moreName;
-            more.depth = baseDepth;
-            more.moreChildren = rest;
-            more.moreCount = int(rest.size());
-            rows.append(more);
-        }
-        finish(rows, false);
+        const QList<Comment> rows = backend ? backend->parseMoreComments(body, more, m_linkAuthor, &err)
+                                            : QList<Comment>{};
+        if (!err.isEmpty() || !backend)
+            setMoreLoading(more.fullname, false);
+        else
+            insertMore(more.fullname, rows);
     });
-    connect(reply, &quokka::ApiReply::failed, this, [finish] { finish({}, true); });
+    connect(reply, &quokka::ApiReply::failed, this, [this, moreName] { setMoreLoading(moreName, false); });
 }
 
-void CommentTreeModel::insertMore(const QString &moreFullname, const QList<Comment> &replacement)
+void CommentTreeModel::setMoreLoading(const QString &moreFullname, bool loading)
 {
-    int i = -1;
     for (int j = 0; j < m_all.size(); ++j) {
         if (m_all[j].c.fullname == moreFullname && m_all[j].c.kind == Comment::Kind::More) {
-            i = j;
-            break;
+            m_all[j].loadingMore = loading;
+            const int r = int(m_visible.indexOf(j));
+            if (r >= 0)
+                emit dataChanged(index(r), index(r), {LoadingMoreRole});
         }
     }
-    if (i < 0)
-        return;
-    const int row = int(m_visible.indexOf(i));
-    const int added = int(replacement.size());
+}
 
-    if (row >= 0) {
-        beginRemoveRows({}, row, row);
-        m_visible.removeAt(row);
+int CommentTreeModel::indexOfFullname(const QString &fullname, Comment::Kind kind) const
+{
+    for (int j = 0; j < m_all.size(); ++j)
+        if (m_all[j].c.fullname == fullname && m_all[j].c.kind == kind)
+            return j;
+    return -1;
+}
+
+bool CommentTreeModel::isVisibleChildOf(int parent) const
+{
+    // A new child of `parent` is visible if the parent is visible and expanded.
+    return parent >= 0 && m_visible.contains(parent) && !m_all.at(parent).collapsed;
+}
+
+void CommentTreeModel::insertNode(int at, const Comment &c, bool visible)
+{
+    for (int &v : m_visible)
+        if (v >= at)
+            ++v;
+    m_all.insert(at, Node{c});
+    if (!visible)
+        return;
+    const int row = int(std::lower_bound(m_visible.begin(), m_visible.end(), at) - m_visible.begin());
+    beginInsertRows({}, row, row);
+    m_visible.insert(row, at);
+    endInsertRows();
+}
+
+void CommentTreeModel::insertMore(const QString &moreFullname, const QList<Comment> &rows)
+{
+    // 1. Remove the placeholder, remembering where it was.
+    int anchor = indexOfFullname(moreFullname, Comment::Kind::More);
+    if (anchor < 0)
+        return;
+    const QString anchorParent = m_all.at(anchor).c.parentId;
+    const int anchorRow = int(m_visible.indexOf(anchor));
+    if (anchorRow >= 0) {
+        beginRemoveRows({}, anchorRow, anchorRow);
+        m_visible.removeAt(anchorRow);
         endRemoveRows();
     }
-    m_all.removeAt(i);
-    for (int k = 0; k < added; ++k)
-        m_all.insert(i + k, Node{replacement.at(k)});
+    m_all.removeAt(anchor);
     for (int &v : m_visible)
-        if (v > i)
-            v += added - 1;
-    if (row >= 0 && added > 0) {
-        beginInsertRows({}, row, row + added - 1);
-        for (int k = 0; k < added; ++k)
-            m_visible.insert(row + k, i + k);
-        endInsertRows();
+        if (v > anchor)
+            --v;
+
+    // 2. Merge each new row under its parent (after the parent's existing replies). Rows whose
+    //    parent is not on screen (e.g. more top-level comments) go where the placeholder was,
+    //    each after the previous one's replies.
+    const int anchorParentIndex = indexOfFullname(anchorParent, Comment::Kind::Comment);
+    QString lastOrphan;
+    Comment::Kind lastOrphanKind = Comment::Kind::Comment;
+    for (const Comment &incoming : rows) {
+        if (indexOfFullname(incoming.fullname, incoming.kind) >= 0)
+            continue; // already shown
+        Comment c = incoming;
+        const int parent = indexOfFullname(c.parentId, Comment::Kind::Comment);
+        int at;
+        bool visible;
+        if (parent >= 0) {
+            c.depth = m_all.at(parent).c.depth + 1;
+            at = subtreeEnd(parent);
+            visible = isVisibleChildOf(parent);
+        } else {
+            const int parentOfAnchor = indexOfFullname(anchorParent, Comment::Kind::Comment);
+            c.depth = parentOfAnchor >= 0 ? m_all.at(parentOfAnchor).c.depth + 1 : 0;
+            const int prev = lastOrphan.isEmpty() ? -1 : indexOfFullname(lastOrphan, lastOrphanKind);
+            at = prev >= 0 ? subtreeEnd(prev) : qMin(anchor, int(m_all.size()));
+            visible = anchorParentIndex < 0 || isVisibleChildOf(parentOfAnchor);
+            lastOrphan = c.fullname;
+            lastOrphanKind = c.kind;
+        }
+        if (at <= anchor)
+            ++anchor;
+        insertNode(at, c, visible);
     }
     emit countChanged();
 }

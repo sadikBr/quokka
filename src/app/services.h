@@ -1,11 +1,12 @@
 #pragma once
 
 namespace quokka {
-class RedditClient;
+class Backend;
 }
 
-// Process-wide services, created in main() before the QML engine loads.
+// The content source in use, owned by ApiInfo (or a test). Models read it on every request,
+// so switching Lemmy servers takes effect on the next load.
 namespace services {
-quokka::RedditClient *reddit();
-void setReddit(quokka::RedditClient *client);
+quokka::Backend *backend();
+void setBackend(quokka::Backend *backend);
 } // namespace services

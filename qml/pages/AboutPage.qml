@@ -59,21 +59,22 @@ Page {
                 Layout.fillWidth: true
                 horizontalAlignment: Text.AlignHCenter
                 wrapMode: Text.Wrap
-                text: qsTr("A happy little, read-only Reddit reader for desktop and Android.")
+                text: qsTr("A happy little, read-only reader for Lemmy, on desktop and Android.")
                 color: Theme.textMuted
                 font.pixelSize: Theme.fontBody
             }
 
             Card {
                 title: qsTr("Privacy")
-                body: qsTr("Quokka has no account, no tracking and no server of its own. It talks directly to "
-                           + "Reddit's public JSON pages. Your communities, saved posts and history are "
-                           + "stored only on this device.")
+                body: qsTr("Quokka has no account, no tracking and no server of its own. It reads the public "
+                           + "API of the Lemmy server you choose (now: %1). Your communities, saved posts and "
+                           + "history are stored only on this device.").arg(Api.serviceName)
             }
             Card {
-                title: qsTr("Not affiliated with Reddit")
-                body: qsTr("Reddit is a trademark of Reddit, Inc. Quokka is an independent project and is "
-                           + "not endorsed by Reddit. Content belongs to its authors.")
+                title: qsTr("Independent")
+                body: qsTr("Quokka is an independent project, not affiliated with the Lemmy developers, any "
+                           + "Lemmy server, or Reddit, Inc. Content belongs to its authors and is moderated by "
+                           + "each community and server.")
             }
 
             Text {

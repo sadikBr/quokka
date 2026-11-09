@@ -1,0 +1,38 @@
+{
+ "community_view": {
+  "community": {
+   "id": 2883,
+   "name": "technology",
+   "title": "Technology",
+   "removed": false,
+   "published": "2023-06-01T10:00:00.000000Z",
+   "deleted": false,
+   "nsfw": false,
+   "actor_id": "https://lemmy.world/c/technology",
+   "local": true,
+   "hidden": false,
+   "posting_restricted_to_mods": false,
+   "instance_id": 1,
+   "visibility": "Public",
+   "description": "# Welcome\n\nNews about **technology** and [gadgets](https://x.y).\n\nRules: be nice.",
+   "icon": "https://lemmy.world/pictrs/image/icon.png"
+  },
+  "subscribed": "NotSubscribed",
+  "blocked": false,
+  "counts": {
+   "community_id": 1,
+   "subscribers": 75000,
+   "posts": 9000,
+   "comments": 120000,
+   "published": "2023-06-01T10:00:00Z",
+   "users_active_day": 1500,
+   "users_active_week": 5000,
+   "users_active_month": 9000,
+   "users_active_half_year": 20000,
+   "subscribers_local": 40000
+  },
+  "banned_from_community": false
+ },
+ "moderators": [],
+ "discussion_languages": []
+}

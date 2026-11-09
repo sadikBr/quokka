@@ -2,7 +2,7 @@
 
 #include "parsers.h"
 #include "postmap.h"
-#include "redditclient.h"
+#include "backend.h"
 #include "services.h"
 
 #include <QUrlQuery>
@@ -12,17 +12,16 @@ using quokka::Post;
 namespace {
 
 const QStringList kSorts = {QStringLiteral("hot"), QStringLiteral("new"), QStringLiteral("top"),
-                            QStringLiteral("rising"), QStringLiteral("controversial"),
+                            QStringLiteral("rising"), QStringLiteral("active"), QStringLiteral("controversial"),
                             QStringLiteral("relevance"), QStringLiteral("comments")};
 const QStringList kRanges = {QStringLiteral("hour"), QStringLiteral("day"), QStringLiteral("week"),
                              QStringLiteral("month"), QStringLiteral("year"), QStringLiteral("all")};
-constexpr int kPageSize = 25;
 constexpr int kMaxEmptyPagesInARow = 3;
 
 QString normalizeFeed(QString feed)
 {
     feed = feed.trimmed();
-    for (const auto prefix : {"/r/", "r/", "/"}) {
+    for (const auto prefix : {"/r/", "r/", "/c/", "c/", "!", "/"}) {
         if (feed.startsWith(QLatin1String(prefix), Qt::CaseInsensitive)) {
             feed = feed.mid(int(qstrlen(prefix)));
             break;
@@ -205,19 +204,17 @@ void PostListModel::setEnabled(bool enabled)
     scheduleReload();
 }
 
-QString PostListModel::apiPath() const
+quokka::FeedRequest PostListModel::feedRequest() const
 {
-    if (!m_user.isEmpty())
-        return QStringLiteral("/user/%1/submitted").arg(m_user);
-    if (!m_search.isEmpty()) {
-        const QString f = m_feed.toLower();
-        return (f == QLatin1String("popular") || f == QLatin1String("all"))
-            ? QStringLiteral("/search")
-            : QStringLiteral("/r/%1/search").arg(m_feed);
-    }
-    // Search-only sorts make no sense for plain feeds.
-    const bool feedSort = m_sort != QLatin1String("relevance") && m_sort != QLatin1String("comments");
-    return QStringLiteral("/r/%1/%2").arg(m_feed, feedSort ? m_sort : QStringLiteral("hot"));
+    quokka::FeedRequest r;
+    r.feed = m_feed;
+    r.sort = m_sort;
+    r.timeRange = m_timeRange;
+    r.search = m_search;
+    r.user = m_user;
+    r.nsfw = m_showNsfw;
+    r.after = m_after;
+    return r;
 }
 
 void PostListModel::scheduleReload()
@@ -246,8 +243,8 @@ void PostListModel::loadMore()
 
 void PostListModel::request(bool reset)
 {
-    auto *client = services::reddit();
-    if (!client)
+    auto *backend = services::backend();
+    if (!backend)
         return;
 
     if (m_reply) {
@@ -273,37 +270,24 @@ void PostListModel::request(bool reset)
     m_refreshing = reset;
     setError({});
 
-    QUrlQuery q;
-    q.addQueryItem(QStringLiteral("limit"), QString::number(kPageSize));
-    if (!reset && !m_after.isEmpty())
-        q.addQueryItem(QStringLiteral("after"), m_after);
-    const bool timed = m_sort == QLatin1String("top") || m_sort == QLatin1String("controversial")
-        || (!m_search.isEmpty() && m_sort != QLatin1String("new"));
-    if (timed)
-        q.addQueryItem(QStringLiteral("t"), m_timeRange);
-    if (!m_user.isEmpty() || !m_search.isEmpty())
-        q.addQueryItem(QStringLiteral("sort"), m_sort);
-    if (!m_search.isEmpty()) {
-        q.addQueryItem(QStringLiteral("q"), m_search);
-        q.addQueryItem(QStringLiteral("type"), QStringLiteral("link"));
-        if (!apiPath().startsWith(QLatin1String("/search")))
-            q.addQueryItem(QStringLiteral("restrict_sr"), QStringLiteral("on"));
-    }
-    if (m_showNsfw)
-        q.addQueryItem(QStringLiteral("include_over_18"), QStringLiteral("on"));
-
-    quokka::ApiReply *reply = client->get(apiPath(), q);
+    quokka::FeedRequest feedRequest = this->feedRequest();
+    if (reset)
+        feedRequest.after.clear();
+    quokka::ApiReply *reply = backend->posts(feedRequest);
     m_reply = reply;
     emit loadingChanged();
 
     if (reset)
         m_emptyPages = 0;
 
-    connect(reply, &quokka::ApiReply::finished, this, [this, reply, reset](const QByteArray &body) {
+    connect(reply, &quokka::ApiReply::finished, this, [this, reply, reset, feedRequest](const QByteArray &body) {
         if (reply != m_reply)
             return;
         m_reply = nullptr;
-        const auto listing = quokka::parsers::parsePostListing(body);
+        auto *backend = services::backend();
+        if (!backend)
+            return;
+        const auto listing = backend->parsePosts(body, feedRequest);
         if (!listing.ok) {
             setError(listing.error);
             emit loadingChanged();

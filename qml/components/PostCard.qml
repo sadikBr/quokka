@@ -47,7 +47,7 @@ Item {
     implicitHeight: body.implicitHeight + 2 * Theme.pad + shadowOffset
 
     Accessible.role: Accessible.ListItem
-    Accessible.name: title + ", r/" + subreddit + ", " + score + " points, " + numComments + " comments"
+    Accessible.name: title + ", " + Api.community(subreddit) + ", " + score + " points, " + numComments + " comments"
     Accessible.onPressAction: openPost()
     readonly property int shadowOffset: 4
 
@@ -109,7 +109,7 @@ Item {
                     Layout.fillWidth: true
                     spacing: 0
                     Text {
-                        text: "r/" + card.subreddit
+                        text: Api.community(card.subreddit)
                         color: Theme.text
                         font.pixelSize: Theme.fontMeta
                         font.weight: Font.Bold
@@ -118,7 +118,7 @@ Item {
                         TapHandler { gesturePolicy: TapHandler.ReleaseWithinBounds; onTapped: card.openSubreddit(card.subreddit) }
                     }
                     Text {
-                        text: "u/" + card.author + "  ·  " + Format.relativeTime(card.createdUtc)
+                        text: Api.user(card.author) + "  ·  " + Format.relativeTime(card.createdUtc)
                         color: Theme.textMuted
                         font.pixelSize: Theme.fontSmall
                         elide: Text.ElideRight
@@ -315,7 +315,7 @@ Item {
                     size: 34
                     tooltip: qsTr("Open in browser")
                     tint: Theme.textMuted
-                    onClicked: card.openLink(Format.webUrl(card.permalink))
+                    onClicked: card.openLink(Api.webUrl(card.permalink))
                 }
             }
         }

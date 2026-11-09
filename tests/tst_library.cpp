@@ -25,6 +25,10 @@ private slots:
     {
         QCOMPARE(Library::normalizeName(" r/Pics/ "), QStringLiteral("Pics"));
         QCOMPARE(Library::normalizeName("https://www.reddit.com/r/linux"), QStringLiteral("linux"));
+        QCOMPARE(Library::normalizeName("!linux@Lemmy.ML"), QStringLiteral("linux@lemmy.ml"));
+        QCOMPARE(Library::normalizeName("c/technology@lemmy.world"), QStringLiteral("technology@lemmy.world"));
+        QCOMPARE(Library::normalizeName("https://lemmy.ml/c/linux"), QStringLiteral("linux@lemmy.ml"));
+        QCOMPARE(Library::normalizeName("linux@"), QString());
         QCOMPARE(Library::normalizeName("bad name!"), QString());
         QCOMPARE(Library::normalizeName("x"), QString());
     }

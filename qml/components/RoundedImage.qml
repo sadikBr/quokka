@@ -10,6 +10,9 @@ Item {
     property int radius: Theme.radiusMedia
     property color backgroundColor: Theme.surface   // colour of whatever is behind the image
     property color placeholderColor: Theme.surfaceAlt
+    // height / width of the loaded picture, 0 until it has loaded
+    readonly property real naturalRatio: img.status === Image.Ready && img.implicitWidth > 0
+                                         ? img.implicitHeight / img.implicitWidth : 0
 
     Rectangle {
         anchors.fill: parent

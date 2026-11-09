@@ -1,0 +1,74 @@
+{
+ "type_": "Posts",
+ "comments": [],
+ "posts": [
+  {
+   "post": {
+    "id": 101,
+    "name": "Linux 7.0 is out",
+    "creator_id": 5146,
+    "community_id": 9482,
+    "removed": false,
+    "locked": false,
+    "published": "2025-11-09T08:00:00.123456Z",
+    "deleted": false,
+    "nsfw": false,
+    "ap_id": "https://lemmy.world/post/101",
+    "local": true,
+    "language_id": 0,
+    "featured_community": true,
+    "featured_local": false,
+    "url": "https://kernel.org/news",
+    "thumbnail_url": "https://lemmy.world/pictrs/image/thumb1.webp",
+    "embed_title": "Kernel news"
+   },
+   "creator": {
+    "id": 5146,
+    "name": "bob",
+    "banned": false,
+    "published": "2023-06-01T10:00:00.000000Z",
+    "actor_id": "https://lemmy.ml/u/bob",
+    "local": false,
+    "deleted": false,
+    "bot_account": false,
+    "instance_id": 1
+   },
+   "community": {
+    "id": 9482,
+    "name": "linux",
+    "title": "Linux",
+    "removed": false,
+    "published": "2023-06-01T10:00:00.000000Z",
+    "deleted": false,
+    "nsfw": false,
+    "actor_id": "https://lemmy.ml/c/linux",
+    "local": false,
+    "hidden": false,
+    "posting_restricted_to_mods": false,
+    "instance_id": 1,
+    "visibility": "Public"
+   },
+   "creator_banned_from_community": false,
+   "banned_from_community": false,
+   "creator_is_moderator": false,
+   "creator_is_admin": false,
+   "counts": {
+    "post_id": 101,
+    "comments": 42,
+    "score": 500,
+    "upvotes": 505,
+    "downvotes": 5,
+    "published": "2025-11-09T08:00:00.123456Z",
+    "newest_comment_time": "2025-11-09T08:00:00.123456Z"
+   },
+   "subscribed": "NotSubscribed",
+   "saved": false,
+   "read": false,
+   "hidden": false,
+   "creator_blocked": false,
+   "unread_comments": 0
+  }
+ ],
+ "communities": [],
+ "users": []
+}

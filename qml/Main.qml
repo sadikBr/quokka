@@ -119,18 +119,27 @@ ApplicationWindow {
         AboutPage {}
     }
 
-    // `quokka <reddit link>` opens that link on start.
+    // `quokka <link>` opens that Lemmy (or Reddit) link on start.
     Component.onCompleted: {
         Nav.window = window
         Nav.sidebarDocked = wide
         restoreGeometry()
         const args = Qt.application.arguments
         for (let i = 1; i < args.length; ++i) {
-            if (/^(https?:\/\/|\/?(r|u|user)\/)/.test(args[i])) {
+            if (/^(https?:\/\/|\/?(r|c|u|user|post)\/)/.test(args[i])) {
                 const link = args[i]
                 Qt.callLater(() => Nav.openLink(link))
                 break
             }
+        }
+    }
+
+    // Switching servers: start over from a fresh main feed.
+    Connections {
+        target: Api
+        function onChanged() {
+            stack.clear()
+            stack.push(rootFeed)
         }
     }
 

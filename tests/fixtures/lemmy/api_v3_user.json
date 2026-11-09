@@ -1,0 +1,174 @@
+{
+ "person_view": {
+  "person": {
+   "id": 8281,
+   "name": "alice",
+   "banned": false,
+   "published": "2023-06-01T10:00:00.000000Z",
+   "actor_id": "https://lemmy.world/u/alice",
+   "local": true,
+   "deleted": false,
+   "bot_account": false,
+   "instance_id": 1,
+   "avatar": "https://lemmy.world/pictrs/image/alice.png",
+   "bio": "I like **quokkas**."
+  },
+  "counts": {
+   "person_id": 1,
+   "post_count": 12,
+   "comment_count": 340
+  },
+  "is_admin": false
+ },
+ "comments": [
+  {
+   "comment": {
+    "id": 1,
+    "creator_id": 8281,
+    "post_id": 103,
+    "content": "Top comment",
+    "removed": false,
+    "published": "2025-11-09T09:00:00.000000Z",
+    "deleted": false,
+    "ap_id": "https://lemmy.world/comment/1",
+    "local": true,
+    "path": "0.1",
+    "distinguished": false,
+    "language_id": 0
+   },
+   "creator": {
+    "id": 8281,
+    "name": "alice",
+    "banned": false,
+    "published": "2023-06-01T10:00:00.000000Z",
+    "actor_id": "https://lemmy.world/u/alice",
+    "local": true,
+    "deleted": false,
+    "bot_account": false,
+    "instance_id": 1
+   },
+   "post": {
+    "id": 103,
+    "name": "Ask: favourite distro?",
+    "creator_id": 58,
+    "community_id": 2883,
+    "removed": false,
+    "locked": false,
+    "published": "2025-11-09T08:00:00.123456Z",
+    "deleted": false,
+    "nsfw": false,
+    "ap_id": "https://lemmy.world/post/103",
+    "local": true,
+    "language_id": 0,
+    "featured_community": false,
+    "featured_local": false,
+    "body": "What do you use and **why**?\n\n::: spoiler my answer\nArch, btw\n:::"
+   },
+   "community": {
+    "id": 2883,
+    "name": "technology",
+    "title": "Technology",
+    "removed": false,
+    "published": "2023-06-01T10:00:00.000000Z",
+    "deleted": false,
+    "nsfw": false,
+    "actor_id": "https://lemmy.world/c/technology",
+    "local": true,
+    "hidden": false,
+    "posting_restricted_to_mods": false,
+    "instance_id": 1,
+    "visibility": "Public"
+   },
+   "counts": {
+    "comment_id": 1,
+    "score": 5,
+    "upvotes": 5,
+    "downvotes": 0,
+    "published": "2025-11-09T09:00:00.000000Z",
+    "child_count": 0
+   },
+   "creator_banned_from_community": false,
+   "banned_from_community": false,
+   "creator_is_moderator": false,
+   "creator_is_admin": false,
+   "subscribed": "NotSubscribed",
+   "saved": false,
+   "creator_blocked": false
+  }
+ ],
+ "posts": [
+  {
+   "post": {
+    "id": 102,
+    "name": "My new desk setup",
+    "creator_id": 8281,
+    "community_id": 2883,
+    "removed": false,
+    "locked": false,
+    "published": "2025-11-09T08:00:00.123456Z",
+    "deleted": false,
+    "nsfw": false,
+    "ap_id": "https://lemmy.world/post/102",
+    "local": true,
+    "language_id": 0,
+    "featured_community": false,
+    "featured_local": false,
+    "url": "https://lemmy.world/pictrs/image/desk.jpeg",
+    "url_content_type": "image/jpeg",
+    "alt_text": "A tidy desk"
+   },
+   "creator": {
+    "id": 8281,
+    "name": "alice",
+    "banned": false,
+    "published": "2023-06-01T10:00:00.000000Z",
+    "actor_id": "https://lemmy.world/u/alice",
+    "local": true,
+    "deleted": false,
+    "bot_account": false,
+    "instance_id": 1
+   },
+   "community": {
+    "id": 2883,
+    "name": "technology",
+    "title": "Technology",
+    "removed": false,
+    "published": "2023-06-01T10:00:00.000000Z",
+    "deleted": false,
+    "nsfw": false,
+    "actor_id": "https://lemmy.world/c/technology",
+    "local": true,
+    "hidden": false,
+    "posting_restricted_to_mods": false,
+    "instance_id": 1,
+    "visibility": "Public"
+   },
+   "creator_banned_from_community": false,
+   "banned_from_community": false,
+   "creator_is_moderator": false,
+   "creator_is_admin": false,
+   "counts": {
+    "post_id": 102,
+    "comments": 10,
+    "score": 250,
+    "upvotes": 255,
+    "downvotes": 5,
+    "published": "2025-11-09T08:00:00.123456Z",
+    "newest_comment_time": "2025-11-09T08:00:00.123456Z"
+   },
+   "subscribed": "NotSubscribed",
+   "saved": false,
+   "read": false,
+   "hidden": false,
+   "creator_blocked": false,
+   "unread_comments": 0,
+   "image_details": {
+    "link": "https://lemmy.world/pictrs/image/desk.jpeg",
+    "width": 1600,
+    "height": 1200,
+    "content_type": "image/jpeg"
+   }
+  }
+ ],
+ "moderates": []
+}

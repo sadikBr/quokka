@@ -1,0 +1,76 @@
+{
+ "communities": [
+  {
+   "community": {
+    "id": 2883,
+    "name": "technology",
+    "title": "Technology",
+    "removed": false,
+    "published": "2023-06-01T10:00:00.000000Z",
+    "deleted": false,
+    "nsfw": false,
+    "actor_id": "https://lemmy.world/c/technology",
+    "local": true,
+    "hidden": false,
+    "posting_restricted_to_mods": false,
+    "instance_id": 1,
+    "visibility": "Public"
+   },
+   "subscribed": "NotSubscribed",
+   "blocked": false,
+   "counts": {
+    "subscribers": 75000,
+    "users_active_day": 1500
+   },
+   "banned_from_community": false
+  },
+  {
+   "community": {
+    "id": 9482,
+    "name": "linux",
+    "title": "Linux",
+    "removed": false,
+    "published": "2023-06-01T10:00:00.000000Z",
+    "deleted": false,
+    "nsfw": false,
+    "actor_id": "https://lemmy.ml/c/linux",
+    "local": false,
+    "hidden": false,
+    "posting_restricted_to_mods": false,
+    "instance_id": 1,
+    "visibility": "Public"
+   },
+   "subscribed": "NotSubscribed",
+   "blocked": false,
+   "counts": {
+    "subscribers": 50000,
+    "users_active_day": 900
+   },
+   "banned_from_community": false
+  },
+  {
+   "community": {
+    "id": 3119,
+    "name": "spicy",
+    "title": "Spicy",
+    "removed": false,
+    "published": "2023-06-01T10:00:00.000000Z",
+    "deleted": false,
+    "nsfw": true,
+    "actor_id": "https://lemmynsfw.com/c/spicy",
+    "local": false,
+    "hidden": false,
+    "posting_restricted_to_mods": false,
+    "instance_id": 1,
+    "visibility": "Public"
+   },
+   "subscribed": "NotSubscribed",
+   "blocked": false,
+   "counts": {
+    "subscribers": 10,
+    "users_active_day": 1
+   },
+   "banned_from_community": false
+  }
+ ]
+}

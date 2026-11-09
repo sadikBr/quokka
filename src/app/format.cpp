@@ -78,12 +78,6 @@ QColor Format::nameColor(const QString &name)
     return palette[qHash(name.toLower()) % n];
 }
 
-QString Format::webUrl(const QString &permalink)
-{
-    if (permalink.startsWith(QLatin1String("http")))
-        return permalink;
-    return QStringLiteral("https://www.reddit.com") + permalink;
-}
 
 QString Format::qtVersion()
 {

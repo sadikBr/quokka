@@ -50,13 +50,13 @@ jobs:
         env:
           QT_QPA_PLATFORM: offscreen
           QT_QUICK_BACKEND: software
-          QUOKKA_FIXTURES: ${{ github.workspace }}/tests/fixtures
+          QUOKKA_FIXTURES: ${{ github.workspace }}/tests/fixtures/lemmy
           QUOKKA_WINDOW_SIZE: 412x900
           QUOKKA_SCREENSHOT: ${{ github.workspace }}/screenshot-linux.png:4000
         run: |
           ./build/quokka
           test -s screenshot-linux.png
-          QUOKKA_SCREENSHOT="$GITHUB_WORKSPACE/screenshot-linux-post.png:4000" ./build/quokka /r/test/comments/abc/
+          QUOKKA_SCREENSHOT="$GITHUB_WORKSPACE/screenshot-linux-post.png:4000" ./build/quokka /post/103
           test -s screenshot-linux-post.png
 
       - uses: actions/upload-artifact@v4

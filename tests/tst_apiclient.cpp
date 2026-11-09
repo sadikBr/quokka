@@ -1,4 +1,4 @@
-#include "redditclient.h"
+#include "apiclient.h"
 
 #include <QSignalSpy>
 #include <QTest>
@@ -44,16 +44,16 @@ public:
     }
 };
 
-class TestRedditClient : public QObject
+class TestApiClient : public QObject
 {
     Q_OBJECT
 
 private slots:
-    void addsRawJsonAndSucceeds()
+    void sendsQueryAndSucceeds()
     {
         auto *fake = new FakeTransport;
         fake->script = {TransportResponse{200, R"({"ok":true})"}};
-        RedditClient client{std::unique_ptr<Transport>(fake)};
+        ApiClient client{std::unique_ptr<Transport>(fake)};
 
         QUrlQuery q;
         q.addQueryItem("limit", "5");
@@ -64,7 +64,6 @@ private slots:
 
         QCOMPARE(fake->requested.size(), 1);
         const QUrlQuery sent(fake->requested.first());
-        QCOMPARE(sent.queryItemValue("raw_json"), QStringLiteral("1"));
         QCOMPARE(sent.queryItemValue("limit"), QStringLiteral("5"));
     }
 
@@ -72,7 +71,7 @@ private slots:
     {
         auto *fake = new FakeTransport;
         fake->script = {TransportResponse{503, {}}, TransportResponse{200, "{}"}};
-        RedditClient client{std::unique_ptr<Transport>(fake)};
+        ApiClient client{std::unique_ptr<Transport>(fake)};
         client.setRetryDelayMs(10);
 
         ApiReply *reply = client.get("/r/pics/hot");
@@ -85,7 +84,7 @@ private slots:
     {
         auto *fake = new FakeTransport;
         fake->script = {TransportResponse{500, {}}, TransportResponse{500, {}}};
-        RedditClient client{std::unique_ptr<Transport>(fake)};
+        ApiClient client{std::unique_ptr<Transport>(fake)};
         client.setRetryDelayMs(5);
         client.setMaxAttempts(2);
 
@@ -100,7 +99,7 @@ private slots:
     {
         auto *fake = new FakeTransport;
         fake->script = {TransportResponse{404, {}}};
-        RedditClient client{std::unique_ptr<Transport>(fake)};
+        ApiClient client{std::unique_ptr<Transport>(fake)};
 
         ApiReply *reply = client.get("/r/doesnotexist/hot");
         QSignalSpy failed(reply, &ApiReply::failed);
@@ -113,7 +112,7 @@ private slots:
     void limitsConcurrency()
     {
         auto *fake = new FakeTransport;
-        RedditClient client{std::unique_ptr<Transport>(fake)};
+        ApiClient client{std::unique_ptr<Transport>(fake)};
         client.setMaxConcurrent(2);
 
         QList<ApiReply *> replies;
@@ -129,7 +128,7 @@ private slots:
     void abortCancelsAndFreesSlot()
     {
         auto *fake = new FakeTransport;
-        RedditClient client{std::unique_ptr<Transport>(fake)};
+        ApiClient client{std::unique_ptr<Transport>(fake)};
         client.setMaxConcurrent(1);
 
         ApiReply *first = client.get("/r/a/hot");
@@ -152,7 +151,7 @@ private slots:
         exhausted.rateLimitRemaining = 0;
         exhausted.rateLimitResetSecs = 1;
         fake->script = {exhausted};
-        RedditClient client{std::unique_ptr<Transport>(fake)};
+        ApiClient client{std::unique_ptr<Transport>(fake)};
 
         ApiReply *a = client.get("/r/a/hot");
         QSignalSpy aOk(a, &ApiReply::finished);
@@ -167,5 +166,5 @@ private slots:
     }
 };
 
-QTEST_GUILESS_MAIN(TestRedditClient)
-#include "tst_redditclient.moc"
+QTEST_GUILESS_MAIN(TestApiClient)
+#include "tst_apiclient.moc"

@@ -39,7 +39,7 @@ Rectangle {
             RowLayout {
                 spacing: 6
                 Text {
-                    text: "r/" + row.name
+                    text: Api.community(row.name)
                     color: Theme.text
                     font.pixelSize: Theme.fontBody
                     font.weight: Font.Bold

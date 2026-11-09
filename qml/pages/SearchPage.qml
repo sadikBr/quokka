@@ -6,7 +6,7 @@ import QtQuick.Layouts
 Page {
     id: page
     property string initialQuery
-    property string subreddit          // scope; empty = all of Reddit
+    property string subreddit          // scope; empty = everywhere
     property string query: initialQuery
     property int tab: 0                // 0 = posts, 1 = communities
     readonly property bool active: StackView.status === StackView.Active
@@ -77,8 +77,8 @@ Page {
                             id: field
                             Layout.fillWidth: true
                             text: page.initialQuery
-                            placeholderText: page.subreddit !== "" ? qsTr("Search r/%1").arg(page.subreddit)
-                                                                  : qsTr("Search Reddit")
+                            placeholderText: page.subreddit !== "" ? qsTr("Search %1").arg(Api.community(page.subreddit))
+                                                                  : qsTr("Search %1").arg(Api.serviceName)
                             placeholderTextColor: Theme.textMuted
                             color: Theme.text
                             font.pixelSize: Theme.fontBody
@@ -102,7 +102,7 @@ Page {
 
             Chip {
                 visible: page.subreddit !== ""
-                text: qsTr("in r/%1 (tap to search everywhere)").arg(page.subreddit)
+                text: qsTr("in %1 (tap to search everywhere)").arg(Api.community(page.subreddit))
                 iconName: "close"
                 clickable: true
                 fontSize: Theme.fontSmall

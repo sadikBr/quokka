@@ -111,13 +111,26 @@ void Library::loadCaches()
 QString Library::normalizeName(const QString &name)
 {
     QString n = name.trimmed();
-    static const QRegularExpression prefix(QStringLiteral("^(https?://(www\\.)?reddit\\.com)?/?r/"),
-                                           QRegularExpression::CaseInsensitiveOption);
+    // Accepts "r/pics", "c/linux", "!linux@lemmy.ml", "https://lemmy.ml/c/linux", ...
+    static const QRegularExpression urlForm(
+        QStringLiteral("^https?://([^/]+)/(r|c)/([A-Za-z0-9_]+)/?$"), QRegularExpression::CaseInsensitiveOption);
+    const auto m = urlForm.match(n);
+    if (m.hasMatch()) {
+        const QString host = m.captured(1).toLower();
+        n = m.captured(3);
+        if (!host.endsWith(QLatin1String("reddit.com")))
+            n += QLatin1Char('@') + host;
+    }
+    static const QRegularExpression prefix(QStringLiteral("^(/?(r|c)/|!)"), QRegularExpression::CaseInsensitiveOption);
     n.remove(prefix);
     while (n.endsWith(QLatin1Char('/')))
         n.chop(1);
-    static const QRegularExpression valid(QStringLiteral("^[A-Za-z0-9_]{2,21}$"));
-    return valid.match(n).hasMatch() ? n : QString();
+    static const QRegularExpression valid(
+        QStringLiteral("^[A-Za-z0-9_]{2,50}(@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)+)?$"));
+    if (!valid.match(n).hasMatch())
+        return {};
+    const int at = n.indexOf(QLatin1Char('@'));
+    return at < 0 ? n : n.left(at) + n.mid(at).toLower();
 }
 
 QString Library::homeFeed() const

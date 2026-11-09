@@ -1,6 +1,6 @@
 import QtQuick
 
-// Renders cleaned Reddit HTML (body_html / selftext_html). Links route through Nav;
+// Renders post/comment HTML (cleaned Reddit HTML or rendered Lemmy Markdown). Links route through Nav;
 // spoilers stay hidden until tapped.
 Text {
     id: root

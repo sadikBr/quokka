@@ -39,11 +39,13 @@ public:
     virtual void cancel(QObject *handle) = 0;
 };
 
-// Talks to https://www.reddit.com/<path>.json
-class PublicJsonTransport : public Transport
+// Plain HTTPS GET against a base URL, e.g. https://lemmy.world + "/api/v3/post/list", or
+// https://www.reddit.com + "/r/pics/hot" + ".json".
+class HttpTransport : public Transport
 {
 public:
-    explicit PublicJsonTransport(QNetworkAccessManager *nam, QString userAgent);
+    HttpTransport(QNetworkAccessManager *nam, QString userAgent, QUrl baseUrl,
+                  QString pathSuffix = {});
 
     QUrl buildUrl(const QString &path, const QString &query) const override;
     QObject *fetch(const QUrl &url, Callback done) override;
@@ -52,11 +54,13 @@ public:
 private:
     QPointer<QNetworkAccessManager> m_nam;
     QString m_userAgent;
+    QUrl m_base;
+    QString m_suffix;
 };
 
 // Serves recorded responses from a directory, for tests and offline UI development.
-// "/r/pics/hot?after=x" maps to "r_pics_hot.json"; when that file does not exist,
-// "listing.json" is used for any listing request.
+// "/api/v3/post/list?x=y" maps to "api_v3_post_list.json"; when that file does not exist the
+// last path segment is dropped and tried again ("api_v3_post.json", ...), then "listing.json".
 class FixtureTransport : public Transport
 {
 public:

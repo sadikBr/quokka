@@ -28,7 +28,7 @@ Rectangle {
             Avatar { name: card.subreddit; size: 22; backgroundColor: card.color }
             Text {
                 Layout.fillWidth: true
-                text: "r/" + card.subreddit + "  ·  " + Format.relativeTime(card.createdUtc)
+                text: Api.community(card.subreddit) + "  ·  " + Format.relativeTime(card.createdUtc)
                 color: Theme.textMuted
                 font.pixelSize: Theme.fontSmall
                 font.weight: Font.DemiBold
@@ -67,5 +67,5 @@ Rectangle {
     }
 
     HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }
-    TapHandler { onTapped: Nav.openLink(Format.webUrl(card.permalink)) }
+    TapHandler { onTapped: Nav.openLink(Api.webUrl(card.permalink)) }
 }

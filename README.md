@@ -2,8 +2,8 @@
 
 <h1 align="center">Quokka</h1>
 
-<p align="center">A playful, read-only Reddit client for <b>Linux</b> and <b>Android</b>, built with <b>Qt 6 / QML</b>.<br>
-It uses Reddit's public JSON endpoints (add <code>.json</code> to a Reddit URL), so no account is needed.</p>
+<p align="center">A playful, read-only <b>Lemmy</b> client for <b>Linux</b> and <b>Android</b>, built with <b>Qt 6 / QML</b>.<br>
+It reads the public API of any Lemmy server (lemmy.world by default), so no account is needed.</p>
 
 <p align="center">
   <img src="docs/screenshots/feed-light.png" width="200" alt="Feed, light theme">
@@ -13,22 +13,29 @@ It uses Reddit's public JSON endpoints (add <code>.json</code> to a Reddit URL),
 </p>
 <p align="center"><img src="docs/screenshots/desktop.png" width="820" alt="Desktop layout with sidebar"></p>
 
-> Status: pre-1.0 (all planned milestones done, now in testing). Nothing is released until 1.0.0.
-> Quokka is not affiliated with or endorsed by Reddit, Inc.
+> Status: pre-1.0, in testing. Nothing is released until 1.0.0.
+>
+> **Why Lemmy?** Quokka started as a Reddit client built on Reddit's public `.json` pages. In 2026 Reddit
+> began refusing anonymous requests (HTTP 403) and new API access needs Reddit's approval, so Quokka now
+> reads [Lemmy](https://join-lemmy.org), an open, community-run forum network with a free public API. The
+> Reddit code is kept behind the same interface (`QUOKKA_BACKEND=reddit`) in case API access becomes
+> available. Quokka is not affiliated with Lemmy, any Lemmy server, or Reddit, Inc.
 
 ## Features
 
-- **Feeds**: Home (built from the communities you join), Popular, All, any subreddit or `a+b+c` multireddit;
-  hot / new / top / rising / controversial with time ranges; infinite scroll and pull-to-refresh
-- **Posts and comments**: full post with media and text, threaded comments with coloured rails,
-  collapse, "load more", "continue this thread", OP / MOD badges, tap-to-reveal spoilers
+- **Feeds**: Home (merged from up to 25 communities you join), All, Local (your server), any community,
+  including ones on other servers (`linux@lemmy.ml`); hot / new / top / active / controversial with time
+  ranges; infinite scroll and pull-to-refresh
+- **Any Lemmy server**: lemmy.world by default; switch in the drawer (lemmy.ml, programming.dev, ...)
+- **Posts and comments**: full post with media and Markdown text, threaded comments with coloured rails,
+  collapse, "load more replies", OP / MOD badges, tap-to-reveal spoilers
 - **Media viewer**: images with pinch / wheel / double-tap zoom, galleries with captions, videos with sound
   (HLS), GIFs, full screen
 - **Discover**: search posts (everywhere or inside a community) and communities; community headers with
   icon, members and description; user profiles with karma, posts and comments
 - **Your library, on your device**: join communities, save posts, reading history, import / export your list
-- **Comfort**: light / dark / system theme, compact cards, dim read posts, NSFW hidden unless enabled,
-  in-app handling of Reddit links
+- **Comfort**: light / dark / system theme, compact cards, dim read posts, NSFW hidden unless enabled
+  (excluded by the server and filtered again in the app), in-app handling of Lemmy links
 - **Desktop**: docked sidebar on wide windows, keyboard shortcuts (press <kbd>?</kbd>), tooltips, mouse back
   button, remembered window size
 
@@ -87,7 +94,7 @@ cmake --preset desktop-debug && cmake --build --preset desktop-debug
 ctest --preset desktop-debug
 ```
 
-Open any Reddit link straight away: `./build/desktop-release/quokka https://www.reddit.com/r/linux`
+Open a link straight away: `./build/desktop-release/quokka https://lemmy.ml/c/linux`
 
 Optional install (adds a menu entry and icon):
 
@@ -119,7 +126,8 @@ Every push to `main` also builds an AppImage and an APK in GitHub Actions (see t
 
 | Variable | Effect |
 |---|---|
-| `QUOKKA_FIXTURES=<dir>` | Serve recorded JSON from `<dir>` instead of calling Reddit (try `tests/fixtures`) |
+| `QUOKKA_FIXTURES=<dir>` | Serve recorded JSON from `<dir>` instead of the network (try `tests/fixtures/lemmy`) |
+| `QUOKKA_BACKEND=reddit` | Use Reddit's public JSON instead of Lemmy (Reddit currently refuses anonymous access) |
 | `QUOKKA_SCREENSHOT=<file.png>[:<ms>]` | Save a screenshot of the window after `<ms>` and quit |
 | `QUOKKA_WINDOW_SIZE=<w>x<h>` | Window size for screenshots, e.g. `412x900` |
 
@@ -133,7 +141,7 @@ the repository secrets `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD` an
 ## Project layout
 
 ```
-src/core/     networking, rate limiting, JSON parsing (no UI, unit-tested)
+src/core/     networking, rate limiting, Lemmy + Reddit backends, Markdown rendering (no UI, unit-tested)
 src/app/      main(), QML-facing models, local library (SQLite), settings
 qml/          UI: Main.qml, Nav.qml (routing), pages/, components/, theme/Theme.qml
 resources/    logo, icons, desktop entry

@@ -72,7 +72,7 @@ Item {
                 size: 22
             }
             Text {
-                text: row.author
+                text: Api.shortName(row.author)
                 color: row.isSubmitter ? Theme.accent
                      : row.distinguished === "moderator" ? Theme.mint
                      : row.distinguished === "admin" ? Theme.nsfw : Theme.text

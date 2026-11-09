@@ -31,6 +31,4 @@ public:
     // The Qt version the app runs with, e.g. "6.8.3".
     Q_INVOKABLE static QString qtVersion();
 
-    // "/r/x/comments/..." -> "https://www.reddit.com/r/x/comments/..."
-    Q_INVOKABLE static QString webUrl(const QString &permalink);
 };

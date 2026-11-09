@@ -10,13 +10,13 @@ function(quokka_add_test name)
 endfunction()
 
 quokka_add_test(tst_parsers tst_parsers.cpp)
-quokka_add_test(tst_redditclient tst_redditclient.cpp)
+quokka_add_test(tst_apiclient tst_apiclient.cpp)
 
 quokka_add_test(tst_comments tst_comments.cpp
     ${PROJECT_SOURCE_DIR}/src/app/commenttreemodel.cpp
     ${PROJECT_SOURCE_DIR}/src/app/postmap.cpp
     ${PROJECT_SOURCE_DIR}/src/app/postlistmodel.cpp
-    ${PROJECT_SOURCE_DIR}/tests/test_services.cpp)
+    ${PROJECT_SOURCE_DIR}/src/app/services.cpp)
 target_include_directories(tst_comments PRIVATE ${PROJECT_SOURCE_DIR}/src/app)
 target_link_libraries(tst_comments PRIVATE Qt6::Gui Qt6::Qml)
 
@@ -25,9 +25,17 @@ quokka_add_test(tst_library tst_library.cpp
     ${PROJECT_SOURCE_DIR}/src/app/networkfactory.cpp
     ${PROJECT_SOURCE_DIR}/src/app/postmap.cpp
     ${PROJECT_SOURCE_DIR}/src/app/postlistmodel.cpp
-    ${PROJECT_SOURCE_DIR}/tests/test_services.cpp)
+    ${PROJECT_SOURCE_DIR}/src/app/services.cpp)
 target_include_directories(tst_library PRIVATE ${PROJECT_SOURCE_DIR}/src/app)
 target_link_libraries(tst_library PRIVATE Qt6::Gui Qt6::Qml Qt6::Sql)
+
+quokka_add_test(tst_lemmy tst_lemmy.cpp
+    ${PROJECT_SOURCE_DIR}/src/app/commenttreemodel.cpp
+    ${PROJECT_SOURCE_DIR}/src/app/postmap.cpp
+    ${PROJECT_SOURCE_DIR}/src/app/postlistmodel.cpp
+    ${PROJECT_SOURCE_DIR}/src/app/services.cpp)
+target_include_directories(tst_lemmy PRIVATE ${PROJECT_SOURCE_DIR}/src/app)
+target_link_libraries(tst_lemmy PRIVATE Qt6::Gui Qt6::Qml)
 
 quokka_add_test(tst_format tst_format.cpp ${PROJECT_SOURCE_DIR}/src/app/format.cpp)
 target_include_directories(tst_format PRIVATE ${PROJECT_SOURCE_DIR}/src/app)

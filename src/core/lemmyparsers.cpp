@@ -1,0 +1,278 @@
+#include "lemmyparsers.h"
+
+#include "markdown.h"
+
+#include <QDateTime>
+#include <QHash>
+#include <QRegularExpression>
+#include <QSet>
+#include <QUrl>
+
+#include <functional>
+
+namespace quokka::lemmy {
+
+namespace {
+
+QString str(const QJsonObject &o, const char *key)
+{
+    return o.value(QLatin1String(key)).toString();
+}
+
+qint64 num(const QJsonObject &o, const char *key)
+{
+    return qint64(o.value(QLatin1String(key)).toDouble());
+}
+
+QString idString(const QJsonObject &o)
+{
+    return QString::number(num(o, "id"));
+}
+
+bool hasExtension(const QString &url, std::initializer_list<const char *> exts)
+{
+    const QString path = QUrl(url).path().toLower();
+    for (const char *e : exts)
+        if (path.endsWith(QLatin1String(e)))
+            return true;
+    return false;
+}
+
+// pict-rs (Lemmy's image server) resizes on request; ask for a card-sized thumbnail.
+QString sizedImage(const QString &url, int width)
+{
+    if (!url.contains(QLatin1String("/pictrs/image/")) || url.contains(QLatin1String("thumbnail=")))
+        return url;
+    return url + (url.contains(QLatin1Char('?')) ? QLatin1Char('&') : QLatin1Char('?'))
+        + QStringLiteral("thumbnail=%1&format=webp").arg(width);
+}
+
+} // namespace
+
+qint64 parseTime(const QString &iso)
+{
+    if (iso.isEmpty())
+        return 0;
+    // Lemmy sends microseconds and, before 0.19, no time zone (always UTC).
+    static const QRegularExpression re(
+        QStringLiteral("^(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2})(\\.\\d+)?(Z|[+-]\\d{2}:?\\d{2})?$"));
+    const auto m = re.match(iso.trimmed());
+    if (!m.hasMatch())
+        return 0;
+    QString zone = m.captured(3);
+    if (zone.isEmpty() || zone == QLatin1String("Z"))
+        zone = QStringLiteral("+00:00");
+    else if (!zone.contains(QLatin1Char(':')))
+        zone.insert(3, QLatin1Char(':'));
+    const QDateTime dt = QDateTime::fromString(m.captured(1) + zone, Qt::ISODate);
+    return dt.isValid() ? dt.toSecsSinceEpoch() : 0;
+}
+
+QString hostOf(const QString &url)
+{
+    return QUrl(url).host().toLower();
+}
+
+QString qualifiedName(const QJsonObject &actor)
+{
+    const QString name = str(actor, "name");
+    const QString host = hostOf(str(actor, "actor_id"));
+    return host.isEmpty() ? name : name + QLatin1Char('@') + host;
+}
+
+Post postFromView(const QJsonObject &pv, const QString &webBase)
+{
+    const QJsonObject p = pv.value(QLatin1String("post")).toObject();
+    const QJsonObject creator = pv.value(QLatin1String("creator")).toObject();
+    const QJsonObject community = pv.value(QLatin1String("community")).toObject();
+    const QJsonObject counts = pv.value(QLatin1String("counts")).toObject();
+    const QJsonObject image = pv.value(QLatin1String("image_details")).toObject();
+
+    Post post;
+    post.id = idString(p);
+    post.fullname = QStringLiteral("lp_") + post.id;
+    post.title = str(p, "name");
+    post.author = qualifiedName(creator);
+    post.subreddit = qualifiedName(community);
+    post.permalink = webBase + QStringLiteral("/post/") + post.id;
+    post.url = str(p, "url");
+    post.domain = post.url.isEmpty() ? hostOf(webBase) : hostOf(post.url);
+    post.selftext = str(p, "body");
+    post.selftextHtml = markdown::toHtml(post.selftext);
+    post.createdUtc = parseTime(str(p, "published"));
+    post.score = int(num(counts, "score"));
+    post.numComments = int(num(counts, "comments"));
+    const double up = counts.value(QLatin1String("upvotes")).toDouble();
+    const double down = counts.value(QLatin1String("downvotes")).toDouble();
+    post.upvoteRatio = up + down > 0 ? up / (up + down) : 0;
+    post.nsfw = p.value(QLatin1String("nsfw")).toBool() || community.value(QLatin1String("nsfw")).toBool();
+    post.stickied = p.value(QLatin1String("featured_community")).toBool()
+        || p.value(QLatin1String("featured_local")).toBool();
+    post.locked = p.value(QLatin1String("locked")).toBool();
+
+    const QString contentType = str(p, "url_content_type").toLower();
+    const QString thumb = str(p, "thumbnail_url");
+    const QString embedVideo = str(p, "embed_video_url");
+    const bool directVideo = contentType.startsWith(QLatin1String("video/"))
+        || hasExtension(post.url, {".mp4", ".webm", ".mov", ".m4v"});
+    const bool embedIsFile = hasExtension(embedVideo, {".mp4", ".webm", ".mov", ".m4v", ".m3u8"});
+    const bool isImage = contentType.startsWith(QLatin1String("image/"))
+        || hasExtension(post.url, {".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif"});
+    const bool gif = contentType == QLatin1String("image/gif") || hasExtension(post.url, {".gif"});
+    if (!image.isEmpty()) {
+        post.previewWidth = int(num(image, "width"));
+        post.previewHeight = int(num(image, "height"));
+    }
+
+    if (post.url.isEmpty()) {
+        post.kind = Post::Kind::Self;
+        post.previewUrl = sizedImage(thumb, 640);
+    } else if (directVideo || embedIsFile) {
+        post.kind = Post::Kind::Video;
+        post.videoUrl = directVideo ? post.url : embedVideo;
+        post.previewUrl = sizedImage(thumb, 640);
+        post.media.append({post.videoUrl, post.previewWidth, post.previewHeight, {}, true});
+    } else if (isImage) {
+        post.kind = Post::Kind::Image;
+        if (gif || post.url.contains(QLatin1String("/pictrs/image/")))
+            post.previewUrl = gif ? post.url : sizedImage(post.url, 640);
+        else
+            post.previewUrl = thumb.isEmpty() ? post.url : sizedImage(thumb, 640);
+        post.media.append({post.url, post.previewWidth, post.previewHeight, str(p, "alt_text"), gif});
+    } else {
+        post.kind = Post::Kind::Link;
+        post.previewUrl = sizedImage(thumb, 320);
+    }
+    return post;
+}
+
+Subreddit communityFromView(const QJsonObject &cv)
+{
+    const QJsonObject c = cv.value(QLatin1String("community")).toObject();
+    const QJsonObject counts = cv.value(QLatin1String("counts")).toObject();
+    Subreddit s;
+    s.name = qualifiedName(c);
+    s.title = str(c, "title");
+    const QString description = str(c, "description");
+    s.publicDescription = markdown::toPlainSummary(description);
+    s.descriptionHtml = markdown::toHtml(description);
+    s.subscribers = num(counts, "subscribers");
+    s.activeUsers = counts.contains(QLatin1String("users_active_day")) ? num(counts, "users_active_day") : -1;
+    s.iconUrl = sizedImage(str(c, "icon"), 128);
+    s.bannerUrl = str(c, "banner");
+    s.nsfw = c.value(QLatin1String("nsfw")).toBool();
+    s.createdUtc = parseTime(str(c, "published"));
+    return s;
+}
+
+UserAccount userFromView(const QJsonObject &pv)
+{
+    const QJsonObject p = pv.value(QLatin1String("person")).toObject();
+    const QJsonObject counts = pv.value(QLatin1String("counts")).toObject();
+    UserAccount u;
+    u.name = qualifiedName(p);
+    u.iconUrl = sizedImage(str(p, "avatar"), 160);
+    u.bannerUrl = str(p, "banner");
+    u.description = markdown::toPlainSummary(str(p, "bio"), 300);
+    u.createdUtc = parseTime(str(p, "published"));
+    u.suspended = p.value(QLatin1String("banned")).toBool();
+    u.hasKarma = false;
+    u.postCount = num(counts, "post_count");
+    u.commentCount = num(counts, "comment_count");
+    return u;
+}
+
+Comment commentFromView(const QJsonObject &cv, const QString &webBase)
+{
+    const QJsonObject c = cv.value(QLatin1String("comment")).toObject();
+    const QJsonObject creator = cv.value(QLatin1String("creator")).toObject();
+    const QJsonObject post = cv.value(QLatin1String("post")).toObject();
+    const QJsonObject community = cv.value(QLatin1String("community")).toObject();
+    const QJsonObject counts = cv.value(QLatin1String("counts")).toObject();
+
+    Comment out;
+    out.id = idString(c);
+    out.fullname = QStringLiteral("lc_") + out.id;
+    const QStringList path = str(c, "path").split(QLatin1Char('.'), Qt::SkipEmptyParts);
+    out.depth = qMax(0, int(path.size()) - 2);
+    out.parentId = path.size() >= 3 ? QStringLiteral("lc_") + path.at(path.size() - 2)
+                                    : QStringLiteral("lp_") + QString::number(num(post, "id"));
+    out.author = qualifiedName(creator);
+    if (c.value(QLatin1String("deleted")).toBool()) {
+        out.bodyHtml = QStringLiteral("<i>[deleted]</i>");
+        out.author = QStringLiteral("[deleted]");
+    } else if (c.value(QLatin1String("removed")).toBool()) {
+        out.bodyHtml = QStringLiteral("<i>[removed by a moderator]</i>");
+    } else {
+        out.bodyHtml = markdown::toHtml(str(c, "content"));
+    }
+    if (c.value(QLatin1String("distinguished")).toBool())
+        out.distinguished = cv.value(QLatin1String("creator_is_admin")).toBool() ? QStringLiteral("admin")
+                                                                               : QStringLiteral("moderator");
+    out.score = int(num(counts, "score"));
+    out.createdUtc = parseTime(str(c, "published"));
+    out.isSubmitter = num(c, "creator_id") != 0 && num(c, "creator_id") == num(post, "creator_id");
+    out.edited = !str(c, "updated").isEmpty();
+    out.subreddit = qualifiedName(community);
+    out.linkTitle = str(post, "name");
+    out.permalink = webBase + QStringLiteral("/post/%1/%2").arg(num(post, "id")).arg(out.id);
+    out.nsfw = community.value(QLatin1String("nsfw")).toBool() || post.value(QLatin1String("nsfw")).toBool();
+    out.moreCount = int(num(counts, "child_count")); // total replies; used by buildCommentTree
+    return out;
+}
+
+QList<Comment> buildCommentTree(const QJsonArray &views, const QString &webBase, const QString &postAuthor)
+{
+    QList<Comment> all;
+    QSet<QString> seen;
+    for (const auto &v : views) {
+        Comment c = commentFromView(v.toObject(), webBase);
+        if (seen.contains(c.fullname))
+            continue;
+        seen.insert(c.fullname);
+        if (!postAuthor.isEmpty() && c.author == postAuthor)
+            c.isSubmitter = true;
+        all.append(c);
+    }
+
+    QHash<QString, QList<int>> childrenOf;
+    QList<int> roots;
+    for (int i = 0; i < all.size(); ++i) {
+        if (seen.contains(all[i].parentId))
+            childrenOf[all[i].parentId].append(i);
+        else
+            roots.append(i);
+    }
+
+    QList<Comment> out;
+    // Lemmy's child_count counts all descendants. A missing reply is shown once, under the
+    // deepest loaded comment that knows about it: visit() returns how many descendants are
+    // accounted for (loaded, or already behind a "load more" row further down).
+    std::function<int(int)> visit = [&](int i) -> int {
+        Comment c = all[i];
+        const int totalReplies = c.moreCount;
+        c.moreCount = 0;
+        out.append(c);
+        int below = 0;
+        for (int child : childrenOf.value(c.fullname))
+            below += 1 + visit(child);
+        const int missing = totalReplies - below;
+        if (missing > 0) {
+            Comment more;
+            more.kind = Comment::Kind::More;
+            more.fullname = QStringLiteral("lm_") + c.id;
+            more.parentId = c.fullname;
+            more.depth = c.depth + 1;
+            more.moreCount = missing;
+            more.moreParentId = c.id;
+            out.append(more);
+            below += missing;
+        }
+        return below;
+    };
+    for (int r : roots)
+        visit(r);
+    return out;
+}
+
+} // namespace quokka::lemmy

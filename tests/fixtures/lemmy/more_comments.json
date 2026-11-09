@@ -1,0 +1,152 @@
+{
+ "comments": [
+  {
+   "comment": {
+    "id": 4,
+    "creator_id": 8281,
+    "post_id": 103,
+    "content": "The missing reply",
+    "removed": false,
+    "published": "2025-11-09T09:00:00.000000Z",
+    "deleted": false,
+    "ap_id": "https://lemmy.world/comment/4",
+    "local": true,
+    "path": "0.1.2.3.4",
+    "distinguished": false,
+    "language_id": 0
+   },
+   "creator": {
+    "id": 8281,
+    "name": "alice",
+    "banned": false,
+    "published": "2023-06-01T10:00:00.000000Z",
+    "actor_id": "https://lemmy.world/u/alice",
+    "local": true,
+    "deleted": false,
+    "bot_account": false,
+    "instance_id": 1
+   },
+   "post": {
+    "id": 103,
+    "name": "Ask: favourite distro?",
+    "creator_id": 58,
+    "community_id": 2883,
+    "removed": false,
+    "locked": false,
+    "published": "2025-11-09T08:00:00.123456Z",
+    "deleted": false,
+    "nsfw": false,
+    "ap_id": "https://lemmy.world/post/103",
+    "local": true,
+    "language_id": 0,
+    "featured_community": false,
+    "featured_local": false,
+    "body": "What do you use and **why**?\n\n::: spoiler my answer\nArch, btw\n:::"
+   },
+   "community": {
+    "id": 2883,
+    "name": "technology",
+    "title": "Technology",
+    "removed": false,
+    "published": "2023-06-01T10:00:00.000000Z",
+    "deleted": false,
+    "nsfw": false,
+    "actor_id": "https://lemmy.world/c/technology",
+    "local": true,
+    "hidden": false,
+    "posting_restricted_to_mods": false,
+    "instance_id": 1,
+    "visibility": "Public"
+   },
+   "counts": {
+    "comment_id": 4,
+    "score": 5,
+    "upvotes": 5,
+    "downvotes": 0,
+    "published": "2025-11-09T09:00:00.000000Z",
+    "child_count": 0
+   },
+   "creator_banned_from_community": false,
+   "banned_from_community": false,
+   "creator_is_moderator": false,
+   "creator_is_admin": false,
+   "subscribed": "NotSubscribed",
+   "saved": false,
+   "creator_blocked": false
+  },
+  {
+   "comment": {
+    "id": 3,
+    "creator_id": 5146,
+    "post_id": 103,
+    "content": "Deep reply ^sup^",
+    "removed": false,
+    "published": "2025-11-09T09:00:00.000000Z",
+    "deleted": false,
+    "ap_id": "https://lemmy.world/comment/3",
+    "local": true,
+    "path": "0.1.2.3",
+    "distinguished": false,
+    "language_id": 0
+   },
+   "creator": {
+    "id": 5146,
+    "name": "bob",
+    "banned": false,
+    "published": "2023-06-01T10:00:00.000000Z",
+    "actor_id": "https://lemmy.ml/u/bob",
+    "local": false,
+    "deleted": false,
+    "bot_account": false,
+    "instance_id": 1
+   },
+   "post": {
+    "id": 103,
+    "name": "Ask: favourite distro?",
+    "creator_id": 58,
+    "community_id": 2883,
+    "removed": false,
+    "locked": false,
+    "published": "2025-11-09T08:00:00.123456Z",
+    "deleted": false,
+    "nsfw": false,
+    "ap_id": "https://lemmy.world/post/103",
+    "local": true,
+    "language_id": 0,
+    "featured_community": false,
+    "featured_local": false,
+    "body": "What do you use and **why**?\n\n::: spoiler my answer\nArch, btw\n:::"
+   },
+   "community": {
+    "id": 2883,
+    "name": "technology",
+    "title": "Technology",
+    "removed": false,
+    "published": "2023-06-01T10:00:00.000000Z",
+    "deleted": false,
+    "nsfw": false,
+    "actor_id": "https://lemmy.world/c/technology",
+    "local": true,
+    "hidden": false,
+    "posting_restricted_to_mods": false,
+    "instance_id": 1,
+    "visibility": "Public"
+   },
+   "counts": {
+    "comment_id": 3,
+    "score": 5,
+    "upvotes": 5,
+    "downvotes": 0,
+    "published": "2025-11-09T09:00:00.000000Z",
+    "child_count": 1
+   },
+   "creator_banned_from_community": false,
+   "banned_from_community": false,
+   "creator_is_moderator": false,
+   "creator_is_admin": false,
+   "subscribed": "NotSubscribed",
+   "saved": false,
+   "creator_blocked": false
+  }
+ ]
+}

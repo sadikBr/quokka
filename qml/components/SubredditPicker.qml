@@ -7,11 +7,11 @@ Popup {
     id: root
     signal picked(string feed)
 
-    readonly property var suggestions: [
-        "popular", "all", "pics", "aww", "AskReddit", "worldnews", "todayilearned",
-        "technology", "science", "gaming", "movies", "mildlyinteresting", "programming",
-        "linux", "android", "space", "food", "books"
-    ]
+    // The server's most active communities, loaded when the sheet first opens.
+    SubredditListModel {
+        id: popular
+        showNsfw: AppSettings.showNsfw
+    }
 
     modal: true
     focus: true
@@ -21,7 +21,7 @@ Popup {
     onOpened: { field.text = ""; field.forceActiveFocus() }
 
     function submit(name) {
-        const n = name.trim().replace(/^\/?r\//i, "")
+        const n = name.trim().replace(/^(\/?(r|c)\/|!)/i, "")
         if (n.length === 0)
             return
         root.picked(n)
@@ -68,7 +68,7 @@ Popup {
                 anchors.rightMargin: 6
                 spacing: 4
                 Text {
-                    text: "r/"
+                    text: Api.communityPrefix
                     color: Theme.accent
                     font.pixelSize: Theme.fontTitle
                     font.weight: Font.Black
@@ -76,7 +76,7 @@ Popup {
                 TextField {
                     id: field
                     Layout.fillWidth: true
-                    placeholderText: qsTr("subreddit, or a+b+c")
+                    placeholderText: Api.isLemmy ? qsTr("community, or name@server") : qsTr("subreddit, or a+b+c")
                     placeholderTextColor: Theme.textMuted
                     color: Theme.text
                     font.pixelSize: Theme.fontTitle
@@ -96,27 +96,51 @@ Popup {
         }
 
         Text {
-            text: qsTr("Popular picks")
+            text: qsTr("Popular on %1").arg(Api.serviceName)
             color: Theme.textMuted
             font.pixelSize: Theme.fontMeta
             font.weight: Font.Bold
         }
 
+        LoadingDots {
+            visible: popular.loading && popular.count === 0
+            Layout.alignment: Qt.AlignHCenter
+        }
+
         Flow {
             Layout.fillWidth: true
             spacing: 8
+            Chip {
+                text: qsTr("All")
+                iconName: "globe"
+                fontSize: Theme.fontMeta
+                clickable: true
+                hpad: 12
+                onClicked: root.submit("all")
+            }
+            Chip {
+                visible: Api.isLemmy
+                text: qsTr("Local")
+                iconName: "fire"
+                fontSize: Theme.fontMeta
+                clickable: true
+                hpad: 12
+                onClicked: root.submit("local")
+            }
             Repeater {
-                model: root.suggestions
+                model: popular
                 delegate: Chip {
-                    required property string modelData
-                    text: "r/" + modelData
+                    required property string name
+                    required property int index
+                    visible: index < 16
+                    text: Api.community(name)
                     fontSize: Theme.fontMeta
                     clickable: true
                     hpad: 12
-                    fillColor: Theme.alpha(Format.nameColor(modelData), 0.16)
+                    fillColor: Theme.alpha(Format.nameColor(name), 0.16)
                     textColor: Theme.text
                     border.width: 0
-                    onClicked: root.submit(modelData)
+                    onClicked: root.submit(name)
                 }
             }
         }

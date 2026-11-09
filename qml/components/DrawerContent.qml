@@ -41,7 +41,7 @@ Flickable {
                     font.weight: Font.Black
                 }
                 Text {
-                    text: qsTr("v%1 · a happy little Reddit reader").arg(Qt.application.version)
+                    text: qsTr("v%1 · reading %2").arg(Qt.application.version).arg(Api.serviceName)
                     color: Theme.textMuted
                     font.pixelSize: Theme.fontSmall
                 }
@@ -58,18 +58,18 @@ Flickable {
             onClicked: root.navigate(() => Nav.goToFeed("home"))
         }
         NavRow {
-            iconName: "fire"
-            text: qsTr("Popular")
-            accent: Theme.caramel
-            current: root.currentFeed === "popular"
-            onClicked: root.navigate(() => Nav.goToFeed("popular"))
-        }
-        NavRow {
             iconName: "globe"
             text: qsTr("All")
             accent: Theme.mint
-            current: root.currentFeed === "all"
+            current: root.currentFeed === "all" || root.currentFeed === "popular"
             onClicked: root.navigate(() => Nav.goToFeed("all"))
+        }
+        NavRow {
+            iconName: "fire"
+            text: Api.isLemmy ? qsTr("Local · %1").arg(Api.instance) : qsTr("Popular")
+            accent: Theme.caramel
+            current: root.currentFeed === (Api.isLemmy ? "local" : "popular")
+            onClicked: root.navigate(() => Nav.goToFeed(Api.isLemmy ? "local" : "popular"))
         }
         NavRow {
             iconName: "search"
@@ -106,7 +106,8 @@ Flickable {
         Text {
             visible: Library.subscriptions.length === 0
             Layout.fillWidth: true
-            text: qsTr("Tap Join on any community to add it to your Home feed, or import a list.")
+            text: qsTr("Tap Join on any community to add it to your Home feed, or import a list. "
+                       + "Home shows up to 25 of them.")
             color: Theme.textMuted
             font.pixelSize: Theme.fontMeta
             wrapMode: Text.Wrap
@@ -116,10 +117,68 @@ Flickable {
             delegate: NavRow {
                 required property string modelData
                 avatarName: modelData
-                text: "r/" + modelData
+                text: Api.community(modelData)
                 compact: true
                 current: root.currentFeed === modelData.toLowerCase()
                 onClicked: root.navigate(() => Nav.goToFeed(modelData))
+            }
+        }
+
+        // ---- Server ----
+        SectionLabel { text: qsTr("Server"); Layout.topMargin: 14; visible: Api.isLemmy }
+        Text {
+            visible: Api.isLemmy
+            Layout.fillWidth: true
+            text: qsTr("Lemmy is made of many servers that share content. You can read everything "
+                       + "from any of them; pick the one you like.")
+            color: Theme.textMuted
+            font.pixelSize: Theme.fontSmall
+            wrapMode: Text.Wrap
+        }
+        Flow {
+            visible: Api.isLemmy
+            Layout.fillWidth: true
+            spacing: 6
+            Repeater {
+                model: ["lemmy.world", "lemmy.ml", "programming.dev", "sh.itjust.works", "lemmy.zip", "discuss.tchncs.de"]
+                delegate: Chip {
+                    required property string modelData
+                    text: modelData
+                    clickable: true
+                    selected: Api.instance === modelData
+                    onClicked: Api.setInstance(modelData)
+                }
+            }
+        }
+        Rectangle {
+            visible: Api.isLemmy
+            Layout.fillWidth: true
+            Layout.preferredHeight: 42
+            radius: 21
+            color: Theme.surfaceAlt
+            border.width: serverField.activeFocus ? 2 : 1
+            border.color: serverField.activeFocus ? Theme.accent : Theme.border
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: 14
+                anchors.rightMargin: 4
+                TextField {
+                    id: serverField
+                    Layout.fillWidth: true
+                    placeholderText: qsTr("Other server, e.g. lemmy.ca")
+                    placeholderTextColor: Theme.textMuted
+                    color: Theme.text
+                    font.pixelSize: Theme.fontMeta
+                    background: null
+                    inputMethodHints: Qt.ImhUrlCharactersOnly | Qt.ImhNoAutoUppercase
+                    onAccepted: if (Api.setInstance(text)) text = ""
+                }
+                Chip {
+                    text: qsTr("Use")
+                    clickable: serverField.text.trim() !== ""
+                    selected: true
+                    onClicked: if (Api.setInstance(serverField.text)) serverField.text = ""
+                }
             }
         }
 
@@ -184,7 +243,7 @@ Flickable {
             Repeater {
                 model: [
                     { key: "hot", label: qsTr("Hot") }, { key: "new", label: qsTr("New") },
-                    { key: "top", label: qsTr("Top") }, { key: "rising", label: qsTr("Rising") }
+                    { key: "top", label: qsTr("Top") }, { key: "active", label: qsTr("Active") }
                 ]
                 delegate: Chip {
                     required property var modelData
@@ -220,9 +279,9 @@ Flickable {
         SectionLabel { text: qsTr("About"); Layout.topMargin: 14 }
         Text {
             Layout.fillWidth: true
-            text: qsTr("Quokka is an open-source, read-only client that uses Reddit's public JSON. "
-                       + "It is not affiliated with or endorsed by Reddit, Inc. "
-                       + "Your subscriptions, saved posts and history stay on this device.")
+            text: qsTr("Quokka is an open-source, read-only client for Lemmy, the community-run "
+                       + "forum network. No account needed. Your communities, saved posts and history "
+                       + "stay on this device.")
             color: Theme.textMuted
             font.pixelSize: Theme.fontMeta
             wrapMode: Text.Wrap

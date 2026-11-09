@@ -68,7 +68,7 @@ Page {
     readonly property bool saved: Library.savedRevision >= 0 && Library.isSaved(page.postId)
 
     header: TopBar {
-        title: page.post.subreddit ? "r/" + page.post.subreddit : qsTr("Post")
+        title: page.post.subreddit ? Api.community(page.post.subreddit) : qsTr("Post")
         subtitle: page.post.numComments !== undefined
                   ? (page.post.numComments === 1 ? qsTr("1 comment") : qsTr("%1 comments").arg(Format.compact(page.post.numComments)))
                   : ""
@@ -94,7 +94,7 @@ Page {
             iconName: "external"
             tooltip: qsTr("Open in browser")
             fill: Theme.surfaceAlt
-            onClicked: Qt.openUrlExternally(Format.webUrl(page.post.permalink || ("/comments/" + page.postId)))
+            onClicked: Qt.openUrlExternally(Api.webUrl(page.post.permalink || ("/post/" + page.postId)))
         }
     }
 
@@ -181,7 +181,7 @@ Page {
                 Layout.fillWidth: true
                 spacing: 0
                 Text {
-                    text: "r/" + (page.post.subreddit || "")
+                    text: Api.community(page.post.subreddit || "")
                     color: Theme.text
                     font.pixelSize: Theme.fontMeta
                     font.weight: Font.Bold
@@ -189,7 +189,7 @@ Page {
                     HoverHandler { cursorShape: Qt.PointingHandCursor }
                 }
                 Text {
-                    text: "u/" + (page.post.author || "") + "  ·  " + Format.relativeTime(page.post.createdUtc || 0)
+                    text: Api.user(page.post.author || "") + "  ·  " + Format.relativeTime(page.post.createdUtc || 0)
                     color: Theme.textMuted
                     font.pixelSize: Theme.fontSmall
                     TapHandler { onTapped: Nav.openUser(page.post.author) }

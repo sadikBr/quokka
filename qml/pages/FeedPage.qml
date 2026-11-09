@@ -12,6 +12,15 @@ Page {
     // What the user picked: "home", "popular", "all", "pics", "pics+aww"...
     property string feedKey: initialFeed.replace(/^\/?r\//i, "")
     readonly property bool isHome: feedKey.toLowerCase() === "home"
+    readonly property string feedTitle: {
+        const k = feedKey.toLowerCase()
+        if (k === "home") return qsTr("Home")
+        if (k === "all") return qsTr("All")
+        if (k === "local") return qsTr("Local")
+        if (k === "popular") return qsTr("Popular")
+        if (k.indexOf("+") >= 0) return qsTr("%1 communities").arg(k.split("+").length)
+        return Api.community(posts.feed)
+    }
     readonly property bool active: StackView.status === StackView.Active || StackView.view === null
 
     signal menuRequested()
@@ -142,7 +151,7 @@ Page {
                     iconName: "search"
                     fill: Theme.alpha("white", 0.22)
                     tint: "white"
-                    tooltip: page.realSubreddit ? qsTr("Search r/%1").arg(posts.feed) : qsTr("Search")
+                    tooltip: page.realSubreddit ? qsTr("Search %1").arg(Api.community(posts.feed)) : qsTr("Search")
                     onClicked: Nav.openSearch("", page.realSubreddit ? posts.feed : "")
                 }
                 RoundButton2 {
@@ -193,7 +202,7 @@ Page {
                             Text {
                                 width: Math.min(implicitWidth, titleRow.width - titleAvatar.width - 50
                                                 - (joinChip.visible ? joinChip.width + 12 : 0))
-                                text: page.isHome ? qsTr("Home") : "r/" + posts.feed
+                                text: page.feedTitle
                                 color: "white"
                                 font.pixelSize: 28
                                 font.weight: Font.Black
@@ -207,7 +216,9 @@ Page {
                             }
                         }
                         Text {
-                            text: page.isHome
+                            text: page.feedKey.toLowerCase() === "local" ? qsTr("Posts from %1").arg(Api.serviceName)
+                                : page.feedKey.toLowerCase() === "all" ? qsTr("Everything %1 knows about").arg(Api.serviceName)
+                                : page.isHome
                                 ? (Library.subscriptions.length === 0 ? qsTr("Join communities to fill your home feed")
                                    : Library.subscriptions.length === 1 ? qsTr("1 community") : qsTr("%1 communities").arg(Library.subscriptions.length))
                                 : page.realSubreddit
@@ -230,7 +241,9 @@ Page {
                     visible: page.realSubreddit
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
-                    readonly property bool joined: Library.subscriptions.length >= 0 && Library.isSubscribed(posts.feed)
+                    // Join with the full name ("linux@lemmy.ml") so it works from any server.
+                    readonly property string fullName: about.displayName !== "" ? about.displayName : posts.feed
+                    readonly property bool joined: Library.subscriptions.length >= 0 && Library.isSubscribed(fullName)
                     text: joined ? qsTr("Joined") : qsTr("Join")
                     iconName: joined ? "check" : "plus"
                     clickable: true
@@ -241,7 +254,7 @@ Page {
                     textColor: joined ? "white" : Theme.berry
                     border.width: joined ? 1 : 0
                     border.color: "white"
-                    onClicked: Library.toggleSubscription(posts.feed)
+                    onClicked: Library.toggleSubscription(fullName)
                 }
             }
 

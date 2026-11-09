@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.21)
 
 project(Quokka
-    VERSION 0.6.0
-    DESCRIPTION "A playful, read-only Reddit client for desktop and Android"
+    VERSION 0.7.0
+    DESCRIPTION "A playful, read-only Lemmy (and Reddit) client for desktop and Android"
     HOMEPAGE_URL "https://github.com/sadikBr/Reddit-Client"
     LANGUAGES CXX)
 
@@ -22,6 +22,7 @@ add_subdirectory(src/core)
 qt_add_executable(quokka
     src/app/main.cpp
     src/app/services.h
+    src/app/services.cpp
     src/app/networkfactory.h
     src/app/networkfactory.cpp
 )
@@ -78,6 +79,7 @@ qt_add_qml_module(quokka
     VERSION 1.0
     QML_FILES ${QUOKKA_QML_FILES}
     SOURCES
+        src/app/apiinfo.h src/app/apiinfo.cpp
         src/app/appsettings.h src/app/appsettings.cpp
         src/app/format.h src/app/format.cpp
         src/app/postlistmodel.h src/app/postlistmodel.cpp

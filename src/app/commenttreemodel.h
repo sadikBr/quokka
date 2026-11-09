@@ -1,7 +1,7 @@
 #pragma once
 
 #include "comment.h"
-#include "redditclient.h"
+#include "apiclient.h"
 
 #include <QAbstractListModel>
 #include <QPointer>
@@ -80,7 +80,9 @@ public:
 
     // Exposed for tests.
     void setComments(const QList<quokka::Comment> &comments, const QString &linkAuthor = {});
-    void insertMore(const QString &moreFullname, const QList<quokka::Comment> &replacement);
+    // Replaces a "load more" row with what it stood for: each new comment goes under its parent,
+    // comments already on screen are skipped.
+    void insertMore(const QString &moreFullname, const QList<quokka::Comment> &rows);
 
 signals:
     void postIdChanged();
@@ -102,6 +104,10 @@ private:
     void scheduleReload();
     void setError(const QString &e);
     int subtreeEnd(int index) const;     // one past the last descendant in m_all
+    int indexOfFullname(const QString &fullname, quokka::Comment::Kind kind) const;
+    bool isVisibleChildOf(int parent) const;
+    void insertNode(int at, const quokka::Comment &c, bool visible);
+    void setMoreLoading(const QString &moreFullname, bool loading);
     QList<int> visibleDescendants(int index) const;
     int hiddenCount(int index) const;
 

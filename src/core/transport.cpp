@@ -8,29 +8,32 @@
 
 namespace quokka {
 
-PublicJsonTransport::PublicJsonTransport(QNetworkAccessManager *nam, QString userAgent)
+HttpTransport::HttpTransport(QNetworkAccessManager *nam, QString userAgent, QUrl baseUrl,
+                             QString pathSuffix)
     : m_nam(nam)
     , m_userAgent(std::move(userAgent))
+    , m_base(std::move(baseUrl))
+    , m_suffix(std::move(pathSuffix))
 {
 }
 
-QUrl PublicJsonTransport::buildUrl(const QString &path, const QString &query) const
+QUrl HttpTransport::buildUrl(const QString &path, const QString &query) const
 {
     QString p = path;
     if (!p.startsWith(QLatin1Char('/')))
         p.prepend(QLatin1Char('/'));
     while (p.size() > 1 && p.endsWith(QLatin1Char('/')))
         p.chop(1);
-    if (!p.endsWith(QLatin1String(".json")))
-        p += QLatin1String(".json");
+    if (!m_suffix.isEmpty() && !p.endsWith(m_suffix))
+        p += m_suffix;
 
-    QUrl url(QStringLiteral("https://www.reddit.com"));
-    url.setPath(p);
+    QUrl url(m_base);
+    url.setPath(m_base.path() + p);
     url.setQuery(query);
     return url;
 }
 
-QObject *PublicJsonTransport::fetch(const QUrl &url, Callback done)
+QObject *HttpTransport::fetch(const QUrl &url, Callback done)
 {
     if (!m_nam) {
         TransportResponse r;
@@ -72,7 +75,7 @@ QObject *PublicJsonTransport::fetch(const QUrl &url, Callback done)
     return reply;
 }
 
-void PublicJsonTransport::cancel(QObject *handle)
+void HttpTransport::cancel(QObject *handle)
 {
     if (auto *reply = qobject_cast<QNetworkReply *>(handle))
         reply->abort();
@@ -107,7 +110,12 @@ QString FixtureTransport::fileNameForPath(const QString &path)
 
 QObject *FixtureTransport::fetch(const QUrl &url, Callback done)
 {
-    QString file = m_dir.filePath(fileNameForPath(url.path()));
+    QString path = url.path();
+    QString file = m_dir.filePath(fileNameForPath(path));
+    while (!QFile::exists(file) && path.count(QLatin1Char('/')) > 1) {
+        path = path.left(path.lastIndexOf(QLatin1Char('/')));
+        file = m_dir.filePath(fileNameForPath(path));
+    }
     if (!QFile::exists(file))
         file = m_dir.filePath(QStringLiteral("listing.json"));
 

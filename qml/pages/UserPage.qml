@@ -27,6 +27,7 @@ Page {
     UserCommentModel {
         id: userComments
         userName: page.userName
+        showNsfw: AppSettings.showNsfw
         enabled: page.tab === 1
     }
 
@@ -37,14 +38,19 @@ Page {
     }
 
     header: TopBar {
-        title: "u/" + page.userName
-        subtitle: user.loaded ? qsTr("%1 karma").arg(Format.compact(user.totalKarma)) : ""
+        title: Api.user(page.userName)
+        subtitle: !user.loaded ? ""
+                  : user.hasKarma ? qsTr("%1 karma").arg(Format.compact(user.totalKarma))
+                  : qsTr("%1 posts · %2 comments").arg(Format.compact(user.postCount)).arg(Format.compact(user.commentCount))
         onBack: page.back()
         RoundButton2 {
             iconName: "external"
             tooltip: qsTr("Open in browser")
             fill: Theme.surfaceAlt
-            onClicked: Qt.openUrlExternally("https://www.reddit.com/user/" + page.userName)
+            onClicked: {
+                Qt.openUrlExternally(Api.isLemmy ? Api.webUrl("/u/" + page.userName)
+                                                 : "https://www.reddit.com/user/" + page.userName)
+            }
         }
     }
 
@@ -107,7 +113,7 @@ Page {
                             spacing: 4
                             Text {
                                 Layout.fillWidth: true
-                                text: "u/" + page.userName
+                                text: Api.user(page.userName)
                                 color: "white"
                                 font.pixelSize: 24
                                 font.weight: Font.Black
@@ -115,7 +121,7 @@ Page {
                             }
                             Text {
                                 visible: user.loaded
-                                text: qsTr("Redditor for %1").arg(Format.age(user.createdUtc))
+                                text: qsTr("Member for %1").arg(Format.age(user.createdUtc))
                                 color: Theme.alpha("white", 0.9)
                                 font.pixelSize: Theme.fontMeta
                                 font.weight: Font.DemiBold
@@ -144,12 +150,19 @@ Page {
                 }
 
                 RowLayout {
-                    visible: user.loaded
+                    visible: user.loaded && user.hasKarma
                     Layout.fillWidth: true
                     spacing: 10
                     StatTile { label: qsTr("Post karma"); value: Format.compact(user.linkKarma); accent: Theme.upvote }
                     StatTile { label: qsTr("Comment karma"); value: Format.compact(user.commentKarma); accent: Theme.sky }
                     StatTile { label: qsTr("Total"); value: Format.compact(user.totalKarma); accent: Theme.mint }
+                }
+                RowLayout {
+                    visible: user.loaded && !user.hasKarma
+                    Layout.fillWidth: true
+                    spacing: 10
+                    StatTile { label: qsTr("Posts"); value: Format.compact(user.postCount); accent: Theme.upvote }
+                    StatTile { label: qsTr("Comments"); value: Format.compact(user.commentCount); accent: Theme.sky }
                 }
 
                 SegmentedTabs {

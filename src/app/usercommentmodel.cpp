@@ -1,9 +1,8 @@
 #include "usercommentmodel.h"
 
-#include "parsers.h"
+#include "backend.h"
 #include "services.h"
 
-#include <QUrlQuery>
 
 UserCommentModel::UserCommentModel(QObject *parent)
     : QAbstractListModel(parent)
@@ -63,6 +62,15 @@ void UserCommentModel::setSort(const QString &sort)
     scheduleReload();
 }
 
+void UserCommentModel::setShowNsfw(bool show)
+{
+    if (show == m_showNsfw)
+        return;
+    m_showNsfw = show;
+    emit showNsfwChanged();
+    scheduleReload();
+}
+
 void UserCommentModel::setEnabled(bool enabled)
 {
     if (enabled == m_enabled)
@@ -97,8 +105,8 @@ void UserCommentModel::loadMore()
 
 void UserCommentModel::request(bool reset)
 {
-    auto *client = services::reddit();
-    if (!client || m_user.isEmpty() || !m_enabled)
+    auto *backend = services::backend();
+    if (!backend || m_user.isEmpty() || !m_enabled)
         return;
     if (m_reply)
         m_reply->abort();
@@ -109,25 +117,25 @@ void UserCommentModel::request(bool reset)
         emit errorChanged();
     }
 
-    QUrlQuery q;
-    q.addQueryItem(QStringLiteral("limit"), QStringLiteral("25"));
-    q.addQueryItem(QStringLiteral("sort"), m_sort);
-    if (!reset && !m_after.isEmpty())
-        q.addQueryItem(QStringLiteral("after"), m_after);
-
-    auto *reply = client->get(QStringLiteral("/user/%1/comments").arg(m_user), q);
+    const QString after = m_after;
+    auto *reply = backend->userComments(m_user, m_sort, after);
     m_reply = reply;
     emit loadingChanged();
-    connect(reply, &quokka::ApiReply::finished, this, [this, reply, reset](const QByteArray &body) {
+    connect(reply, &quokka::ApiReply::finished, this, [this, reply, reset, after](const QByteArray &body) {
         if (reply != m_reply)
             return;
         m_reply = nullptr;
+        auto *backend = services::backend();
+        if (!backend)
+            return;
         QString err;
-        const auto items = quokka::parsers::parseCommentListing(body, &m_after, &err);
+        QList<quokka::Comment> items = backend->parseUserComments(body, after, &m_after, &err);
         if (!err.isEmpty()) {
             m_error = err;
             emit errorChanged();
         }
+        if (!m_showNsfw)
+            items.removeIf([](const quokka::Comment &c) { return c.nsfw; });
         if (reset) {
             beginResetModel();
             m_items = items;

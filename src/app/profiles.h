@@ -1,7 +1,7 @@
 #pragma once
 
 #include "community.h"
-#include "redditclient.h"
+#include "apiclient.h"
 
 #include <QObject>
 #include <QPointer>
@@ -51,6 +51,7 @@ public:
 
     // True for names that are not a single real community.
     static bool isPseudoFeed(const QString &name);
+    Q_INVOKABLE void refresh();
 
 signals:
     void nameChanged();
@@ -84,6 +85,10 @@ class UserInfo : public QObject
     Q_PROPERTY(qint64 totalKarma READ totalKarma NOTIFY changed)
     Q_PROPERTY(qint64 createdUtc READ createdUtc NOTIFY changed)
     Q_PROPERTY(bool suspended READ suspended NOTIFY changed)
+    Q_PROPERTY(bool hasKarma READ hasKarma NOTIFY changed)
+    Q_PROPERTY(qint64 postCount READ postCount NOTIFY changed)
+    Q_PROPERTY(qint64 commentCount READ commentCount NOTIFY changed)
+    Q_PROPERTY(QString displayName READ displayName NOTIFY changed)
 
 public:
     explicit UserInfo(QObject *parent = nullptr);
@@ -102,6 +107,11 @@ public:
     qint64 totalKarma() const { return m_user.totalKarma; }
     qint64 createdUtc() const { return m_user.createdUtc; }
     bool suspended() const { return m_user.suspended; }
+    bool hasKarma() const { return m_user.hasKarma; }
+    qint64 postCount() const { return m_user.postCount; }
+    qint64 commentCount() const { return m_user.commentCount; }
+    QString displayName() const { return m_user.name.isEmpty() ? m_name : m_user.name; }
+    Q_INVOKABLE void fetch();
 
 signals:
     void nameChanged();

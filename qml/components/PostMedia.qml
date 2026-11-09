@@ -18,7 +18,8 @@ Item {
 
     property bool revealed: false
     readonly property bool covered: (spoiler || nsfw) && !revealed
-    readonly property real ratio: previewWidth > 0 && previewHeight > 0 ? previewHeight / previewWidth : 0.66
+    readonly property real ratio: previewWidth > 0 && previewHeight > 0 ? previewHeight / previewWidth
+                                : image.naturalRatio > 0 ? image.naturalRatio : 0.66
 
     implicitHeight: Math.min(maxHeight, Math.round(width * Math.max(0.45, Math.min(maxRatio, ratio))))
 

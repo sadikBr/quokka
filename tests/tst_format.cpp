@@ -62,11 +62,6 @@ private slots:
         QVERIFY(Format::nameColor("pics").isValid());
     }
 
-    void webUrl()
-    {
-        QCOMPARE(Format::webUrl("/r/a/comments/x/"), QStringLiteral("https://www.reddit.com/r/a/comments/x/"));
-        QCOMPARE(Format::webUrl("https://x.y"), QStringLiteral("https://x.y"));
-    }
 };
 
 QTEST_GUILESS_MAIN(TestFormat)

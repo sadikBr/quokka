@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtMultimedia
 
-// Plays a Reddit video (HLS with audio) or a GIF-style MP4, with simple controls.
+// Plays a video (HLS stream or MP4/WebM file), with simple controls.
 Item {
     id: root
     property url source

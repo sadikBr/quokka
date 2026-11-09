@@ -1,6 +1,6 @@
 #include "profiles.h"
 
-#include "parsers.h"
+#include "backend.h"
 #include "services.h"
 
 SubredditInfo::SubredditInfo(QObject *parent)
@@ -16,9 +16,8 @@ SubredditInfo::~SubredditInfo()
 
 bool SubredditInfo::isPseudoFeed(const QString &name)
 {
-    const QString n = name.toLower();
-    return n.isEmpty() || n == QLatin1String("popular") || n == QLatin1String("all")
-        || n == QLatin1String("home") || n.contains(QLatin1Char('+'));
+    auto *backend = services::backend();
+    return !backend || backend->isPseudoFeed(name);
 }
 
 void SubredditInfo::setName(const QString &name)
@@ -27,6 +26,11 @@ void SubredditInfo::setName(const QString &name)
         return;
     m_name = name;
     emit nameChanged();
+    fetch();
+}
+
+void SubredditInfo::refresh()
+{
     fetch();
 }
 
@@ -39,17 +43,20 @@ void SubredditInfo::fetch()
     m_error.clear();
     emit changed();
 
-    auto *client = services::reddit();
-    if (!client || isPseudoFeed(m_name))
+    auto *backend = services::backend();
+    if (!backend || isPseudoFeed(m_name))
         return;
-    auto *reply = client->get(QStringLiteral("/r/%1/about").arg(m_name));
+    auto *reply = backend->community(m_name);
     m_reply = reply;
     connect(reply, &quokka::ApiReply::finished, this, [this, reply](const QByteArray &body) {
         if (reply != m_reply)
             return;
         m_reply = nullptr;
+        auto *backend = services::backend();
+        if (!backend)
+            return;
         QString err;
-        m_sub = quokka::parsers::parseSubredditAbout(body, &err);
+        m_sub = backend->parseCommunity(body, &err);
         m_loaded = err.isEmpty();
         m_error = err;
         emit changed();
@@ -80,6 +87,11 @@ void UserInfo::setName(const QString &name)
         return;
     m_name = name;
     emit nameChanged();
+    fetch();
+}
+
+void UserInfo::fetch()
+{
 
     if (m_reply)
         m_reply->abort();
@@ -87,20 +99,23 @@ void UserInfo::setName(const QString &name)
     m_loaded = false;
     m_error.clear();
 
-    auto *client = services::reddit();
-    if (!client || m_name.isEmpty()) {
+    auto *backend = services::backend();
+    if (!backend || m_name.isEmpty()) {
         emit changed();
         return;
     }
-    auto *reply = client->get(QStringLiteral("/user/%1/about").arg(m_name));
+    auto *reply = backend->user(m_name);
     m_reply = reply;
     emit changed();
     connect(reply, &quokka::ApiReply::finished, this, [this, reply](const QByteArray &body) {
         if (reply != m_reply)
             return;
         m_reply = nullptr;
+        auto *backend = services::backend();
+        if (!backend)
+            return;
         QString err;
-        m_user = quokka::parsers::parseUserAbout(body, &err);
+        m_user = backend->parseUser(body, &err);
         m_loaded = err.isEmpty();
         m_error = err;
         emit changed();

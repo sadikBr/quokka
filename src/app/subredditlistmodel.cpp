@@ -1,9 +1,8 @@
 #include "subredditlistmodel.h"
 
-#include "parsers.h"
+#include "backend.h"
 #include "services.h"
 
-#include <QUrlQuery>
 
 SubredditListModel::SubredditListModel(QObject *parent)
     : QAbstractListModel(parent)
@@ -89,8 +88,8 @@ void SubredditListModel::loadMore()
 
 void SubredditListModel::request(bool reset)
 {
-    auto *client = services::reddit();
-    if (!client)
+    auto *backend = services::backend();
+    if (!backend)
         return;
     if (m_reply)
         m_reply->abort();
@@ -101,27 +100,19 @@ void SubredditListModel::request(bool reset)
         emit errorChanged();
     }
 
-    QUrlQuery q;
-    q.addQueryItem(QStringLiteral("limit"), QStringLiteral("25"));
-    if (!reset && !m_after.isEmpty())
-        q.addQueryItem(QStringLiteral("after"), m_after);
-    if (m_showNsfw)
-        q.addQueryItem(QStringLiteral("include_over_18"), QStringLiteral("on"));
-    QString path = QStringLiteral("/subreddits/popular");
-    if (!m_query.isEmpty()) {
-        path = QStringLiteral("/subreddits/search");
-        q.addQueryItem(QStringLiteral("q"), m_query);
-    }
-
-    auto *reply = client->get(path, q);
+    const QString after = m_after;
+    auto *reply = backend->communities(m_query, m_showNsfw, after);
     m_reply = reply;
     emit loadingChanged();
-    connect(reply, &quokka::ApiReply::finished, this, [this, reply, reset](const QByteArray &body) {
+    connect(reply, &quokka::ApiReply::finished, this, [this, reply, reset, after](const QByteArray &body) {
         if (reply != m_reply)
             return;
         m_reply = nullptr;
+        auto *backend = services::backend();
+        if (!backend)
+            return;
         QString err;
-        QList<quokka::Subreddit> items = quokka::parsers::parseSubredditListing(body, &m_after, &err);
+        QList<quokka::Subreddit> items = backend->parseCommunities(body, after, &m_after, &err);
         if (!err.isEmpty()) {
             m_error = err;
             emit errorChanged();

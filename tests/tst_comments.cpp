@@ -1,5 +1,6 @@
 #include "commenttreemodel.h"
 #include "html.h"
+#include "backend.h"
 #include "postlistmodel.h"
 #include "parsers.h"
 
@@ -123,22 +124,25 @@ private slots:
         QCOMPARE(ids(model), QStringList({"t1_c1", "t1_c6", "t1_m2"}));
     }
 
-    void postListPaths()
+    void redditPostPaths()
     {
+        using quokka::RedditBackend;
         PostListModel m;
-        QCOMPARE(m.apiPath(), QStringLiteral("/r/popular/hot"));
+        QCOMPARE(RedditBackend::postsPath(m.feedRequest()), QStringLiteral("/r/popular/hot"));
         m.setFeed("r/Pics/");
         m.setSort("top");
-        QCOMPARE(m.apiPath(), QStringLiteral("/r/Pics/top"));
+        QCOMPARE(RedditBackend::postsPath(m.feedRequest()), QStringLiteral("/r/Pics/top"));
         m.setSearchQuery("  quokka ");
-        QCOMPARE(m.apiPath(), QStringLiteral("/r/Pics/search"));
+        QCOMPARE(RedditBackend::postsPath(m.feedRequest()), QStringLiteral("/r/Pics/search"));
         m.setFeed("all");
-        QCOMPARE(m.apiPath(), QStringLiteral("/search"));
+        QCOMPARE(RedditBackend::postsPath(m.feedRequest()), QStringLiteral("/search"));
         m.setSearchQuery("");
         m.setSort("relevance"); // search-only sort falls back to hot for feeds
-        QCOMPARE(m.apiPath(), QStringLiteral("/r/all/hot"));
+        QCOMPARE(RedditBackend::postsPath(m.feedRequest()), QStringLiteral("/r/all/hot"));
         m.setUserName("u/someone");
-        QCOMPARE(m.apiPath(), QStringLiteral("/user/someone/submitted"));
+        QCOMPARE(RedditBackend::postsPath(m.feedRequest()), QStringLiteral("/user/someone/submitted"));
+        m.setFeed("c/linux@lemmy.ml");
+        QCOMPARE(m.feed(), QStringLiteral("linux@lemmy.ml"));
     }
 };
 

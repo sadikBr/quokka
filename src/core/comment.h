@@ -34,9 +34,13 @@ struct Comment
     QString linkTitle;
     QString permalink;
 
-    // Kind::More
+    bool nsfw = false;     // from the post's community (Lemmy), for filtering
+
+    // Kind::More. Reddit lists the missing ids; Lemmy loads by parent comment or by page.
     QStringList moreChildren;
     int moreCount = 0;
+    QString moreParentId;  // load the replies of this comment (Lemmy)
+    int morePage = 0;      // load this page of top-level comments (Lemmy)
 };
 
 } // namespace quokka

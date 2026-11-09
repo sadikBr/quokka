@@ -1,7 +1,7 @@
 #pragma once
 
 #include "community.h"
-#include "redditclient.h"
+#include "apiclient.h"
 
 #include <QAbstractListModel>
 #include <QPointer>

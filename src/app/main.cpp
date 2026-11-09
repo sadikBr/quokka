@@ -1,31 +1,18 @@
 #include "library.h"
 #include "networkfactory.h"
-#include "redditclient.h"
-#include "services.h"
+#include "apiclient.h"
+#include "apiinfo.h"
 
 #include <QGuiApplication>
 #include <QIcon>
 #include <QQmlApplicationEngine>
 #include <QQuickStyle>
 #include <QQuickWindow>
+#include <QSettings>
 #include <QTimer>
 #include <QtGlobal>
 
 #include <memory>
-
-namespace {
-quokka::RedditClient *g_reddit = nullptr;
-}
-
-quokka::RedditClient *services::reddit()
-{
-    return g_reddit;
-}
-
-void services::setReddit(quokka::RedditClient *client)
-{
-    g_reddit = client;
-}
 
 int main(int argc, char *argv[])
 {
@@ -41,20 +28,18 @@ int main(int argc, char *argv[])
     // One style everywhere; Theme.qml supplies the colours.
     QQuickStyle::setStyle(QStringLiteral("Material"));
 
-    NetworkFactory networkFactory(quokka::RedditClient::defaultUserAgent());
+    NetworkFactory networkFactory(quokka::ApiClient::defaultUserAgent());
 
-    // QUOKKA_FIXTURES=<dir> serves recorded JSON instead of hitting Reddit (offline UI work).
-    std::unique_ptr<quokka::Transport> transport;
-    const QString fixtures = qEnvironmentVariable("QUOKKA_FIXTURES");
-    QObject apiNamOwner;
-    if (!fixtures.isEmpty()) {
-        transport = std::make_unique<quokka::FixtureTransport>(fixtures);
-    } else {
-        transport = std::make_unique<quokka::PublicJsonTransport>(
-            networkFactory.create(&apiNamOwner), quokka::RedditClient::defaultUserAgent());
-    }
-    quokka::RedditClient reddit(std::move(transport));
-    services::setReddit(&reddit);
+    // Content source: a Lemmy server (default lemmy.world, changeable in the app).
+    // QUOKKA_BACKEND=reddit uses Reddit's public JSON instead (Reddit now refuses anonymous
+    // access, so this only helps for development). QUOKKA_FIXTURES=<dir> serves recorded JSON
+    // instead of using the network (offline UI work, CI screenshots).
+    ApiInfo api(&networkFactory, qEnvironmentVariable("QUOKKA_FIXTURES"));
+    if (qEnvironmentVariable("QUOKKA_BACKEND") == QLatin1String("reddit"))
+        api.useReddit();
+    else
+        api.useLemmy(ApiInfo::normalizeHost(QSettings().value(QStringLiteral("lemmy/instance"),
+                                                             QStringLiteral("lemmy.world")).toString()));
 
     Library library;
     Library::setInstance(&library);
@@ -88,7 +73,5 @@ int main(int argc, char *argv[])
         });
     }
 
-    const int rc = app.exec();
-    services::setReddit(nullptr);
-    return rc;
+    return app.exec();
 }

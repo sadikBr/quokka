@@ -33,6 +33,9 @@ struct UserAccount
     qint64 totalKarma = 0;
     qint64 createdUtc = 0;
     bool suspended = false;
+    bool hasKarma = true;   // Reddit has karma; Lemmy has post/comment counts instead
+    qint64 postCount = -1;
+    qint64 commentCount = -1;
 };
 
 } // namespace quokka
