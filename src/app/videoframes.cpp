@@ -84,24 +84,29 @@ void VideoFrames::start(const QString &videoUrl)
     auto *sink = new QVideoSink(player);
     player->setVideoSink(sink);   // no audio output: plays silently
     auto skipped = std::make_shared<int>(0);
-    QPointer<QMediaPlayer> guard(player);
 
-    connect(sink, &QVideoSink::videoFrameChanged, player, [this, player, videoUrl, skipped](const QVideoFrame &frame) {
-        if (!m_running.contains(videoUrl) || !frame.isValid())
+    connect(sink, &QVideoSink::videoFrameChanged, player, [this, player, sink, videoUrl, skipped](const QVideoFrame &frame) {
+        if (!m_running.contains(videoUrl) || !frame.isValid() || player->property("quokkaDone").toBool())
             return;
         QImage img = frame.toImage();
         if (img.isNull())
             return;
         if (brightness(img) < 18 && ++*skipped < kMaxFramesToSkip)
             return; // a dark intro: wait for something to see
+        // Got one: stop listening, and leave the player alone until this signal is over
+        // (stopping or deleting a media player from inside its own frame signal can crash).
+        player->setProperty("quokkaDone", true);
+        QObject::disconnect(sink, nullptr, player, nullptr);
         if (img.width() > kWidth)
             img = img.scaledToWidth(kWidth, Qt::SmoothTransformation);
         QDir().mkpath(NetworkFactory::frameDirectory());
         const bool ok = img.convertToFormat(QImage::Format_RGB32).save(framePath(videoUrl), "JPG", 82);
-        finish(player, videoUrl, ok);
+        QMetaObject::invokeMethod(this, [this, player, videoUrl, ok] { finish(player, videoUrl, ok); },
+                                  Qt::QueuedConnection);
     });
     connect(player, &QMediaPlayer::errorOccurred, player, [this, player, videoUrl] {
-        finish(player, videoUrl, false);
+        QMetaObject::invokeMethod(this, [this, player, videoUrl] { finish(player, videoUrl, false); },
+                                  Qt::QueuedConnection);
     });
     QTimer::singleShot(kTimeoutMs, player, [this, player, videoUrl] { finish(player, videoUrl, false); });
 

@@ -27,8 +27,9 @@ public:
     static MediaProbe *instance();
 
     // Calls `done(alive)` once some link in `urls` is known to work (true) or all are dead
-    // (false). Links that can't be checked directly (empty, video pages needing a lookup) count
-    // as working. Called back on this object's thread; `context` going away cancels the call.
+    // (false), always later from the event loop, never from inside check() or a network signal.
+    // When a link is already known to work (or can't be checked: video pages needing a lookup)
+    // nothing is called. `context` going away cancels the call.
     void check(const QStringList &urls, QObject *context, std::function<void(bool alive)> done);
 
     State state(const QString &url) const;

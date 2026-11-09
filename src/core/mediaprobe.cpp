@@ -94,15 +94,18 @@ void MediaProbe::check(const QStringList &urls, QObject *context, std::function<
     // Already decided?
     bool allDead = !urls.isEmpty();
     for (const QString &u : urls) {
-        if (uncheckable(u) || state(u) == State::Alive) {
-            done(true);
-            return;
-        }
+        if (uncheckable(u) || state(u) == State::Alive)
+            return; // works (or can't be checked): nothing to do
         if (state(u) != State::Dead)
             allDead = false;
     }
-    if (allDead || urls.isEmpty()) {
-        done(!allDead);
+    if (urls.isEmpty())
+        return;
+    if (allDead) {
+        // Known dead: answer once the caller has finished what it's doing.
+        QPointer<QObject> ctx(context);
+        QMetaObject::invokeMethod(this, [ctx, done = std::move(done)] { if (ctx) done(false); },
+                                  Qt::QueuedConnection);
         return;
     }
     m_waiters.append({urls, context, std::move(done)});
@@ -144,7 +147,11 @@ void MediaProbe::probe(const QString &url)
         } else {
             settle(url, looksLikeMedia(status, reply->header(QNetworkRequest::ContentTypeHeader).toByteArray()));
         }
-        reply->abort();
+        // Stop the download, but not from inside the reply's own signal, and never once it has
+        // finished (Qt warns "must only be called once" and can misbehave).
+        if (!finished)
+            QMetaObject::invokeMethod(reply, [reply] { if (!reply->isFinished()) reply->abort(); },
+                                      Qt::QueuedConnection);
     };
     connect(reply, &QNetworkReply::metaDataChanged, this, [decide] { decide(false); });
     connect(reply, &QNetworkReply::finished, this, [this, reply, url, decide] {
@@ -158,21 +165,31 @@ void MediaProbe::probe(const QString &url)
 void MediaProbe::settle(const QString &url, bool alive)
 {
     alive ? markAlive(url) : markDead(url);
-    // Answer every waiter whose fate is now known.
-    for (int i = m_waiters.size() - 1; i >= 0; --i) {
-        const Waiter &w = m_waiters.at(i);
+    // Answer every waiter whose fate is now known, but later: never from inside a network
+    // signal (answers may remove posts from lists, which deletes their delegates).
+    QList<Waiter> ready;
+    for (int i = int(m_waiters.size()) - 1; i >= 0; --i) {
         bool anyAlive = false, allDead = true;
-        for (const QString &u : w.urls) {
+        for (const QString &u : m_waiters.at(i).urls) {
             const State s = state(u);
             anyAlive = anyAlive || s == State::Alive;
             allDead = allDead && s == State::Dead;
         }
-        if (!anyAlive && !allDead)
-            continue;
-        Waiter done = m_waiters.takeAt(i);
-        if (done.context)
-            done.done(anyAlive);
+        if (anyAlive || allDead)
+            ready.append(m_waiters.takeAt(i));
     }
+    if (ready.isEmpty())
+        return;
+    QMetaObject::invokeMethod(this, [this, ready] {
+        for (const Waiter &w : ready) {
+            if (!w.context)
+                continue;
+            bool anyAlive = false;
+            for (const QString &u : w.urls)
+                anyAlive = anyAlive || state(u) == State::Alive;
+            w.done(anyAlive);
+        }
+    }, Qt::QueuedConnection);
 }
 
 } // namespace quokka
