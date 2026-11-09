@@ -22,6 +22,7 @@ Page {
         userName: page.userName
         sort: "new"
         showNsfw: AppSettings.showNsfw
+        hideBroken: AppSettings.hideBrokenMedia
         nsfwOnly: AppSettings.showNsfw && AppSettings.nsfwOnly
         enabled: page.tab === 0 || posts.count > 0
     }

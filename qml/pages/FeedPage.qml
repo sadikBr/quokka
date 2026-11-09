@@ -49,6 +49,7 @@ Page {
                           : page.feedKey
         sort: AppSettings.defaultSort
         showNsfw: AppSettings.showNsfw
+        hideBroken: AppSettings.hideBrokenMedia
         nsfwOnly: AppSettings.showNsfw && AppSettings.nsfwOnly
     }
 

@@ -8,6 +8,7 @@ const QString kDefaultSort = QStringLiteral("browse/defaultSort");
 const QString kCompact = QStringLiteral("ui/compactCards");
 const QString kDimVisited = QStringLiteral("ui/dimVisited");
 const QString kNsfwOnly = QStringLiteral("content/nsfwOnly");
+const QString kHideBroken = QStringLiteral("media/hideBroken");
 const QString kCoverNsfw = QStringLiteral("content/coverNsfw");
 const QString kScrollSpeed = QStringLiteral("ui/scrollSpeed");
 const QString kVideoMuted = QStringLiteral("media/videoMuted");
@@ -187,4 +188,17 @@ void AppSettings::setNsfwOnly(bool on)
         return;
     m_settings.setValue(kNsfwOnly, on);
     emit nsfwOnlyChanged();
+}
+
+bool AppSettings::hideBrokenMedia() const
+{
+    return m_settings.value(kHideBroken, true).toBool();
+}
+
+void AppSettings::setHideBrokenMedia(bool on)
+{
+    if (on == hideBrokenMedia())
+        return;
+    m_settings.setValue(kHideBroken, on);
+    emit hideBrokenMediaChanged();
 }

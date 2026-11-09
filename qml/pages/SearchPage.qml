@@ -24,6 +24,7 @@ Page {
         sort: "relevance"
         timeRange: "all"
         showNsfw: AppSettings.showNsfw
+        hideBroken: AppSettings.hideBrokenMedia
         nsfwOnly: AppSettings.showNsfw && AppSettings.nsfwOnly
     }
     SubredditListModel {

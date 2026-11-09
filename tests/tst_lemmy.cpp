@@ -2,6 +2,7 @@
 #include "backend.h"
 #include "commenttreemodel.h"
 #include "postlistmodel.h"
+#include "mediaprobe.h"
 #include "lemmyparsers.h"
 #include "markdown.h"
 #include "medialinks.h"
@@ -428,6 +429,29 @@ private slots:
         QVERIFY(nsfw.count() < total);
         for (int i = 0; i < nsfw.count(); ++i)
             QVERIFY(nsfw.get(i).value("nsfw").toBool());
+    }
+
+    void brokenMedia()
+    {
+        using quokka::MediaProbe;
+        QVERIFY(MediaProbe::looksLikeMedia(200, "image/jpeg"));
+        QVERIFY(MediaProbe::looksLikeMedia(206, "video/mp4"));
+        QVERIFY(MediaProbe::looksLikeMedia(200, "application/vnd.apple.mpegurl"));
+        QVERIFY(!MediaProbe::looksLikeMedia(403, "video/mp4"));
+        QVERIFY(!MediaProbe::looksLikeMedia(404, "text/html"));
+        QVERIFY(!MediaProbe::looksLikeMedia(200, "text/html; charset=utf-8")); // an error page
+
+        // A post whose only media is known dead never reaches the list.
+        const QString dead = QStringLiteral("https://files.example/cat.mp4");
+        MediaProbe::instance()->markDead(dead);
+        PostListModel m;
+        m.setFeed("all");
+        m.setShowNsfw(true);
+        m.setHideBroken(true);
+        QTRY_VERIFY(m.count() > 0 && !m.loading());
+        for (int i = 0; i < m.count(); ++i)
+            QVERIFY(m.get(i).value("url").toString() != dead);
+        MediaProbe::instance()->markAlive(dead); // don't leave it in the settings
     }
 
     void markdownRendering()

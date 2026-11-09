@@ -33,6 +33,7 @@ Page {
         searchQuery: page.params.searchQuery || ""
         userName: page.params.userName || ""
         showNsfw: AppSettings.showNsfw
+        hideBroken: AppSettings.hideBrokenMedia
         nsfwOnly: AppSettings.showNsfw && AppSettings.nsfwOnly
     }
 
@@ -150,6 +151,22 @@ Page {
                             active: cell.shown
                             showControls: false
                             onTapped: togglePlay()
+                            // Every link failed: have it checked (dead links are dropped from the
+                            // list, the next post slides in) and move on either way.
+                            onFailedChanged: {
+                                if (!failed)
+                                    return
+                                const urls = [String(cell.modelData.url)].concat(
+                                    (cell.modelData.alternates || []).map(a => String(a.url)))
+                                posts.reportBroken(slot.model.postId, urls)
+                                if (cell.shown)
+                                    skipTimer.restart()
+                            }
+                            Timer {
+                                id: skipTimer
+                                interval: 2000
+                                onTriggered: if (cell.shown && pager.currentIndex === slot.index) page.next()
+                            }
                         }
                     }
                     // Paused: a big play mark (tap again to continue).

@@ -21,6 +21,8 @@ class AppSettings : public QObject
     Q_PROPERTY(bool dimVisited READ dimVisited WRITE setDimVisited NOTIFY dimVisitedChanged)
     // Only NSFW posts and communities (when NSFW is shown at all).
     Q_PROPERTY(bool nsfwOnly READ nsfwOnly WRITE setNsfwOnly NOTIFY nsfwOnlyChanged)
+    // Check media links in the background and hide posts whose media no longer loads.
+    Q_PROPERTY(bool hideBrokenMedia READ hideBrokenMedia WRITE setHideBrokenMedia NOTIFY hideBrokenMediaChanged)
     // Cover NSFW pictures and videos until tapped (when NSFW posts are shown at all).
     Q_PROPERTY(bool coverNsfw READ coverNsfw WRITE setCoverNsfw NOTIFY coverNsfwChanged)
     // Multiplier for mouse-wheel / touchpad scrolling distance (1 = normal).
@@ -52,6 +54,8 @@ public:
     void setDimVisited(bool dim);
     bool nsfwOnly() const;
     void setNsfwOnly(bool on);
+    bool hideBrokenMedia() const;
+    void setHideBrokenMedia(bool on);
     bool coverNsfw() const;
     void setCoverNsfw(bool cover);
     bool autoplayFeed() const;
@@ -73,6 +77,7 @@ signals:
     void compactCardsChanged();
     void dimVisitedChanged();
     void coverNsfwChanged();
+    void hideBrokenMediaChanged();
     void nsfwOnlyChanged();
     void scrollSpeedChanged();
     void autoplayFeedChanged();

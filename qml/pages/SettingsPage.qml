@@ -236,6 +236,12 @@ Page {
                     onToggled: (on) => AppSettings.coverNsfw = on
                 }
                 SwitchRow {
+                    text: qsTr("Hide posts whose media won't load")
+                    detail: qsTr("Checks each picture and video link in the background (about 1 KB each) and hides posts whose links are dead. Dead links are remembered for a week.")
+                    checked: AppSettings.hideBrokenMedia
+                    onToggled: (on) => AppSettings.hideBrokenMedia = on
+                }
+                SwitchRow {
                     text: qsTr("Play videos and GIFs in the feed")
                     detail: qsTr("Muted, while they're in the middle of the screen. Tap to watch with sound.")
                     checked: AppSettings.autoplayFeed

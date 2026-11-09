@@ -30,6 +30,9 @@ class PostListModel : public QAbstractListModel
     // Only posts with pictures or videos (the swipe-through media feed).
     Q_PROPERTY(bool mediaOnly READ mediaOnly WRITE setMediaOnly NOTIFY mediaOnlyChanged)
     // Only posts with a video or an animated picture (GIF), not plain photos.
+    // Check media links in the background and drop posts (or gallery items) whose media is
+    // dead; links found dead before are dropped right away (see quokka::MediaProbe).
+    Q_PROPERTY(bool hideBroken READ hideBroken WRITE setHideBroken NOTIFY hideBrokenChanged)
     Q_PROPERTY(bool animatedOnly READ animatedOnly WRITE setAnimatedOnly NOTIFY animatedOnlyChanged)
     Q_PROPERTY(bool loading READ loading NOTIFY loadingChanged)
     Q_PROPERTY(bool refreshing READ refreshing NOTIFY loadingChanged)
@@ -93,6 +96,13 @@ public:
     void setShowNsfw(bool show);
     bool mediaOnly() const { return m_mediaOnly; }
     void setMediaOnly(bool on);
+    bool hideBroken() const { return m_hideBroken; }
+    void setHideBroken(bool on);
+    // Media that turned out not to load after all (e.g. a video that won't play): remember the
+    // links as dead and drop that media from the post (the post itself if nothing is left).
+    Q_INVOKABLE void reportBroken(const QString &postId, const QStringList &urls);
+    // Each media item of a post as its alternative links, first the item's own URL.
+    static QList<QStringList> mediaGroups(const quokka::Post &post);
     bool animatedOnly() const { return m_animatedOnly; }
     void setAnimatedOnly(bool on);
     static bool isAnimated(const quokka::Post &post);
@@ -126,6 +136,7 @@ signals:
     void nsfwOnlyChanged();
     void mediaOnlyChanged();
     void animatedOnlyChanged();
+    void hideBrokenChanged();
     void searchQueryChanged();
     void userNameChanged();
     void enabledChanged();
@@ -141,6 +152,11 @@ private:
 
     bool m_mediaOnly = false;
     bool m_animatedOnly = false;
+    bool m_hideBroken = false;
+    // Drops known-dead media from `posts` (and posts left without any).
+    void dropKnownDead(QList<quokka::Post> &posts) const;
+    void probe(const QList<quokka::Post> &posts);
+    void dropMedia(const QString &postId, const QString &itemUrl);
     QString m_feed = QStringLiteral("popular");
     QString m_sort = QStringLiteral("hot");
     QString m_timeRange = QStringLiteral("day");

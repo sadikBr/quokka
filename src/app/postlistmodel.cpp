@@ -1,5 +1,7 @@
 #include "postlistmodel.h"
 
+#include "mediaprobe.h"
+
 #include <QUrl>
 
 #include "parsers.h"
@@ -196,6 +198,122 @@ void PostListModel::setMediaOnly(bool on)
     scheduleReload();
 }
 
+void PostListModel::setHideBroken(bool on)
+{
+    if (on == m_hideBroken)
+        return;
+    m_hideBroken = on;
+    emit hideBrokenChanged();
+    scheduleReload();
+}
+
+QList<QStringList> PostListModel::mediaGroups(const Post &post)
+{
+    QList<QStringList> groups;
+    if (post.kind == Post::Kind::Image) {
+        // The card shows the preview; the original and the thumbnail are fallbacks of each other.
+        QStringList g;
+        const QString own = post.media.isEmpty() ? post.previewUrl : post.media.first().url;
+        for (const QString &u : {own, post.previewUrl, post.previewFallbackUrl})
+            if (!u.isEmpty() && !g.contains(u))
+                g.append(u);
+        if (!g.isEmpty())
+            groups.append(g);
+        return groups;
+    }
+    if (post.kind != Post::Kind::Video && post.kind != Post::Kind::Gallery)
+        return groups;
+    for (const quokka::MediaItem &m : post.media) {
+        QStringList g{m.url};
+        if (!m.fallbackUrl.isEmpty())
+            g.append(m.fallbackUrl);
+        g.append(m.alternates);
+        groups.append(g);
+    }
+    return groups;
+}
+
+void PostListModel::dropKnownDead(QList<Post> &posts) const
+{
+    auto *probe = quokka::MediaProbe::instance();
+    auto dead = [probe](const QStringList &g) {
+        for (const QString &u : g)
+            if (probe->state(u) != quokka::MediaProbe::State::Dead)
+                return false;
+        return true;
+    };
+    for (int i = int(posts.size()) - 1; i >= 0; --i) {
+        Post &p = posts[i];
+        const QList<QStringList> groups = mediaGroups(p);
+        if (groups.isEmpty())
+            continue;
+        if (p.kind == Post::Kind::Gallery) {
+            p.media.removeIf([&](const quokka::MediaItem &m) {
+                for (const QStringList &g : groups)
+                    if (g.first() == m.url)
+                        return dead(g);
+                return false;
+            });
+            p.galleryCount = int(p.media.size());
+            if (p.media.isEmpty())
+                posts.removeAt(i);
+        } else if (dead(groups.first())) {
+            posts.removeAt(i);
+        }
+    }
+}
+
+void PostListModel::probe(const QList<Post> &posts)
+{
+    for (const Post &p : posts) {
+        for (const QStringList &g : mediaGroups(p)) {
+            const QString id = p.id;
+            const QString item = g.first();
+            quokka::MediaProbe::instance()->check(g, this, [this, id, item](bool alive) {
+                if (!alive && m_hideBroken)
+                    dropMedia(id, item);
+            });
+        }
+    }
+}
+
+void PostListModel::dropMedia(const QString &postId, const QString &itemUrl)
+{
+    for (int row = 0; row < m_posts.size(); ++row) {
+        Post &p = m_posts[row];
+        if (p.id != postId)
+            continue;
+        if (p.kind == Post::Kind::Gallery && p.media.size() > 1) {
+            p.media.removeIf([&](const quokka::MediaItem &m) { return m.url == itemUrl; });
+            p.galleryCount = int(p.media.size());
+            if (!p.media.isEmpty()) {
+                emit dataChanged(index(row), index(row));
+                return;
+            }
+        }
+        beginRemoveRows({}, row, row);
+        m_posts.removeAt(row);
+        endRemoveRows();
+        emit countChanged();
+        return;
+    }
+}
+
+void PostListModel::reportBroken(const QString &postId, const QStringList &urls)
+{
+    // Check again rather than trusting the failure: a dropped connection isn't a dead link.
+    auto *probe = quokka::MediaProbe::instance();
+    for (const QString &u : urls)
+        probe->forget(u);
+    if (urls.isEmpty())
+        return;
+    const QString item = urls.first();
+    probe->check(urls, this, [this, postId, item](bool alive) {
+        if (!alive)
+            dropMedia(postId, item);
+    });
+}
+
 void PostListModel::setAnimatedOnly(bool on)
 {
     if (on == m_animatedOnly)
@@ -356,6 +474,8 @@ void PostListModel::request(bool reset)
             fresh.append(p);
         }
 
+        if (m_hideBroken)
+            dropKnownDead(fresh);
         if (reset) {
             beginResetModel();
             m_posts = fresh;
@@ -365,6 +485,8 @@ void PostListModel::request(bool reset)
             m_posts.append(fresh);
             endInsertRows();
         }
+        if (m_hideBroken)
+            probe(fresh);
         m_after = listing.after;
         const bool more = !m_after.isEmpty();
         if (more != m_hasMore) {
