@@ -29,6 +29,8 @@ class PostListModel : public QAbstractListModel
     Q_PROPERTY(bool nsfwOnly READ nsfwOnly WRITE setNsfwOnly NOTIFY nsfwOnlyChanged)
     // Only posts with pictures or videos (the swipe-through media feed).
     Q_PROPERTY(bool mediaOnly READ mediaOnly WRITE setMediaOnly NOTIFY mediaOnlyChanged)
+    // Only posts with a video or an animated picture (GIF), not plain photos.
+    Q_PROPERTY(bool animatedOnly READ animatedOnly WRITE setAnimatedOnly NOTIFY animatedOnlyChanged)
     Q_PROPERTY(bool loading READ loading NOTIFY loadingChanged)
     Q_PROPERTY(bool refreshing READ refreshing NOTIFY loadingChanged)
     Q_PROPERTY(bool hasMore READ hasMore NOTIFY hasMoreChanged)
@@ -91,6 +93,9 @@ public:
     void setShowNsfw(bool show);
     bool mediaOnly() const { return m_mediaOnly; }
     void setMediaOnly(bool on);
+    bool animatedOnly() const { return m_animatedOnly; }
+    void setAnimatedOnly(bool on);
+    static bool isAnimated(const quokka::Post &post);
     QString searchQuery() const { return m_search; }
     void setSearchQuery(const QString &q);
     QString userName() const { return m_user; }
@@ -120,6 +125,7 @@ signals:
     void showNsfwChanged();
     void nsfwOnlyChanged();
     void mediaOnlyChanged();
+    void animatedOnlyChanged();
     void searchQueryChanged();
     void userNameChanged();
     void enabledChanged();
@@ -134,6 +140,7 @@ private:
     void scheduleReload();
 
     bool m_mediaOnly = false;
+    bool m_animatedOnly = false;
     QString m_feed = QStringLiteral("popular");
     QString m_sort = QStringLiteral("hot");
     QString m_timeRange = QStringLiteral("day");

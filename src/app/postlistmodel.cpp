@@ -1,5 +1,7 @@
 #include "postlistmodel.h"
 
+#include <QUrl>
+
 #include "parsers.h"
 #include "postmap.h"
 #include "backend.h"
@@ -194,6 +196,25 @@ void PostListModel::setMediaOnly(bool on)
     scheduleReload();
 }
 
+void PostListModel::setAnimatedOnly(bool on)
+{
+    if (on == m_animatedOnly)
+        return;
+    m_animatedOnly = on;
+    emit animatedOnlyChanged();
+    scheduleReload();
+}
+
+bool PostListModel::isAnimated(const Post &post)
+{
+    if (post.kind == Post::Kind::Video)
+        return true;
+    for (const quokka::MediaItem &m : post.media)
+        if (m.video || m.animated)
+            return true;
+    return QUrl(post.url).path().endsWith(QLatin1String(".gif"), Qt::CaseInsensitive);
+}
+
 void PostListModel::setSearchQuery(const QString &q)
 {
     const QString v = q.trimmed();
@@ -324,6 +345,8 @@ void PostListModel::request(bool reset)
                 continue;
             if (m_nsfwOnly && !p.nsfw)
                 continue;
+            if (m_animatedOnly && !isAnimated(p))
+                continue;
             if (m_mediaOnly && p.kind != Post::Kind::Image && p.kind != Post::Kind::Gallery
                 && p.kind != Post::Kind::Video)
                 continue;
@@ -354,7 +377,7 @@ void PostListModel::request(bool reset)
         // Skip ahead when a whole page was filtered out (e.g. NSFW), but not forever.
         m_emptyPages = fresh.isEmpty() ? m_emptyPages + 1 : 0;
         // Media-only lists skip text and link posts, so a page can easily come back empty.
-        if (fresh.isEmpty() && more && m_emptyPages < ((m_mediaOnly || m_nsfwOnly) ? 4 * kMaxEmptyPagesInARow : kMaxEmptyPagesInARow))
+        if (fresh.isEmpty() && more && m_emptyPages < ((m_mediaOnly || m_nsfwOnly || m_animatedOnly) ? 4 * kMaxEmptyPagesInARow : kMaxEmptyPagesInARow))
             request(false);
     });
     connect(reply, &quokka::ApiReply::failed, this, [this, reply](const QString &message, int) {

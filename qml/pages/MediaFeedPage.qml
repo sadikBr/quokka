@@ -11,6 +11,13 @@ Page {
     readonly property bool active: StackView.status === StackView.Active
     readonly property bool immersive: true   // dark system bars (see Main)
     property bool chrome: true               // overlays shown (tap a picture to hide them)
+    // Only videos and GIFs (no photos); remembered between visits.
+    property bool videosOnly: AppSettings.value("media/feedVideosOnly", false) === true
+                              || AppSettings.value("media/feedVideosOnly", false) === "true"
+    onVideosOnlyChanged: {
+        AppSettings.setValue("media/feedVideosOnly", videosOnly)
+        pager.currentIndex = -1   // the list reloads: start again at the top
+    }
 
     function back() { page.StackView.view.pop() }
 
@@ -19,6 +26,7 @@ Page {
     PostListModel {
         id: posts
         mediaOnly: true
+        animatedOnly: page.videosOnly
         feed: page.params.feed || "all"
         sort: page.params.sort || AppSettings.defaultSort
         timeRange: page.params.timeRange || "day"
@@ -36,6 +44,7 @@ Page {
     Shortcut { sequences: ["Right", "L"]; enabled: page.active; onActivated: pager.currentItem && pager.currentItem.step(1) }
     Shortcut { sequences: ["Left", "H"]; enabled: page.active; onActivated: pager.currentItem && pager.currentItem.step(-1) }
     Shortcut { sequences: ["Space"]; enabled: page.active; onActivated: pager.currentItem && pager.currentItem.togglePlay() }
+    Shortcut { sequences: ["V"]; enabled: page.active; onActivated: page.videosOnly = !page.videosOnly }
     Shortcut { sequences: ["M"]; enabled: page.active; onActivated: AppSettings.videoMuted = !AppSettings.videoMuted }
     Shortcut { sequences: ["C"]; enabled: page.active && posts.count > 0; onActivated: Nav.openPost(posts.get(pager.currentIndex)) }
 
@@ -53,7 +62,7 @@ Page {
         onCurrentIndexChanged: if (currentIndex >= posts.count - 4) posts.loadMore()
         onCountChanged: {
             // Posts arrive after the page opens: start at the first one.
-            if (count > 0 && currentIndex < 0)
+            if (count > 0 && (currentIndex < 0 || currentIndex >= count))
                 currentIndex = 0
             if (count > 0 && currentIndex >= count - 4)
                 posts.loadMore()
@@ -69,7 +78,10 @@ Page {
             // Load the current post and its neighbours only.
             readonly property bool near: Math.abs(index - pager.currentIndex) <= 1
             readonly property var items: {
-                const m = model.media || []
+                let m = model.media || []
+                // Videos mode: a gallery shows only its videos and GIFs.
+                if (page.videosOnly)
+                    m = m.filter(x => x.video || x.animated || /\.(gif|gifv|mp4|webm|m3u8)(\?|$)/i.test(x.url))
                 if (m.length > 0) return m
                 return model.previewUrl ? [{ url: model.previewUrl, fallbackUrl: model.previewFallbackUrl }] : []
             }
@@ -118,7 +130,8 @@ Page {
                         ZoomableImage {
                             source: cell.modelData.url
                             fallbackSource: cell.modelData.fallbackUrl || ""
-                            placeholderSource: cell.index === 0 ? (slot.model.previewUrl || "") : ""
+                            placeholderSource: slot.model.media && slot.model.media.length > 0
+                                               && slot.model.media[0].url === cell.modelData.url ? (slot.model.previewUrl || "") : ""
                             animated: /\.gif(\?|$)/i.test(cell.modelData.url)
                             onTapped: page.chrome = !page.chrome
                         }
@@ -129,7 +142,11 @@ Page {
                             source: cell.modelData.url
                             resolveKind: cell.modelData.resolve || ""
                             alternates: cell.modelData.alternates || []
-                            poster: cell.modelData.poster || (cell.index === 0 ? (slot.model.previewUrl || "") : "")
+                            // The post's thumbnail belongs to its own first item; else a grabbed first frame.
+                            poster: cell.modelData.poster
+                                    || (slot.model.media && slot.model.media.length > 0
+                                        && slot.model.media[0].url === cell.modelData.url ? (slot.model.previewUrl || "") : "")
+                                    || VideoFrames.frameFor(String(cell.modelData.url))
                             active: cell.shown
                             showControls: false
                             onTapped: togglePlay()
@@ -324,7 +341,46 @@ Page {
                 font.pixelSize: Theme.fontTitle
                 font.weight: Font.DemiBold
                 elide: Text.ElideRight
-                width: Math.min(implicitWidth, page.width - 90)
+                width: Math.min(implicitWidth, page.width - 230)
+            }
+        }
+    }
+
+    // Photos and videos, or videos (and GIFs) only.
+    Rectangle {
+        visible: page.chrome
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.margins: 14
+        height: 36
+        width: modeRow.implicitWidth + 8
+        radius: 18
+        color: "#66000000"
+        Row {
+            id: modeRow
+            anchors.centerIn: parent
+            spacing: 2
+            Repeater {
+                model: [qsTr("All"), qsTr("Videos")]
+                Rectangle {
+                    required property int index
+                    required property string modelData
+                    readonly property bool selected: (index === 1) === page.videosOnly
+                    width: modeText.implicitWidth + 24
+                    height: 28
+                    radius: 14
+                    color: selected ? "white" : "transparent"
+                    Text {
+                        id: modeText
+                        anchors.centerIn: parent
+                        text: parent.modelData
+                        color: parent.selected ? "#141418" : "white"
+                        font.pixelSize: Theme.fontSmall + 1
+                        font.weight: Font.DemiBold
+                    }
+                    TapHandler { onTapped: page.videosOnly = (parent.index === 1) }
+                    HoverHandler { cursorShape: Qt.PointingHandCursor }
+                }
             }
         }
     }
@@ -339,7 +395,8 @@ Page {
         visible: posts.count === 0 && !posts.loading
         horizontalAlignment: Text.AlignHCenter
         wrapMode: Text.Wrap
-        text: posts.error !== "" ? posts.error : qsTr("No pictures or videos here.")
+        text: posts.error !== "" ? posts.error
+            : page.videosOnly ? qsTr("No videos or GIFs here.") : qsTr("No pictures or videos here.")
         color: "#CCFFFFFF"
         font.pixelSize: Theme.fontBody
     }

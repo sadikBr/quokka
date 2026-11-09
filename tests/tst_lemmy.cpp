@@ -410,6 +410,16 @@ private slots:
                     || kind == PostListModel::VideoPost);
         }
 
+        PostListModel videos;
+        videos.setFeed("all");
+        videos.setShowNsfw(true);
+        videos.setMediaOnly(true);
+        videos.setAnimatedOnly(true);
+        QTRY_VERIFY(videos.count() > 0 && !videos.loading());
+        QVERIFY(videos.count() < media.count());
+        for (int i = 0; i < videos.count(); ++i)
+            QCOMPARE(videos.get(i).value("kind").toInt(), int(PostListModel::VideoPost));
+
         PostListModel nsfw;
         nsfw.setFeed("all");
         nsfw.setShowNsfw(true);
