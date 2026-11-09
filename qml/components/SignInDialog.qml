@@ -62,6 +62,15 @@ Popup {
             }
         }
 
+        Text {
+            Layout.fillWidth: true
+            text: qsTr("Use the account you created on %1. Accounts from other Lemmy servers work only "
+                       + "there: switch server in the menu first.").arg(Api.instance)
+            color: Theme.textMuted
+            font.pixelSize: Theme.fontSmall
+            wrapMode: Text.Wrap
+        }
+
         Field {
             id: user
             placeholder: qsTr("Username or email")

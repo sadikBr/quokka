@@ -58,6 +58,10 @@ public:
     // Turns the account's own NSFW preference on or off (affects search on the server).
     Q_INVOKABLE void setShowNsfw(bool show);
 
+    // What to send as "username_or_email": accepts "name", "u/name", "@name@server" and
+    // "name@server" (on that server), and emails. Sets *otherServer for a handle on another server.
+    static QString normalizeLogin(const QString &input, const QString &instance, QString *otherServer);
+
     Q_INVOKABLE bool isFollowing(const QString &community) const;
     // communityId may be 0; it is then looked up first.
     Q_INVOKABLE void toggleFollow(const QString &community, qint64 communityId = 0);

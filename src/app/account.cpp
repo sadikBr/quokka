@@ -125,12 +125,19 @@ void Account::signIn(const QString &user, const QString &password, const QString
         setError(tr("Enter your username (or email) and password."));
         return;
     }
+    QString otherServer;
+    const QString login = normalizeLogin(user, m_instance, &otherServer);
+    if (!otherServer.isEmpty()) {
+        setError(tr("That account lives on %1. Switch to %1 in the menu (Server), then sign in there.")
+                     .arg(otherServer));
+        return;
+    }
     // Sign in fresh: an old token would be sent along otherwise.
     if (m_client)
         m_client->setAuthToken({});
     m_error.clear();
     beginBusy();
-    quokka::ApiReply *reply = backend->login(user, password, totp);
+    quokka::ApiReply *reply = backend->login(login, password, totp);
     connect(reply, &quokka::ApiReply::finished, this, [this](const QByteArray &body) {
         endBusy();
         auto *backend = services::backend();
@@ -151,8 +158,36 @@ void Account::signIn(const QString &user, const QString &password, const QString
         applyToken();
         if (code == QLatin1String("missing_totp_token") || code == QLatin1String("incorrect_totp_token"))
             m_needsTotp = true;
+        if (code == QLatin1String("incorrect_login")) {
+            setError(tr("Wrong username or password for %1. Each Lemmy server has its own accounts: if you "
+                        "signed up somewhere else, switch to that server in the menu first.").arg(m_instance));
+            return;
+        }
         setError(message);
     });
+}
+
+QString Account::normalizeLogin(const QString &input, const QString &instance, QString *otherServer)
+{
+    QString s = input.trimmed();
+    bool handle = false; // written as a Lemmy handle rather than an email address
+    for (const auto prefix : {"/u/", "u/", "@"}) {
+        if (s.startsWith(QLatin1String(prefix), Qt::CaseInsensitive)) {
+            s = s.mid(int(qstrlen(prefix)));
+            handle = true;
+            break;
+        }
+    }
+    const int at = s.indexOf(QLatin1Char('@'));
+    if (at > 0) {
+        const QString host = s.mid(at + 1).toLower();
+        if (host == instance.toLower())
+            return s.left(at); // "name@lemmy.world" on lemmy.world: just the name
+        if (handle && otherServer)
+            *otherServer = host; // "@name@lemmy.ml" while on lemmy.world
+        return s;                // otherwise an email address
+    }
+    return s;
 }
 
 void Account::signOut()

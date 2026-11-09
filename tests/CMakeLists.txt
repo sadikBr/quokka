@@ -37,6 +37,14 @@ quokka_add_test(tst_lemmy tst_lemmy.cpp
 target_include_directories(tst_lemmy PRIVATE ${PROJECT_SOURCE_DIR}/src/app)
 target_link_libraries(tst_lemmy PRIVATE Qt6::Gui Qt6::Qml)
 
+quokka_add_test(tst_account tst_account.cpp
+    ${PROJECT_SOURCE_DIR}/src/app/account.cpp
+    ${PROJECT_SOURCE_DIR}/src/app/apiinfo.cpp
+    ${PROJECT_SOURCE_DIR}/src/app/networkfactory.cpp
+    ${PROJECT_SOURCE_DIR}/src/app/services.cpp)
+target_include_directories(tst_account PRIVATE ${PROJECT_SOURCE_DIR}/src/app)
+target_link_libraries(tst_account PRIVATE Qt6::Gui Qt6::Qml)
+
 quokka_add_test(tst_format tst_format.cpp ${PROJECT_SOURCE_DIR}/src/app/format.cpp)
 target_include_directories(tst_format PRIVATE ${PROJECT_SOURCE_DIR}/src/app)
 target_link_libraries(tst_format PRIVATE Qt6::Gui Qt6::Qml)
