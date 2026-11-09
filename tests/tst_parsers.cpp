@@ -107,6 +107,25 @@ private slots:
         QVERIFY(!x.videoUrl.isEmpty());
     }
 
+    void fullSizeMedia()
+    {
+        const Post &img = byId(listing, "img001");
+        QCOMPARE(img.media.size(), 1);
+        QCOMPARE(img.media[0].url, QStringLiteral("https://i.redd.it/abc.jpeg")); // original file
+        QCOMPARE(img.media[0].width, 3024);
+        QVERIFY(!img.media[0].animated);
+
+        const Post &gal = byId(listing, "gal001");
+        QCOMPARE(gal.media.size(), 1); // only one item has metadata in the fixture
+        QVERIFY(gal.media[0].url.endsWith(QLatin1String("?src")));
+        QCOMPARE(gal.media[0].width, 4000);
+
+        const Post &vid = byId(listing, "vid001");
+        QCOMPARE(vid.media.size(), 1);
+        QVERIFY(vid.media[0].animated);
+        QVERIFY(vid.videoFallbackUrl.endsWith(QLatin1String("DASH_720.mp4")));
+    }
+
     void rejectsGarbage()
     {
         QVERIFY(!parsePostListing("not json").ok);

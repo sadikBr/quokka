@@ -9,7 +9,7 @@ project(Quokka
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt6 6.8 REQUIRED COMPONENTS Core Gui Network Qml Quick QuickControls2 Svg)
+find_package(Qt6 6.8 REQUIRED COMPONENTS Core Gui Network Qml Quick QuickControls2 Svg Multimedia)
 qt_standard_project_setup(REQUIRES 6.8)
 
 option(QUOKKA_BUILD_TESTS "Build the unit tests" ON)
@@ -32,6 +32,7 @@ set(QUOKKA_QML_FILES
     qml/theme/Theme.qml
     qml/pages/FeedPage.qml
     qml/pages/PostPage.qml
+    qml/pages/MediaViewer.qml
     qml/components/Avatar.qml
     qml/components/Chip.qml
     qml/components/CommentRow.qml
@@ -48,6 +49,8 @@ set(QUOKKA_QML_FILES
     qml/components/SortBar.qml
     qml/components/SubredditPicker.qml
     qml/components/TopBar.qml
+    qml/components/VideoPlayer.qml
+    qml/components/ZoomableImage.qml
 )
 # QML files live in sub-folders for tidiness, but are served flat at the module root so they can
 # all see each other without imports.
@@ -84,6 +87,7 @@ target_link_libraries(quokka PRIVATE
     Qt6::Quick
     Qt6::QuickControls2
     Qt6::Svg
+    Qt6::Multimedia
 )
 
 set_target_properties(quokka PROPERTIES

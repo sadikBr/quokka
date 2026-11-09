@@ -16,6 +16,7 @@ class AppSettings : public QObject
     Q_PROPERTY(QString lastFeed READ lastFeed WRITE setLastFeed NOTIFY lastFeedChanged)
     Q_PROPERTY(QString defaultSort READ defaultSort WRITE setDefaultSort NOTIFY defaultSortChanged)
     Q_PROPERTY(QString commentSort READ commentSort WRITE setCommentSort NOTIFY commentSortChanged)
+    Q_PROPERTY(bool videoMuted READ videoMuted WRITE setVideoMuted NOTIFY videoMutedChanged)
 
 public:
     enum ThemeMode { System, Light, Dark };
@@ -33,6 +34,8 @@ public:
     void setDefaultSort(const QString &sort);
     QString commentSort() const;
     void setCommentSort(const QString &sort);
+    bool videoMuted() const;
+    void setVideoMuted(bool muted);
 
 signals:
     void themeModeChanged();
@@ -40,6 +43,7 @@ signals:
     void lastFeedChanged();
     void defaultSortChanged();
     void commentSortChanged();
+    void videoMutedChanged();
 
 private:
     QSettings m_settings;

@@ -22,7 +22,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y ninja-build libgl1-mesa-dev libxkbcommon-dev libxkbcommon-x11-0 \
-            libxcb-cursor0 libxcb-icccm4 libxcb-keysyms1 libxcb-shape0 libegl1 file
+            libxcb-cursor0 libxcb-icccm4 libxcb-keysyms1 libxcb-shape0 libegl1 file \
+            libpulse0 libva2 libva-drm2 libva-x11-2 libvdpau1
 
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
@@ -31,6 +32,7 @@ jobs:
           host: linux
           target: desktop
           arch: linux_gcc_64
+          modules: qtmultimedia
           cache: true
 
       - name: Configure
@@ -66,6 +68,7 @@ jobs:
         env:
           APPIMAGE_EXTRACT_AND_RUN: "1"
           QML_SOURCES_PATHS: ${{ github.workspace }}/qml
+          EXTRA_PLUGINS: multimedia
         run: |
           wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
           wget -q https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage
@@ -115,6 +118,7 @@ jobs:
           host: all_os          # Qt >= 6.7 publishes Android packages under "all_os"
           target: android
           arch: android_arm64_v8a
+          modules: qtmultimedia
           cache: true
           dir: ${{ runner.temp }}/qt-android
 

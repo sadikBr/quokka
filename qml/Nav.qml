@@ -5,6 +5,9 @@ import QtQuick
 QtObject {
     id: nav
 
+    // The application window, set by Main.qml (used for full-screen toggling).
+    property var window: null
+
     signal postRequested(var post)                       // a post map (see postmap.cpp)
     signal threadRequested(string postId, string commentId)
     signal subredditRequested(string name)

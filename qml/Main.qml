@@ -66,8 +66,14 @@ ApplicationWindow {
         PostPage {}
     }
 
+    Component {
+        id: mediaViewer
+        MediaViewer {}
+    }
+
     // `quokka <reddit link>` opens that link on start.
     Component.onCompleted: {
+        Nav.window = window
         const args = Qt.application.arguments
         for (let i = 1; i < args.length; ++i) {
             if (/^(https?:\/\/|\/?(r|u|user)\/)/.test(args[i])) {
@@ -89,10 +95,13 @@ ApplicationWindow {
             stack.push(postPage, { postId: postId, focusCommentId: commentId })
         }
         function onMediaRequested(post, index) {
-            // Full-screen viewer arrives in M3; until then open the post.
-            stack.push(postPage, { postId: post.postId, initialPost: post })
+            const fromPost = stack.currentItem && stack.currentItem.postId === post.postId
+            stack.push(mediaViewer, { post: post, startIndex: index, showCommentsButton: !fromPost })
         }
-        function onImageRequested(url) { Qt.openUrlExternally(url) }
+        function onImageRequested(url) {
+            stack.push(mediaViewer, { post: { media: [{ url: url, caption: "", animated: /\.gif/i.test(url) }] },
+                                      showCommentsButton: false })
+        }
         function onUserRequested(name) { Qt.openUrlExternally("https://www.reddit.com/user/" + name) }
     }
 

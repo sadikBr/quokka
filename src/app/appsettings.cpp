@@ -5,6 +5,7 @@ const QString kTheme = QStringLiteral("ui/themeMode");
 const QString kNsfw = QStringLiteral("content/showNsfw");
 const QString kLastFeed = QStringLiteral("browse/lastFeed");
 const QString kDefaultSort = QStringLiteral("browse/defaultSort");
+const QString kVideoMuted = QStringLiteral("media/videoMuted");
 const QString kCommentSort = QStringLiteral("browse/commentSort");
 } // namespace
 
@@ -78,4 +79,17 @@ void AppSettings::setCommentSort(const QString &sort)
         return;
     m_settings.setValue(kCommentSort, sort);
     emit commentSortChanged();
+}
+
+bool AppSettings::videoMuted() const
+{
+    return m_settings.value(kVideoMuted, false).toBool();
+}
+
+void AppSettings::setVideoMuted(bool muted)
+{
+    if (muted == videoMuted())
+        return;
+    m_settings.setValue(kVideoMuted, muted);
+    emit videoMutedChanged();
 }
