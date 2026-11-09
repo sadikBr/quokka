@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls
 
 // A round, bouncy icon button.
 Item {
@@ -31,5 +32,8 @@ Item {
     }
 
     HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }
+    ToolTip.visible: hover.hovered && tooltip !== "" && Qt.platform.os !== "android"
+    ToolTip.text: tooltip
+    ToolTip.delay: 600
     TapHandler { id: tap; gesturePolicy: TapHandler.ReleaseWithinBounds; onTapped: root.clicked() }
 }

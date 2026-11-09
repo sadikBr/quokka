@@ -100,6 +100,10 @@ private slots:
         model.toggleCollapsed(1);
         QCOMPARE(model.rowCount(), 7);
         QCOMPARE(model.parentRow(2), 1);
+        QCOMPARE(model.nextTopLevel(-1, 1), 0);
+        QCOMPARE(model.nextTopLevel(0, 1), 5);  // c6
+        QCOMPARE(model.nextTopLevel(5, -1), 0);
+        QCOMPARE(model.nextTopLevel(6, 1), 6);  // nothing after the last row
     }
 
     void insertsMoreInPlace()

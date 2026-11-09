@@ -43,6 +43,10 @@ public:
     bool dimVisited() const;
     void setDimVisited(bool dim);
 
+    // Generic storage for small UI state (window geometry and the like).
+    Q_INVOKABLE QVariant value(const QString &key, const QVariant &defaultValue = {}) const;
+    Q_INVOKABLE void setValue(const QString &key, const QVariant &value);
+
 signals:
     void themeModeChanged();
     void showNsfwChanged();

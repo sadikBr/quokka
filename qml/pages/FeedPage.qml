@@ -41,9 +41,45 @@ Page {
     }
 
     Shortcut {
-        sequences: [StandardKey.Refresh, "Ctrl+R"]
+        sequences: [StandardKey.Refresh, "Ctrl+R", "R"]
         enabled: page.active
         onActivated: posts.refresh()
+    }
+
+    // Keyboard navigation: J/K select, Enter/O open, M media, S save, U go to top.
+    property int kbIndex: -1
+    Connections {
+        target: posts
+        function onFeedChanged() { page.kbIndex = -1 }
+        function onSortChanged() { page.kbIndex = -1 }
+    }
+    function step(delta) {
+        if (posts.count === 0)
+            return
+        kbIndex = Math.max(0, Math.min(posts.count - 1, kbIndex + delta))
+        list.positionViewAtIndex(kbIndex, ListView.Contain)
+    }
+    Shortcut { sequences: ["J"]; enabled: page.active; onActivated: page.step(1) }
+    Shortcut { sequences: ["K"]; enabled: page.active; onActivated: page.step(-1) }
+    Shortcut {
+        sequences: ["Return", "Enter", "O"]
+        enabled: page.active && page.kbIndex >= 0
+        onActivated: Nav.openPost(posts.get(page.kbIndex))
+    }
+    Shortcut {
+        sequences: ["M"]
+        enabled: page.active && page.kbIndex >= 0
+        onActivated: Nav.openMedia(posts.get(page.kbIndex), 0)
+    }
+    Shortcut {
+        sequences: ["S"]
+        enabled: page.active && page.kbIndex >= 0
+        onActivated: Library.toggleSaved(posts.get(page.kbIndex))
+    }
+    Shortcut {
+        sequences: ["U"]
+        enabled: page.active
+        onActivated: { page.kbIndex = -1; list.positionViewAtBeginning() }
     }
 
     // ---- Header -------------------------------------------------------------------------
@@ -93,6 +129,7 @@ Page {
                 Layout.fillWidth: true
                 spacing: 8
                 RoundButton2 {
+                    visible: !page.isRoot || !Nav.sidebarDocked
                     iconName: page.isRoot ? "menu" : "chevron-down"
                     rotation: page.isRoot ? 0 : 90
                     fill: Theme.alpha("white", 0.22)
@@ -264,10 +301,11 @@ Page {
         delegate: PostCard {
             width: list.contentWidth2
             x: (list.width - width) / 2
+            highlighted: index === page.kbIndex
             saved: Library.savedRevision >= 0 && Library.isSaved(postId)
             visited: Library.historyRevision >= 0 && Library.isVisited(postId)
             onToggleSave: Library.toggleSaved(posts.get(index))
-            onOpenPost: Nav.openPost(posts.get(index))
+            onOpenPost: { page.kbIndex = index; Nav.openPost(posts.get(index)) }
             onOpenMedia: Nav.openMedia(posts.get(index), 0)
             onOpenSubreddit: (name) => {
                 if (name.toLowerCase() !== posts.feed.toLowerCase())

@@ -232,6 +232,23 @@ Flickable {
             Layout.fillWidth: true
             spacing: 8
             Chip {
+                text: qsTr("About & licenses")
+                iconName: "text"
+                clickable: true
+                fontSize: Theme.fontMeta
+                hpad: 14
+                onClicked: root.navigate(() => Nav.openAbout())
+            }
+            Chip {
+                text: qsTr("Shortcuts")
+                iconName: "layout"
+                clickable: true
+                fontSize: Theme.fontMeta
+                hpad: 14
+                visible: Qt.platform.os !== "android"
+                onClicked: root.navigate(() => Nav.shortcutsRequested())
+            }
+            Chip {
                 text: qsTr("Source on GitHub")
                 iconName: "github"
                 clickable: true

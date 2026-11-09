@@ -290,11 +290,13 @@ Each milestone ends with something runnable on **both** desktop and Android.
 
 ## 13. Progress
 
-- [x] **M0**: skeleton, CMake presets, Android packaging (manifest, icons, OpenSSL), CI for Linux + Android, release workflow
-- [x] **M1 (core)**: network client (queue, rate limits, retries), listing parser, paged feed model, feed UI (cards, sort bar, pull-to-refresh, infinite scroll, skeletons, error states), community picker, settings drawer
-- [ ] M1 polish: verify against live Reddit, card vs compact layout
-- [ ] M2: post page + comments
-- [ ] M3: media viewer + video
-- [ ] M4: search, subreddit and user pages
-- [ ] M5: local library (subscriptions, saved, history)
-- [ ] M6: desktop two-pane layout, keyboard navigation, accessibility, signed release key
+- [x] **M0**: skeleton, CMake presets, Android packaging (manifest, icons, OpenSSL), CI for Linux + Android
+- [x] **M1**: network client (queue, rate limits, retries), feeds with sorting, infinite scroll, pull-to-refresh
+- [x] **M2**: post page, threaded comments (collapse, load more, continue thread), in-app link routing
+- [x] **M3**: full-screen media viewer (zoom, galleries, captions), video playback with Qt Multimedia
+- [x] **M4**: search (posts and communities), community headers, user profiles
+- [x] **M5**: local library (subscriptions + Home feed, saved posts, history), compact cards, settings
+- [x] **M6**: desktop sidebar on wide windows, keyboard shortcuts, tooltips, remembered window size,
+      About & licenses page; releases are published only for tags v1.0.0 and later
+- [ ] **Road to 1.0.0**: real-world testing against live Reddit on Linux and Android, fix what comes up,
+      choose a license, set up a stable APK signing key, write release notes

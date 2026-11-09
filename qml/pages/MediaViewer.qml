@@ -32,7 +32,7 @@ Page {
     Shortcut { sequences: ["Right", "L"]; enabled: page.active; onActivated: pager.incrementCurrentIndex() }
     Shortcut { sequences: ["Left", "H"]; enabled: page.active; onActivated: pager.decrementCurrentIndex() }
     Shortcut { sequences: ["F", "F11"]; enabled: page.active; onActivated: page.toggleFullScreen() }
-    Shortcut { sequences: ["Esc", "Q"]; enabled: page.active; onActivated: page.close() }
+    Shortcut { sequences: ["Q"]; enabled: page.active; onActivated: page.close() } // Esc is handled by Main
 
     Component.onDestruction: {
         const w = Nav.window

@@ -29,6 +29,7 @@ Item {
     required property int previewHeight
     required property int galleryCount
 
+    property bool highlighted: false   // keyboard selection
     property bool saved: false
     property bool visited: false
     property bool compact: AppSettings.compactCards
@@ -44,6 +45,10 @@ Item {
     readonly property bool hasBigMedia: !compact && previewUrl !== "" && hasMedia
 
     implicitHeight: body.implicitHeight + 2 * Theme.pad + shadowOffset
+
+    Accessible.role: Accessible.ListItem
+    Accessible.name: title + ", r/" + subreddit + ", " + score + " points, " + numComments + " comments"
+    Accessible.onPressAction: openPost()
     readonly property int shadowOffset: 4
 
     // Pop-in when the card first appears.
@@ -76,8 +81,9 @@ Item {
             anchors.fill: parent
             radius: Theme.radiusCard
             color: Theme.surface
-            border.width: 1
-            border.color: cardHover.hovered ? Theme.alpha(Theme.accent, 0.6) : Theme.border
+            border.width: card.highlighted ? 2 : 1
+            border.color: card.highlighted ? Theme.accent
+                        : cardHover.hovered ? Theme.alpha(Theme.accent, 0.6) : Theme.border
             Behavior on border.color { ColorAnimation { duration: Theme.quick } }
         }
 

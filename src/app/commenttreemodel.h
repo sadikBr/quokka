@@ -75,6 +75,8 @@ public:
     Q_INVOKABLE void loadMore(int row);
     // Row of the parent comment, or -1 (used for "jump to parent").
     Q_INVOKABLE int parentRow(int row) const;
+    // Next (direction > 0) or previous top-level comment row from `row`, or `row` if none.
+    Q_INVOKABLE int nextTopLevel(int row, int direction) const;
 
     // Exposed for tests.
     void setComments(const QList<quokka::Comment> &comments, const QString &linkAuthor = {});

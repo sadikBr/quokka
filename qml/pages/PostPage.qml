@@ -24,9 +24,39 @@ Page {
     }
 
     Shortcut {
-        sequences: [StandardKey.Refresh, "Ctrl+R"]
+        sequences: [StandardKey.Refresh, "Ctrl+R", "R"]
         enabled: page.active
         onActivated: comments.refresh()
+    }
+
+    // Keyboard: J/K jump between top-level comments, C collapses it, S saves, M opens media.
+    property int kbRow: -1
+    function jump(direction) {
+        kbRow = comments.nextTopLevel(kbRow, direction)
+        if (kbRow >= 0)
+            list.positionViewAtIndex(kbRow, ListView.Beginning)
+    }
+    Shortcut { sequences: ["J"]; enabled: page.active; onActivated: page.jump(1) }
+    Shortcut { sequences: ["K"]; enabled: page.active; onActivated: page.jump(-1) }
+    Shortcut {
+        sequences: ["C"]
+        enabled: page.active && page.kbRow >= 0
+        onActivated: comments.toggleCollapsed(page.kbRow)
+    }
+    Shortcut {
+        sequences: ["S"]
+        enabled: page.active && !!page.post.title
+        onActivated: Library.toggleSaved(page.post)
+    }
+    Shortcut {
+        sequences: ["M"]
+        enabled: page.active && (page.post.media || []).length > 0
+        onActivated: Nav.openMedia(page.post, 0)
+    }
+    Shortcut {
+        sequences: ["U"]
+        enabled: page.active
+        onActivated: { page.kbRow = -1; list.positionViewAtBeginning() }
     }
 
     // Remember what was read (for History and dimming visited posts).

@@ -18,9 +18,37 @@ ApplicationWindow {
     Material.background: Theme.surface
     Material.foreground: Theme.text
 
+    // Wide desktop windows get a permanent sidebar instead of the slide-out drawer.
+    readonly property bool wide: width >= 1100 && Qt.platform.os !== "android"
+    onWideChanged: { Nav.sidebarDocked = wide; if (wide) drawer.close() }
+
+    Rectangle {
+        id: sidebar
+        visible: window.wide
+        width: visible ? 300 : 0
+        height: parent.height
+        color: Theme.bg
+        DrawerContent {
+            anchors.fill: parent
+            anchors.rightMargin: 1
+            onNavigate: (action) => action()
+            onImportRequested: importDialog.open()
+        }
+        Rectangle {
+            anchors.right: parent.right
+            width: 1
+            height: parent.height
+            color: Theme.border
+        }
+    }
+
     StackView {
         id: stack
-        anchors.fill: parent
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        anchors.left: sidebar.right
+        anchors.right: parent.right
+        clip: true
         initialItem: rootFeed
 
         pushEnter: Transition {
@@ -86,9 +114,16 @@ ApplicationWindow {
         LocalPostsPage {}
     }
 
+    Component {
+        id: aboutPage
+        AboutPage {}
+    }
+
     // `quokka <reddit link>` opens that link on start.
     Component.onCompleted: {
         Nav.window = window
+        Nav.sidebarDocked = wide
+        restoreGeometry()
         const args = Qt.application.arguments
         for (let i = 1; i < args.length; ++i) {
             if (/^(https?:\/\/|\/?(r|u|user)\/)/.test(args[i])) {
@@ -118,6 +153,8 @@ ApplicationWindow {
                                       showCommentsButton: false })
         }
         function onUserRequested(name) { stack.push(userPage, { userName: name }) }
+        function onAboutRequested() { stack.push(aboutPage) }
+        function onShortcutsRequested() { shortcutsHelp.open() }
         function onSavedRequested() { stack.push(localPostsPage, { source: "saved" }) }
         function onHistoryRequested() { stack.push(localPostsPage, { source: "history" }) }
         function onRootFeedRequested(feed) {
@@ -142,6 +179,7 @@ ApplicationWindow {
     SettingsDrawer {
         id: drawer
         height: window.height
+        interactive: !window.wide
         onImportRequested: { drawer.close(); importDialog.open() }
     }
 
@@ -149,17 +187,72 @@ ApplicationWindow {
         id: importDialog
     }
 
-    // Back navigation: Esc / Backspace on desktop, the system back button on Android.
+    ShortcutsHelp {
+        id: shortcutsHelp
+    }
+
+    readonly property bool popupOpen: picker.opened || drawer.opened || importDialog.opened || shortcutsHelp.opened
+
+    // Back navigation: Esc / Backspace / Alt+Left on desktop, the system back button on Android.
     Shortcut {
         sequences: [StandardKey.Back, "Esc", "Backspace"]
-        enabled: stack.depth > 1 && !picker.opened && !drawer.opened
+        enabled: stack.depth > 1 && !window.popupOpen
         onActivated: stack.pop()
+    }
+    Shortcut {
+        sequences: ["Ctrl+F"]
+        enabled: !window.popupOpen
+        onActivated: Nav.openSearch("", "")
+    }
+    Shortcut {
+        sequences: ["Ctrl+L", "G"]
+        enabled: !window.popupOpen
+        onActivated: picker.open()
+    }
+    Shortcut {
+        sequences: ["?", "F1"]
+        enabled: !window.popupOpen
+        onActivated: shortcutsHelp.open()
+    }
+    Shortcut {
+        sequences: ["Home"]
+        enabled: stack.depth > 1 && !window.popupOpen
+        onActivated: stack.pop(null)
+    }
+
+    // Mouse "back" button
+    TapHandler {
+        acceptedButtons: Qt.BackButton
+        onTapped: if (stack.depth > 1 && !window.popupOpen) stack.pop()
+    }
+
+    // Remember the window size and position on desktop.
+    function restoreGeometry() {
+        if (Qt.platform.os === "android")
+            return
+        const g = AppSettings.value("window/geometry", "")
+        const p = String(g).split(",").map(Number)
+        if (p.length === 4 && p.every(v => !isNaN(v)) && p[2] >= minimumWidth && p[3] >= minimumHeight) {
+            x = p[0]; y = p[1]; width = p[2]; height = p[3]
+        }
+        if (AppSettings.value("window/maximized", false) === true || AppSettings.value("window/maximized", "") === "true")
+            visibility = Window.Maximized
+    }
+    function saveGeometry() {
+        if (Qt.platform.os === "android")
+            return
+        const maximized = visibility === Window.Maximized || visibility === Window.FullScreen
+        AppSettings.setValue("window/maximized", maximized)
+        if (!maximized)
+            AppSettings.setValue("window/geometry", [x, y, width, height].join(","))
     }
     // On Android the system back button arrives as a close request: use it to step back.
     // On desktop, closing the window always quits.
     onClosing: (close) => {
-        if (Qt.platform.os !== "android")
+        if (Qt.platform.os !== "android") {
+            saveGeometry()
             return
+        }
         if (drawer.opened) {
             drawer.close()
             close.accepted = false

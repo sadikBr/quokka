@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 project(Quokka
-    VERSION 0.1.0
+    VERSION 0.6.0
     DESCRIPTION "A playful, read-only Reddit client for desktop and Android"
     HOMEPAGE_URL "https://github.com/sadikBr/Reddit-Client"
     LANGUAGES CXX)
@@ -30,6 +30,7 @@ set(QUOKKA_QML_FILES
     qml/Main.qml
     qml/Nav.qml
     qml/theme/Theme.qml
+    qml/pages/AboutPage.qml
     qml/pages/FeedPage.qml
     qml/pages/LocalPostsPage.qml
     qml/pages/PostPage.qml
@@ -51,6 +52,7 @@ set(QUOKKA_QML_FILES
     qml/components/RoundButton2.qml
     qml/components/RoundedImage.qml
     qml/components/SegmentedTabs.qml
+    qml/components/ShortcutsHelp.qml
     qml/components/SettingsDrawer.qml
     qml/components/SkeletonCard.qml
     qml/components/SortBar.qml

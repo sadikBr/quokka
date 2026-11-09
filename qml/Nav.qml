@@ -7,6 +7,8 @@ QtObject {
 
     // The application window, set by Main.qml (used for full-screen toggling).
     property var window: null
+    // True when the navigation sidebar is permanently visible (wide desktop windows).
+    property bool sidebarDocked: false
 
     signal postRequested(var post)                       // a post map (see postmap.cpp)
     signal threadRequested(string postId, string commentId)
@@ -18,12 +20,15 @@ QtObject {
     signal savedRequested()
     signal historyRequested()
     signal rootFeedRequested(string feed)   // switch the main feed (drawer)
+    signal aboutRequested()
+    signal shortcutsRequested()
 
     function openPost(post) { postRequested(post) }
     function openThread(postId, commentId) { threadRequested(postId, commentId || "") }
     function openSubreddit(name) { subredditRequested(name) }
     function openUser(name) { if (name && name !== "[deleted]") userRequested(name) }
     function openMedia(post, index) { mediaRequested(post, index || 0) }
+    function openAbout() { aboutRequested() }
     function openSaved() { savedRequested() }
     function openHistory() { historyRequested() }
     function goToFeed(feed) { rootFeedRequested(feed) }

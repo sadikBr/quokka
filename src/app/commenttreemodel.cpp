@@ -291,6 +291,15 @@ int CommentTreeModel::parentRow(int row) const
     return -1;
 }
 
+int CommentTreeModel::nextTopLevel(int row, int direction) const
+{
+    const int step = direction > 0 ? 1 : -1;
+    for (int r = row + step; r >= 0 && r < m_visible.size(); r += step)
+        if (m_all.at(m_visible.at(r)).c.depth == 0)
+            return r;
+    return row;
+}
+
 void CommentTreeModel::loadMore(int row)
 {
     auto *client = services::reddit();

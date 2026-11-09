@@ -84,3 +84,8 @@ QString Format::webUrl(const QString &permalink)
         return permalink;
     return QStringLiteral("https://www.reddit.com") + permalink;
 }
+
+QString Format::qtVersion()
+{
+    return QString::fromLatin1(qVersion());
+}

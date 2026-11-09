@@ -121,3 +121,13 @@ void AppSettings::setDimVisited(bool dim)
     m_settings.setValue(kDimVisited, dim);
     emit dimVisitedChanged();
 }
+
+QVariant AppSettings::value(const QString &key, const QVariant &defaultValue) const
+{
+    return m_settings.value(key, defaultValue);
+}
+
+void AppSettings::setValue(const QString &key, const QVariant &value)
+{
+    m_settings.setValue(key, value);
+}

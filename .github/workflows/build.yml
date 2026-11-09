@@ -173,7 +173,8 @@ jobs:
 
   release:
     name: GitHub Release
-    if: startsWith(github.ref, 'refs/tags/v')
+    # Only 1.0.0 and later are published; v0.x tags just build.
+    if: startsWith(github.ref, 'refs/tags/v') && !startsWith(github.ref, 'refs/tags/v0.')
     needs: [linux, android]
     runs-on: ubuntu-24.04
     permissions:
