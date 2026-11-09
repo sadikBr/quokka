@@ -7,13 +7,10 @@ Item {
     id: root
     property url source
     property url fallbackSource
+    property var alternates: []      // other links to the same video: [{url, resolve}], tried in turn
     property url poster              // still picture shown when the video can't play
     // Set for video pages (e.g. "redgifs"): `source` is the page; the file is looked up first.
     property string resolveKind
-    property url resolvedSource
-    property string resolveError
-    readonly property bool resolving: resolveKind !== "" && resolvedSource.toString() === "" && resolveError === ""
-    readonly property url playSource: resolveKind !== "" ? resolvedSource : source
     property bool active: true
     property bool loop: true
     property bool showControls: true
@@ -25,47 +22,88 @@ Item {
                                         || player.mediaStatus === MediaPlayer.LoadedMedia)
     signal tapped()
 
-    property bool triedFallback: false
-    readonly property bool failed: resolveError !== ""
-                                   || (player.error !== MediaPlayer.NoError
-                                       && triedFallback === (fallbackSource.toString() !== ""))
-
-    function retry() {
-        resolveError = ""
-        triedFallback = false
-        player.stop()
-        if (resolveKind !== "" && resolvedSource.toString() === "") {
-            MediaResolver.resolve(source, resolveKind)
-            return
-        }
-        player.source = ""
-        player.source = Qt.binding(() => root.playSource)
-        player.play()
+    // Every link to this video, in the order they're tried.
+    readonly property var sources: {
+        const out = [{ url: String(source), resolve: resolveKind }]
+        const add = (u, r) => { if (u !== "" && !out.some(o => o.url === u)) out.push({ url: u, resolve: r || "" }) }
+        add(String(fallbackSource), "")
+        for (const alt of (alternates || []))
+            if (alt && alt.url) add(String(alt.url), alt.resolve)
+        return out
     }
+    property int sourceIndex: 0
+    property var tried: ({})                   // indices already tried (reassigned, never mutated)
+    readonly property var current: sources[Math.min(sourceIndex, sources.length - 1)]
+    readonly property string currentHost: {
+        const m = String(current.url).match(/^https?:\/\/(?:www\.)?([^\/]+)/i)
+        return m ? m[1] : ""
+    }
+    property url resolvedSource
+    property string resolveError
+    property bool playerFailed: false
+    property string playerError
+    readonly property bool resolving: current.resolve !== "" && resolvedSource.toString() === "" && resolveError === ""
+    readonly property url playSource: current.resolve !== "" ? resolvedSource : current.url
+    readonly property bool currentFailed: resolveError !== "" || playerFailed
+    // Shown as failed only once every link has been tried.
+    readonly property bool failed: currentFailed && nextUntried() < 0
 
-    onActiveChanged: active ? player.play() : player.pause()
-    Component.onCompleted: {
-        if (resolveKind !== "") {
-            const hit = MediaResolver.cached(source)
-            if (hit !== "")
-                resolvedSource = hit
-            else
-                MediaResolver.resolve(source, resolveKind)
+    function nextUntried() {
+        const t = tried
+        for (let i = 1; i <= sources.length; ++i) {
+            const j = (sourceIndex + i) % sources.length
+            if (!t[j]) return j
+        }
+        return -1
+    }
+    function useSource(i) {
+        const t = Object.assign({}, tried)
+        t[i] = true
+        tried = t
+        player.stop()
+        sourceIndex = i
+        resolveError = ""
+        playerFailed = false
+        playerError = ""
+        resolvedSource = ""
+        if (current.resolve !== "") {
+            const hit = MediaResolver.cached(current.url)
+            if (hit === "") {
+                MediaResolver.resolve(current.url, current.resolve)
+                return
+            }
+            resolvedSource = hit
         }
         if (active)
-            player.play()
+            Qt.callLater(player.play)
     }
+    // Pick a link by hand (or try the current one again): every link is fair game again after it.
+    function switchTo(i) {
+        tried = ({})
+        useSource(i)
+    }
+    function retry() { switchTo(sourceIndex) }
+
+    onCurrentFailedChanged: {
+        if (!currentFailed)
+            return
+        const next = nextUntried()
+        if (next >= 0)
+            Qt.callLater(() => root.useSource(next))
+    }
+    onActiveChanged: active ? player.play() : player.pause()
+    Component.onCompleted: useSource(0)
     Connections {
-        target: root.resolveKind !== "" ? MediaResolver : null
+        target: root.current.resolve !== "" ? MediaResolver : null
         function onResolved(pageUrl, mediaUrl) {
-            if (pageUrl === root.source.toString()) {
+            if (pageUrl === String(root.current.url)) {
                 root.resolvedSource = mediaUrl
                 if (root.active)
                     Qt.callLater(player.play)
             }
         }
         function onFailed(pageUrl, message) {
-            if (pageUrl === root.source.toString())
+            if (pageUrl === String(root.current.url))
                 root.resolveError = message
         }
     }
@@ -76,12 +114,9 @@ Item {
         loops: root.loop ? MediaPlayer.Infinite : 1
         videoOutput: video
         audioOutput: AudioOutput { id: audio; muted: root.forceMuted || AppSettings.videoMuted }
-        onErrorOccurred: {
-            if (!root.triedFallback && root.fallbackSource.toString() !== "") {
-                root.triedFallback = true
-                player.source = root.fallbackSource
-                player.play()
-            }
+        onErrorOccurred: (error, message) => {
+            root.playerError = message
+            root.playerFailed = true
         }
     }
 
@@ -124,7 +159,7 @@ Item {
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.Wrap
             text: root.resolveError !== "" ? root.resolveError
-                : MediaResolver.describePlaybackError(player.errorString, player.source.toString())
+                : MediaResolver.describePlaybackError(root.playerError, player.source.toString())
             color: "white"
             font.pixelSize: Theme.fontBody
         }
@@ -142,7 +177,7 @@ Item {
                 iconName: "external"
                 clickable: true
                 selected: true
-                onClicked: Qt.openUrlExternally(root.source)
+                onClicked: Qt.openUrlExternally(root.current.url)
             }
         }
     }
@@ -152,8 +187,24 @@ Item {
         onDoubleTapped: player.playbackState === MediaPlayer.PlayingState ? player.pause() : player.play()
     }
 
+    // Several links to this video: say which one plays, and switch to the next on click.
+    Chip {
+        anchors.right: parent.right
+        anchors.bottom: controls.visible ? controls.top : parent.bottom
+        anchors.margins: 12
+        visible: root.sources.length > 1 && !root.quiet && (root.showControls || root.failed)
+        text: qsTr("Source %1 / %2 · %3").arg(root.sourceIndex + 1).arg(root.sources.length).arg(root.currentHost)
+        iconName: "refresh"
+        fillColor: "#B3000000"
+        textColor: "white"
+        border.width: 0
+        clickable: true
+        onClicked: root.switchTo((root.sourceIndex + 1) % root.sources.length)
+    }
+
     // Controls
     Rectangle {
+        id: controls
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom

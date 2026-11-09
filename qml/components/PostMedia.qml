@@ -91,6 +91,7 @@ Item {
             readonly property bool showing: playing
             source: root.firstVideo ? root.firstVideo.url : ""
             resolveKind: root.firstVideo ? (root.firstVideo.resolve || "") : ""
+            alternates: root.firstVideo ? (root.firstVideo.alternates || []) : []
             fillMode: VideoOutput.PreserveAspectCrop
             forceMuted: true
             quiet: true
@@ -241,6 +242,20 @@ Item {
         color: "#E6FFFFFF"
         Icon { anchors.centerIn: parent; anchors.horizontalCenterOffset: 2; name: "play"; size: 24; color: "#141418" }
     }
+    // Other links to the same video (tried automatically if one fails; switchable in the viewer).
+    Chip {
+        readonly property int count: root.firstVideo && root.firstVideo.alternates ? root.firstVideo.alternates.length + 1 : 1
+        visible: !root.grid && root.kind === PostListModel.VideoPost && !root.covered && count > 1
+        anchors.top: image.top
+        anchors.right: image.right
+        anchors.margins: 10
+        iconName: "link"
+        text: qsTr("%1 sources").arg(count)
+        fillColor: "#B3000000"
+        textColor: "white"
+        border.width: 0
+    }
+
     // While playing in place: a quiet hint that it's muted and opens with sound.
     Rectangle {
         visible: root.inlineVideo && inline.opacity > 0.5

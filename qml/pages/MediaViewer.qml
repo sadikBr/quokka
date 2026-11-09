@@ -124,6 +124,7 @@ Page {
                 VideoPlayer {
                     source: slot.modelData.url
                     resolveKind: slot.modelData.resolve || ""
+                    alternates: slot.modelData.alternates || []
                     fallbackSource: slot.index === 0 && page.post.videoFallbackUrl ? page.post.videoFallbackUrl : ""
                     poster: slot.modelData.poster || (slot.index === 0 && page.post.previewUrl ? page.post.previewUrl : "")
                     active: slot.isCurrent && page.active

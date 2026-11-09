@@ -139,9 +139,17 @@ Post postFromView(const QJsonObject &pv, const QString &webBase)
         const QList<MediaItem> bodyMedia = media::extractFromText(post.selftext);
         if (!bodyMedia.isEmpty()) {
             post.media = bodyMedia;
-            post.galleryCount = int(bodyMedia.size());
+            // Only videos? Then they're nearly always the same clip on several hosts: one video
+            // that tries each link in turn.
+            if (bodyMedia.size() > 1
+                && std::all_of(bodyMedia.begin(), bodyMedia.end(), [](const MediaItem &m) { return m.video; })) {
+                post.media = {bodyMedia.first()};
+                for (qsizetype i = 1; i < bodyMedia.size(); ++i)
+                    post.media.first().alternates.append(bodyMedia.at(i).url);
+            }
+            post.galleryCount = int(post.media.size());
             const MediaItem &first = bodyMedia.first();
-            if (bodyMedia.size() > 1)
+            if (post.media.size() > 1)
                 post.kind = Post::Kind::Gallery;
             else
                 post.kind = first.video ? Post::Kind::Video : Post::Kind::Image;
@@ -213,8 +221,14 @@ Post postFromView(const QJsonObject &pv, const QString &webBase)
         for (const MediaItem &m : media::extractFromText(post.selftext)) {
             const bool known = std::any_of(post.media.begin(), post.media.end(),
                                            [&m](const MediaItem &o) { return o.url == m.url; });
-            if (!known && m.url != post.url && !(videoPost && m.video))
+            if (known || m.url == post.url)
+                continue;
+            if (videoPost && m.video) {
+                if (!post.media.first().alternates.contains(m.url))
+                    post.media.first().alternates.append(m.url);
+            } else {
                 post.media.append(m);
+            }
         }
         if (post.media.size() > 1) {
             post.kind = Post::Kind::Gallery;

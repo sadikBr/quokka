@@ -348,11 +348,12 @@ private slots:
                          {"community", QJsonObject{{"name", "c"}, {"actor_id", "https://lemmy.world/c/c"}}},
                          {"counts", QJsonObject{{"score", 91}, {"comments", 1}}}};
         const Post p = lemmy::postFromView(view, "https://lemmy.world");
-        QCOMPARE(p.kind, Post::Kind::Gallery);
-        QCOMPARE(p.media.size(), 2);
+        // Two links to (nearly always) the same clip: one video that tries both.
+        QCOMPARE(p.kind, Post::Kind::Video);
+        QCOMPARE(p.media.size(), 1);
         QVERIFY(p.media[0].video);
         QCOMPARE(p.media[0].resolve, QStringLiteral("redgifs"));
-        QCOMPARE(p.media[1].url, QStringLiteral("https://files.catbox.moe/kf2ljs.mp4"));
+        QCOMPARE(p.media[0].alternates, QStringList{"https://files.catbox.moe/kf2ljs.mp4"});
 
         // A link post to a video page plays in the app.
         QJsonObject link = view;
@@ -371,6 +372,7 @@ private slots:
         const Post v2 = lemmy::postFromView(link, "https://lemmy.world");
         QCOMPARE(v2.kind, Post::Kind::Video);
         QCOMPARE(v2.media.size(), 1);
+        QCOMPARE(v2.media.first().alternates, QStringList{"https://files.catbox.moe/kf2ljs.mp4"});
         QVERIFY(v2.media.first().poster.startsWith("https://lemmy.world/pictrs/image/t.jpeg?thumbnail="));
 
         // An image post whose text links more pictures shows them all, as one gallery.

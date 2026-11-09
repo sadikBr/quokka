@@ -24,6 +24,12 @@ QVariantList mediaToVariantList(const QList<quokka::MediaItem> &items)
 {
     QVariantList out;
     for (const auto &m : items) {
+        QVariantList alternates; // {url, resolve} for each other link to the same video
+        for (const QString &a : m.alternates) {
+            const auto c = quokka::media::classify(a);
+            alternates.append(QVariantMap{{QStringLiteral("url"), a},
+                                          {QStringLiteral("resolve"), c ? c->resolve : QString()}});
+        }
         out.append(QVariantMap{
             {QStringLiteral("url"), m.url},
             {QStringLiteral("width"), m.width},
@@ -34,6 +40,7 @@ QVariantList mediaToVariantList(const QList<quokka::MediaItem> &items)
             {QStringLiteral("video"), m.video},
             {QStringLiteral("resolve"), m.resolve},
             {QStringLiteral("poster"), m.poster},
+            {QStringLiteral("alternates"), alternates},
         });
     }
     return out;
@@ -47,8 +54,9 @@ QVariantMap postToVariantMap(const quokka::Post &p)
     QList<quokka::MediaItem> extra;
     if (!p.url.isEmpty()) {
         for (const auto &m : quokka::media::extractFromText(p.selftext)) {
-            const bool known = std::any_of(p.media.begin(), p.media.end(),
-                                           [&m](const quokka::MediaItem &o) { return o.url == m.url; });
+            const bool known = std::any_of(p.media.begin(), p.media.end(), [&m](const quokka::MediaItem &o) {
+                return o.url == m.url || o.alternates.contains(m.url);
+            });
             if (!known)
                 extra.append(m);
         }
@@ -139,6 +147,8 @@ quokka::Post postFromVariantMap(const QVariantMap &m)
         item.video = mm.value(QStringLiteral("video")).toBool();
         item.resolve = mm.value(QStringLiteral("resolve")).toString();
         item.poster = mm.value(QStringLiteral("poster")).toString();
+        for (const QVariant &a : mm.value(QStringLiteral("alternates")).toList())
+            item.alternates.append(a.toMap().value(QStringLiteral("url")).toString());
         p.media.append(item);
     }
     return p;

@@ -2,6 +2,7 @@
 
 #include <QList>
 #include <QString>
+#include <QStringList>
 #include <QtGlobal>
 
 namespace quokka {
@@ -18,6 +19,7 @@ struct MediaItem
     bool video = false;  // play it (MP4/WebM/HLS) rather than show it
     QString resolve;     // a page to look up first, e.g. "redgifs" or "streamable" (see medialinks.h)
     QString poster;      // a still picture for a video (e.g. the post's thumbnail)
+    QStringList alternates; // other links to the same video ("source", "HD version"), tried in turn
 };
 
 // A Reddit "t3" thing (a link / post), reduced to what the UI needs.
