@@ -103,8 +103,10 @@ void SubredditListModel::request(bool reset)
         return;
     if (m_reply)
         m_reply->abort();
-    if (reset)
+    if (reset) {
         m_after.clear();
+        m_skippedPages = 0;
+    }
     if (!m_error.isEmpty()) {
         m_error.clear();
         emit errorChanged();
@@ -142,6 +144,12 @@ void SubredditListModel::request(bool reset)
         }
         emit countChanged();
         emit loadingChanged();
+        // NSFW only: most of a page can be filtered out; keep fetching until the list has
+        // a useful number of communities (but not forever).
+        if (m_nsfwOnly && m_items.size() < 20 && !m_after.isEmpty() && m_skippedPages < 10) {
+            ++m_skippedPages;
+            request(false);
+        }
     });
     connect(reply, &quokka::ApiReply::failed, this, [this, reply](const QString &message) {
         if (reply != m_reply)

@@ -170,7 +170,7 @@ Page {
     ListView {
         id: postList
         anchors.fill: parent
-        visible: page.tab === 0
+        visible: page.tab === 0 && page.query !== ""
         model: results
         spacing: 0
         topMargin: 4
@@ -216,19 +216,12 @@ Page {
         enabled: postList.visible
     }
 
-    EmptyState {
-        visible: page.tab === 0 && page.query === ""
-        anchors.centerIn: parent
-        width: Math.min(parent.width - 48, 420)
-        title: qsTr("What are you curious about?")
-        message: qsTr("Type something above. Try “quokka”!")
-    }
-
     // ---- Communities ----
     ListView {
         id: subList
         anchors.fill: parent
-        visible: page.tab === 1
+        // Communities tab, and below an empty search box: what's trending.
+        visible: page.tab === 1 || page.query === ""
         model: communities
         spacing: 0
         topMargin: 8
@@ -246,7 +239,8 @@ Page {
             bottomPadding: 10
             visible: page.query === ""
             height: visible ? implicitHeight : 0
-            text: qsTr("Popular communities")
+            text: AppSettings.showNsfw && AppSettings.nsfwOnly ? qsTr("Trending NSFW communities")
+                                                               : qsTr("Trending communities")
             color: Theme.textMuted
             font.pixelSize: Theme.fontSmall + 1
             font.weight: Font.DemiBold

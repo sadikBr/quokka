@@ -335,7 +335,7 @@ ApiReply *LemmyBackend::communities(const QString &query, bool nsfw, const QStri
     q.addQueryItem(QStringLiteral("limit"), QString::number(kPageSize));
     if (query.isEmpty()) {
         q.addQueryItem(QStringLiteral("type_"), QStringLiteral("All"));
-        q.addQueryItem(QStringLiteral("sort"), QStringLiteral("TopMonth"));
+        q.addQueryItem(QStringLiteral("sort"), QStringLiteral("Hot"));   // trending
         q.addQueryItem(QStringLiteral("show_nsfw"), nsfw ? QStringLiteral("true") : QStringLiteral("false"));
         return m_client->get(QStringLiteral("/api/v3/community/list"), q);
     }

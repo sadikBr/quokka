@@ -70,6 +70,7 @@ private:
     QString m_query;
     bool m_showNsfw = false;
     bool m_nsfwOnly = false;
+    int m_skippedPages = 0;   // NSFW only: pages fetched in a row to fill the list
     QList<quokka::Subreddit> m_items;
     QString m_after;
     QString m_error;
