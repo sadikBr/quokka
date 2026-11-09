@@ -21,6 +21,8 @@ class AppSettings : public QObject
     Q_PROPERTY(bool dimVisited READ dimVisited WRITE setDimVisited NOTIFY dimVisitedChanged)
     // Cover NSFW pictures and videos until tapped (when NSFW posts are shown at all).
     Q_PROPERTY(bool coverNsfw READ coverNsfw WRITE setCoverNsfw NOTIFY coverNsfwChanged)
+    // Multiplier for mouse-wheel / touchpad scrolling distance (1 = normal).
+    Q_PROPERTY(double scrollSpeed READ scrollSpeed WRITE setScrollSpeed NOTIFY scrollSpeedChanged)
 
 public:
     enum ThemeMode { System, Light, Dark };
@@ -46,6 +48,8 @@ public:
     void setDimVisited(bool dim);
     bool coverNsfw() const;
     void setCoverNsfw(bool cover);
+    double scrollSpeed() const;
+    void setScrollSpeed(double speed);
 
     // Generic storage for small UI state (window geometry and the like).
     Q_INVOKABLE QVariant value(const QString &key, const QVariant &defaultValue = {}) const;
@@ -61,6 +65,7 @@ signals:
     void compactCardsChanged();
     void dimVisitedChanged();
     void coverNsfwChanged();
+    void scrollSpeedChanged();
 
 private:
     QSettings m_settings;

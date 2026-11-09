@@ -8,6 +8,7 @@ const QString kDefaultSort = QStringLiteral("browse/defaultSort");
 const QString kCompact = QStringLiteral("ui/compactCards");
 const QString kDimVisited = QStringLiteral("ui/dimVisited");
 const QString kCoverNsfw = QStringLiteral("content/coverNsfw");
+const QString kScrollSpeed = QStringLiteral("ui/scrollSpeed");
 const QString kVideoMuted = QStringLiteral("media/videoMuted");
 const QString kCommentSort = QStringLiteral("browse/commentSort");
 } // namespace
@@ -144,4 +145,18 @@ void AppSettings::setCoverNsfw(bool cover)
         return;
     m_settings.setValue(kCoverNsfw, cover);
     emit coverNsfwChanged();
+}
+
+double AppSettings::scrollSpeed() const
+{
+    return qBound(0.5, m_settings.value(kScrollSpeed, 1.0).toDouble(), 4.0);
+}
+
+void AppSettings::setScrollSpeed(double speed)
+{
+    speed = qBound(0.5, speed, 4.0);
+    if (qFuzzyCompare(speed, scrollSpeed()))
+        return;
+    m_settings.setValue(kScrollSpeed, speed);
+    emit scrollSpeedChanged();
 }

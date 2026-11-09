@@ -180,6 +180,31 @@ Page {
                     checked: AppSettings.compactCards
                     onToggled: (on) => AppSettings.compactCards = on
                 }
+                Item {
+                    Layout.fillWidth: true
+                    implicitHeight: 64
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 16
+                        anchors.rightMargin: 12
+                        Text {
+                            Layout.fillWidth: true
+                            text: qsTr("Scroll speed")
+                            color: Theme.text
+                            font.pixelSize: Theme.fontBody
+                            font.weight: Font.Medium
+                        }
+                        Segmented {
+                            options: [
+                                { value: 1.0, label: qsTr("Normal") },
+                                { value: 1.6, label: qsTr("Fast") },
+                                { value: 2.4, label: qsTr("Faster") }
+                            ]
+                            value: AppSettings.scrollSpeed
+                            onPicked: (v) => AppSettings.scrollSpeed = v
+                        }
+                    }
+                }
                 SwitchRow {
                     text: qsTr("Dim posts you've read")
                     checked: AppSettings.dimVisited
