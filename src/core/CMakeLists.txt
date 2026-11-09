@@ -12,6 +12,7 @@ add_library(quokka_core STATIC
     apiclient.h apiclient.cpp
     backend.h redditbackend.cpp lemmybackend.cpp
     lemmyparsers.h lemmyparsers.cpp
+    mediasites.h mediasites.cpp
 )
 target_include_directories(quokka_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(quokka_core PUBLIC Qt6::Core Qt6::Gui Qt6::Network)

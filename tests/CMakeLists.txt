@@ -53,3 +53,5 @@ target_link_libraries(tst_mediaresolver PRIVATE Qt6::Gui Qt6::Qml)
 quokka_add_test(tst_format tst_format.cpp ${PROJECT_SOURCE_DIR}/src/app/format.cpp)
 target_include_directories(tst_format PRIVATE ${PROJECT_SOURCE_DIR}/src/app)
 target_link_libraries(tst_format PRIVATE Qt6::Gui Qt6::Qml)
+
+quokka_add_test(tst_mediasites tst_mediasites.cpp)

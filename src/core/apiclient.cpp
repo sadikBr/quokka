@@ -289,4 +289,67 @@ void CompositeReply::partDone(int index, const QByteArray *body, const QString &
     deleteLater();
 }
 
+ChainReply::ChainReply(ApiReply *first, Next next, QObject *parent)
+    : ApiReply(parent)
+    , m_current(first)
+    , m_next(std::move(next))
+{
+    connect(first, &ApiReply::finished, this, [this](const QByteArray &body) {
+        if (m_aborted)
+            return;
+        ApiReply *second = m_next ? m_next(body) : nullptr;
+        m_next = nullptr;
+        if (!second) {
+            emit finished(body);
+            deleteLater();
+            return;
+        }
+        m_current = second;
+        forward(second);
+    });
+    connect(first, &ApiReply::failed, this, [this](const QString &message, int status, const QString &code) {
+        if (m_aborted)
+            return;
+        emit failed(message, status, code);
+        deleteLater();
+    });
+}
+
+void ChainReply::forward(ApiReply *reply)
+{
+    connect(reply, &ApiReply::finished, this, [this](const QByteArray &body) {
+        if (m_aborted)
+            return;
+        emit finished(body);
+        deleteLater();
+    });
+    connect(reply, &ApiReply::failed, this, [this](const QString &message, int status, const QString &code) {
+        if (m_aborted)
+            return;
+        emit failed(message, status, code);
+        deleteLater();
+    });
+}
+
+void ChainReply::abort()
+{
+    if (m_aborted)
+        return;
+    m_aborted = true;
+    if (m_current)
+        m_current->abort();
+    deleteLater();
+}
+
+FailedReply::FailedReply(const QString &message, QObject *parent)
+    : ApiReply(parent)
+{
+    QMetaObject::invokeMethod(this, [this, message] {
+        if (m_aborted)
+            return;
+        emit failed(message, 0);
+        deleteLater();
+    }, Qt::QueuedConnection);
+}
+
 } // namespace quokka

@@ -62,6 +62,12 @@ struct Post
 
     // Full-size media for the viewer: one item for images/videos, all items for galleries.
     QList<MediaItem> media;
+
+    // Where the post comes from when it isn't the server being read: a media site ("redgifs",
+    // "eporner") or another Lemmy server ("lemmynsfw.com") in the combined feed.
+    QString source;      // media site, empty for Lemmy / Reddit posts
+    QString origin;      // Lemmy server the post was loaded from, when not the current one
+    QStringList tags;    // media sites: the clip's tags
 };
 
 } // namespace quokka

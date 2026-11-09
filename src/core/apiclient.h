@@ -72,6 +72,31 @@ private:
     bool m_emitted = false;
 };
 
+// One request, then a follow-up built from its answer (e.g. fetch a token, then the data).
+// Finishes or fails with the follow-up; fails if the first one does.
+class ChainReply : public ApiReply
+{
+    Q_OBJECT
+public:
+    // `next` may return nullptr to finish with the first body as is.
+    using Next = std::function<ApiReply *(const QByteArray &firstBody)>;
+    ChainReply(ApiReply *first, Next next, QObject *parent = nullptr);
+    void abort() override;
+
+private:
+    void forward(ApiReply *reply);
+    QPointer<ApiReply> m_current;
+    Next m_next;
+};
+
+// A reply that fails right away (asynchronously), for things a source doesn't offer.
+class FailedReply : public ApiReply
+{
+    Q_OBJECT
+public:
+    explicit FailedReply(const QString &message, QObject *parent = nullptr);
+};
+
 // Entry point for all API calls. Owns the transport, queues requests, keeps a small
 // number in flight, honours Reddit's rate-limit headers and retries on 429 / 5xx.
 class ApiClient : public QObject
