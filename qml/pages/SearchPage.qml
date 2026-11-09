@@ -109,6 +109,18 @@ Page {
                 onClicked: page.subreddit = ""
             }
 
+            // Lemmy's search uses the signed-in account's NSFW preference, and Quokka reads
+            // anonymously, so servers never return NSFW results to a search.
+            Text {
+                visible: AppSettings.showNsfw && Api.isLemmy
+                Layout.fillWidth: true
+                text: qsTr("Lemmy servers leave NSFW posts and communities out of searches for readers "
+                           + "who aren't signed in. Browse NSFW communities directly to see their posts.")
+                color: Theme.textMuted
+                font.pixelSize: Theme.fontSmall
+                wrapMode: Text.Wrap
+            }
+
             SegmentedTabs {
                 Layout.fillWidth: true
                 tabs: [qsTr("Posts"), qsTr("Communities")]
