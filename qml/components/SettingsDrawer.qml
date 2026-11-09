@@ -7,6 +7,9 @@ Drawer {
     id: root
     width: Math.min(300, parent ? parent.width * 0.84 : 300)
     edge: Qt.LeftEdge
+    topPadding: SafeArea.top
+    bottomPadding: SafeArea.bottom
+    leftPadding: SafeArea.left
 
     // When true the drawer is shown permanently as a sidebar (wide desktop windows).
     property bool docked: false

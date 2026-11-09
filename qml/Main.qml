@@ -10,7 +10,12 @@ ApplicationWindow {
     minimumHeight: 480
     visible: true
     title: "Quokka"
-    color: Theme.bg
+    // Behind the system bars (Android draws the app under them): the current page's colour.
+    readonly property bool immersivePage: stack.currentItem !== null && stack.currentItem.immersive === true
+    color: immersivePage ? "#0B0A0F" : Theme.bg
+    Binding { target: SafeArea; property: "lightBars"; value: !Theme.dark && !window.immersivePage }
+    onWidthChanged: SafeArea.refresh()
+    onHeightChanged: SafeArea.refresh()
 
     Material.theme: Theme.dark ? Material.Dark : Material.Light
     Material.accent: Theme.accent
@@ -44,10 +49,15 @@ ApplicationWindow {
 
     StackView {
         id: stack
+        // Keep clear of the status bar, gesture bar and camera cut-outs (phones).
         anchors.top: parent.top
+        anchors.topMargin: SafeArea.top
         anchors.bottom: parent.bottom
+        anchors.bottomMargin: SafeArea.bottom
         anchors.left: sidebar.right
+        anchors.leftMargin: SafeArea.left
         anchors.right: parent.right
+        anchors.rightMargin: SafeArea.right
         clip: true
         initialItem: rootFeed
 

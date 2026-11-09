@@ -11,7 +11,7 @@ Flickable {
     contentHeight: col.implicitHeight + 24
     clip: true
     boundsBehavior: Flickable.StopAtBounds
-    ScrollBar.vertical: ScrollBar {}
+    ScrollBar.vertical: ThinScrollBar {}
 
     readonly property string currentFeed: AppSettings.lastFeed.toLowerCase()
     // Signed in: the account's subscriptions; otherwise the communities joined in Quokka.

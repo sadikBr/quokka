@@ -166,7 +166,7 @@ Page {
         bottomMargin: 24
         cacheBuffer: 1200
         readonly property int contentWidth2: Math.min(width - 24, Theme.contentMaxWidth)
-        ScrollBar.vertical: ScrollBar {}
+        ScrollBar.vertical: ThinScrollBar {}
         onContentYChanged: {
             if (results.count > 0 && !results.loading && results.hasMore
                     && contentY + height > originY + contentHeight - height * 1.5)
@@ -223,7 +223,7 @@ Page {
         topMargin: 8
         bottomMargin: 24
         readonly property int contentWidth2: Math.min(width - 24, Theme.contentMaxWidth)
-        ScrollBar.vertical: ScrollBar {}
+        ScrollBar.vertical: ThinScrollBar {}
         onContentYChanged: {
             if (communities.count > 0 && !communities.loading && communities.hasMore
                     && contentY + height > originY + contentHeight - height * 1.5)

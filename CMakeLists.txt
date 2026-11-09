@@ -68,6 +68,7 @@ set(QUOKKA_QML_FILES
     qml/components/UserCommentCard.qml
     qml/components/VideoPlayer.qml
     qml/components/VideoThumb.qml
+    qml/components/ThinScrollBar.qml
     qml/components/WheelScroller.qml
     qml/components/ZoomableImage.qml
 )
@@ -98,6 +99,7 @@ qt_add_qml_module(quokka
         src/app/usercommentmodel.h src/app/usercommentmodel.cpp
         src/app/library.h src/app/library.cpp
         src/app/mediaresolver.h src/app/mediaresolver.cpp
+        src/app/safearea.h src/app/safearea.cpp
     RESOURCES
         resources/logo.svg
         resources/fonts/Inter-Regular.ttf

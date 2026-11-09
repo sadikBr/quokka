@@ -10,6 +10,7 @@ Page {
     property bool showCommentsButton: true
     readonly property bool active: StackView.status === StackView.Active
     property bool chrome: true
+    readonly property bool immersive: true   // dark system bars (see Main)
 
     readonly property var items: {
         const m = post.media || []

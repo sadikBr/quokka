@@ -106,7 +106,7 @@ Page {
         boundsBehavior: Flickable.StopAtBounds
         readonly property int contentWidth2: Math.min(width - 24, Theme.contentMaxWidth)
 
-        ScrollBar.vertical: ScrollBar {}
+        ScrollBar.vertical: ThinScrollBar {}
 
         header: Item {
             width: list.width

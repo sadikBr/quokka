@@ -65,7 +65,7 @@ Page {
 
         // The profile header grows once loaded; if we were at the top then, stay at the top.
         property bool atTop: true
-        ScrollBar.vertical: ScrollBar {}
+        ScrollBar.vertical: ThinScrollBar {}
 
         onContentYChanged: {
             atTop = contentY - originY < 4

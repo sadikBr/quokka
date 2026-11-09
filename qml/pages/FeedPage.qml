@@ -238,7 +238,7 @@ Page {
         readonly property int contentWidth2: Math.min(width - 24, Theme.contentMaxWidth)
         readonly property real pull: Math.max(0, -(contentY - originY + topMargin))
 
-        ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
+        ScrollBar.vertical: ThinScrollBar {}
 
         onContentYChanged: {
             atTop = contentY - originY < 4

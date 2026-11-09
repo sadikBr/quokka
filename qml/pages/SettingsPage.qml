@@ -19,7 +19,7 @@ Page {
         anchors.fill: parent
         contentHeight: col.implicitHeight + 48
         boundsBehavior: Flickable.StopAtBounds
-        ScrollBar.vertical: ScrollBar {}
+        ScrollBar.vertical: ThinScrollBar {}
 
         ColumnLayout {
             id: col
