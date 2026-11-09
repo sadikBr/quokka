@@ -80,6 +80,8 @@ public:
     // Reloads the first page. Existing posts stay visible until the new page arrives.
     Q_INVOKABLE void refresh();
     Q_INVOKABLE void loadMore();
+    // Everything about one post as a map (role names as keys), for the post page.
+    Q_INVOKABLE QVariantMap get(int row) const;
 
     // Builds the API path for the current feed + sort, e.g. "/r/pics/top".
     QString apiPath() const;

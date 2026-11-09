@@ -28,20 +28,26 @@ qt_add_executable(quokka
 
 set(QUOKKA_QML_FILES
     qml/Main.qml
+    qml/Nav.qml
     qml/theme/Theme.qml
     qml/pages/FeedPage.qml
+    qml/pages/PostPage.qml
     qml/components/Avatar.qml
     qml/components/Chip.qml
+    qml/components/CommentRow.qml
     qml/components/EmptyState.qml
     qml/components/Icon.qml
     qml/components/LoadingDots.qml
     qml/components/PostCard.qml
+    qml/components/PostMedia.qml
+    qml/components/RedditText.qml
     qml/components/RoundButton2.qml
     qml/components/RoundedImage.qml
     qml/components/SettingsDrawer.qml
     qml/components/SkeletonCard.qml
     qml/components/SortBar.qml
     qml/components/SubredditPicker.qml
+    qml/components/TopBar.qml
 )
 # QML files live in sub-folders for tidiness, but are served flat at the module root so they can
 # all see each other without imports.
@@ -49,7 +55,7 @@ foreach(qml_file IN LISTS QUOKKA_QML_FILES)
     get_filename_component(qml_name ${qml_file} NAME)
     set_source_files_properties(${qml_file} PROPERTIES QT_RESOURCE_ALIAS ${qml_name})
 endforeach()
-set_source_files_properties(qml/theme/Theme.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
+set_source_files_properties(qml/theme/Theme.qml qml/Nav.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 
 file(GLOB QUOKKA_ICONS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} CONFIGURE_DEPENDS resources/icons/*.svg)
 
@@ -61,6 +67,8 @@ qt_add_qml_module(quokka
         src/app/appsettings.h src/app/appsettings.cpp
         src/app/format.h src/app/format.cpp
         src/app/postlistmodel.h src/app/postlistmodel.cpp
+        src/app/commenttreemodel.h src/app/commenttreemodel.cpp
+        src/app/postmap.h src/app/postmap.cpp
     RESOURCES
         resources/logo.svg
         ${QUOKKA_ICONS}

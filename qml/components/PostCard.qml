@@ -30,13 +30,13 @@ Item {
     required property int galleryCount
 
     signal openPost()
+    signal openMedia()
     signal openSubreddit(string name)
     signal openLink(string link)
 
     readonly property bool hasBigMedia: previewUrl !== "" && (kind === PostListModel.ImagePost
                                         || kind === PostListModel.GalleryPost
                                         || kind === PostListModel.VideoPost)
-    property bool spoilerRevealed: false
 
     implicitHeight: body.implicitHeight + 2 * Theme.pad + shadowOffset
     readonly property int shadowOffset: 4
@@ -149,65 +149,18 @@ Item {
             }
 
             // Big media: image, gallery, video
-            Item {
-                id: media
+            PostMedia {
                 visible: card.hasBigMedia
                 Layout.fillWidth: true
-                readonly property real ratio: card.previewWidth > 0 && card.previewHeight > 0
-                                              ? card.previewHeight / card.previewWidth : 0.66
-                Layout.preferredHeight: visible ? Math.min(560, Math.round(width * Math.max(0.45, Math.min(1.25, ratio)))) : 0
-
-                RoundedImage {
-                    anchors.fill: parent
-                    source: card.hasBigMedia ? card.previewUrl : ""
-                }
-
-                // Spoiler cover
-                Rectangle {
-                    anchors.fill: parent
-                    visible: card.spoiler && !card.spoilerRevealed
-                    radius: Theme.radiusMedia
-                    color: Theme.spoiler
-                    Column {
-                        anchors.centerIn: parent
-                        spacing: 6
-                        Icon { anchors.horizontalCenter: parent.horizontalCenter; name: "eye-off"; size: 30; color: "white" }
-                        Text { text: "Spoiler, tap to reveal"; color: "white"; font.pixelSize: Theme.fontMeta; font.weight: Font.Bold }
-                    }
-                    TapHandler { gesturePolicy: TapHandler.ReleaseWithinBounds; onTapped: card.spoilerRevealed = true }
-                }
-
-                // Gallery badge
-                Chip {
-                    visible: card.kind === PostListModel.GalleryPost
-                    anchors.top: parent.top
-                    anchors.right: parent.right
-                    anchors.margins: 10
-                    iconName: "gallery"
-                    text: "1 / " + card.galleryCount
-                    fillColor: "#B3000000"
-                    textColor: "white"
-                    border.width: 0
-                }
-
-                // Play button
-                Rectangle {
-                    visible: card.kind === PostListModel.VideoPost && !(card.spoiler && !card.spoilerRevealed)
-                    anchors.centerIn: parent
-                    width: 64
-                    height: 64
-                    radius: 32
-                    color: Theme.alpha(Theme.accent, 0.92)
-                    border.width: 3
-                    border.color: "white"
-                    Icon { anchors.centerIn: parent; anchors.horizontalCenterOffset: 3; name: "play"; size: 28; color: "white" }
-                    SequentialAnimation on scale {
-                        loops: Animation.Infinite
-                        running: card.visible
-                        NumberAnimation { to: 1.08; duration: 700; easing.type: Easing.InOutSine }
-                        NumberAnimation { to: 1.0; duration: 700; easing.type: Easing.InOutSine }
-                    }
-                }
+                Layout.preferredHeight: visible ? implicitHeight : 0
+                kind: card.kind
+                previewUrl: card.hasBigMedia ? card.previewUrl : ""
+                previewWidth: card.previewWidth
+                previewHeight: card.previewHeight
+                galleryCount: card.galleryCount
+                spoiler: card.spoiler
+                nsfw: card.nsfw
+                onActivated: card.openMedia()
             }
 
             // External link preview

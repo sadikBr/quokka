@@ -13,7 +13,6 @@ Page {
 
     signal menuRequested()
     signal pickerRequested()
-    signal subredditRequested(string name)
     signal backRequested()
 
     function goTo(feed) {
@@ -217,9 +216,13 @@ Page {
         delegate: PostCard {
             width: list.contentWidth2
             x: (list.width - width) / 2
-            onOpenPost: Qt.openUrlExternally(Format.webUrl(permalink))   // Post page arrives in M2
-            onOpenSubreddit: (name) => page.subredditRequested(name)
-            onOpenLink: (link) => Qt.openUrlExternally(link)
+            onOpenPost: Nav.openPost(posts.get(index))
+            onOpenMedia: Nav.openMedia(posts.get(index), 0)
+            onOpenSubreddit: (name) => {
+                if (name.toLowerCase() !== posts.feed.toLowerCase())
+                    Nav.openSubreddit(name)
+            }
+            onOpenLink: (link) => Nav.openLink(link)
         }
 
         footer: Item {

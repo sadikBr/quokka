@@ -1,9 +1,15 @@
 #include "parsers.h"
 
+#include "html.h"
+
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonParseError>
+#include <QHash>
+#include <QSet>
 #include <QUrl>
+
+#include <functional>
 
 namespace quokka::parsers {
 
@@ -90,6 +96,29 @@ void resolveMedia(Post &post, const QJsonObject &data)
         if (!items.isEmpty()) {
             post.kind = Post::Kind::Gallery;
             post.galleryCount = int(items.size());
+            for (const auto &it : items) {
+                const QJsonObject item = it.toObject();
+                const QJsonObject mm = meta.value(item.value(QLatin1String("media_id")).toString())
+                                           .toObject();
+                if (mm.value(QLatin1String("status")).toString() != QLatin1String("valid"))
+                    continue;
+                const QJsonObject src = mm.value(QLatin1String("s")).toObject();
+                MediaItem mi;
+                mi.width = src.value(QLatin1String("x")).toInt();
+                mi.height = src.value(QLatin1String("y")).toInt();
+                mi.caption = item.value(QLatin1String("caption")).toString();
+                if (src.contains(QLatin1String("mp4"))) {
+                    mi.url = src.value(QLatin1String("mp4")).toString();
+                    mi.animated = true;
+                } else if (src.contains(QLatin1String("gif"))) {
+                    mi.url = src.value(QLatin1String("gif")).toString();
+                    mi.animated = true;
+                } else {
+                    mi.url = src.value(QLatin1String("u")).toString();
+                }
+                if (!mi.url.isEmpty())
+                    post.media.append(mi);
+            }
             const QString firstId = items.first().toObject()
                                         .value(QLatin1String("media_id")).toString();
             const QJsonObject m = meta.value(firstId).toObject();
@@ -108,11 +137,16 @@ void resolveMedia(Post &post, const QJsonObject &data)
     if (!hls.isEmpty()) {
         post.kind = Post::Kind::Video;
         post.videoUrl = hls;
+        post.videoFallbackUrl = video.value(QLatin1String("fallback_url")).toString();
         usePreview(preview);
+        const int vw = video.value(QLatin1String("width")).toInt();
+        const int vh = video.value(QLatin1String("height")).toInt();
         if (post.previewWidth <= 0) {
-            post.previewWidth = video.value(QLatin1String("width")).toInt();
-            post.previewHeight = video.value(QLatin1String("height")).toInt();
+            post.previewWidth = vw;
+            post.previewHeight = vh;
         }
+        post.media.append(MediaItem{hls, vw > 0 ? vw : post.previewWidth,
+                                    vh > 0 ? vh : post.previewHeight, {}, true});
         return;
     }
 
@@ -131,6 +165,30 @@ void resolveMedia(Post &post, const QJsonObject &data)
             usePreview(preview);
         else
             post.previewUrl = post.url; // size unknown until it loads
+
+        const QJsonObject img = data.value(QLatin1String("preview")).toObject()
+                                    .value(QLatin1String("images")).toArray().first().toObject();
+        const QJsonObject source = img.value(QLatin1String("source")).toObject();
+        const QJsonObject mp4 = img.value(QLatin1String("variants")).toObject()
+                                    .value(QLatin1String("mp4")).toObject()
+                                    .value(QLatin1String("source")).toObject();
+        MediaItem mi;
+        if (!mp4.isEmpty()) { // GIFs: Reddit offers an MP4 rendition
+            mi = {mp4.value(QLatin1String("url")).toString(), mp4.value(QLatin1String("width")).toInt(),
+                  mp4.value(QLatin1String("height")).toInt(), {}, true};
+        } else if (QUrl(post.url).path().endsWith(QLatin1String(".gif"), Qt::CaseInsensitive)) {
+            mi = {post.url, source.value(QLatin1String("width")).toInt(),
+                  source.value(QLatin1String("height")).toInt(), {}, true};
+        } else if (post.url.contains(QLatin1String("i.redd.it")) || source.isEmpty()) {
+            mi = {post.url, source.value(QLatin1String("width")).toInt(),
+                  source.value(QLatin1String("height")).toInt(), {}, false};
+        } else {
+            mi = {source.value(QLatin1String("url")).toString(),
+                  source.value(QLatin1String("width")).toInt(),
+                  source.value(QLatin1String("height")).toInt(), {}, false};
+        }
+        if (!mi.url.isEmpty())
+            post.media.append(mi);
         return;
     }
 
@@ -166,6 +224,7 @@ Post parsePost(const QJsonObject &data)
         p.url = data.value(QLatin1String("url")).toString();
     p.domain = data.value(QLatin1String("domain")).toString();
     p.selftext = data.value(QLatin1String("selftext")).toString();
+    p.selftextHtml = html::cleanRedditHtml(data.value(QLatin1String("selftext_html")).toString());
     p.flair = data.value(QLatin1String("link_flair_text")).toString();
     p.flairColor = data.value(QLatin1String("link_flair_background_color")).toString();
 
@@ -189,13 +248,17 @@ Post parsePost(const QJsonObject &data)
         p.kind = parent.kind;
         p.url = parent.url;
         p.domain = parent.domain;
-        if (p.selftext.isEmpty())
+        if (p.selftext.isEmpty()) {
             p.selftext = parent.selftext;
+            p.selftextHtml = parent.selftextHtml;
+        }
         p.previewUrl = parent.previewUrl;
         p.previewWidth = parent.previewWidth;
         p.previewHeight = parent.previewHeight;
         p.videoUrl = parent.videoUrl;
+        p.videoFallbackUrl = parent.videoFallbackUrl;
         p.galleryCount = parent.galleryCount;
+        p.media = parent.media;
     } else {
         resolveMedia(p, data);
     }
@@ -228,6 +291,187 @@ PostListing parsePostListing(const QByteArray &json)
     }
     result.ok = true;
     return result;
+}
+
+namespace {
+
+Comment parseCommentData(const QJsonObject &d, const QString &linkAuthor)
+{
+    Comment c;
+    c.kind = Comment::Kind::Comment;
+    c.id = d.value(QLatin1String("id")).toString();
+    c.fullname = d.value(QLatin1String("name")).toString();
+    if (c.fullname.isEmpty() && !c.id.isEmpty())
+        c.fullname = QStringLiteral("t1_") + c.id;
+    c.parentId = d.value(QLatin1String("parent_id")).toString();
+    c.depth = d.value(QLatin1String("depth")).toInt();
+    c.author = d.value(QLatin1String("author")).toString();
+    c.bodyHtml = html::cleanRedditHtml(d.value(QLatin1String("body_html")).toString());
+    if (c.bodyHtml.isEmpty())
+        c.bodyHtml = d.value(QLatin1String("body")).toString().toHtmlEscaped();
+    c.flair = d.value(QLatin1String("author_flair_text")).toString();
+    c.distinguished = d.value(QLatin1String("distinguished")).toString();
+    c.score = d.value(QLatin1String("score")).toInt();
+    c.createdUtc = qint64(d.value(QLatin1String("created_utc")).toDouble());
+    c.isSubmitter = d.value(QLatin1String("is_submitter")).toBool()
+        || (!linkAuthor.isEmpty() && c.author == linkAuthor && c.author != QLatin1String("[deleted]"));
+    c.stickied = d.value(QLatin1String("stickied")).toBool();
+    c.scoreHidden = d.value(QLatin1String("score_hidden")).toBool();
+    const QJsonValue edited = d.value(QLatin1String("edited"));
+    c.edited = edited.isDouble() || (edited.isBool() && edited.toBool());
+    c.subreddit = d.value(QLatin1String("subreddit")).toString();
+    c.linkTitle = d.value(QLatin1String("link_title")).toString();
+    c.permalink = d.value(QLatin1String("permalink")).toString();
+    return c;
+}
+
+Comment parseMoreData(const QJsonObject &d)
+{
+    Comment c;
+    c.id = d.value(QLatin1String("id")).toString();
+    c.fullname = d.value(QLatin1String("name")).toString();
+    c.parentId = d.value(QLatin1String("parent_id")).toString();
+    c.depth = d.value(QLatin1String("depth")).toInt();
+    c.moreCount = d.value(QLatin1String("count")).toInt();
+    for (const auto &v : d.value(QLatin1String("children")).toArray())
+        c.moreChildren.append(v.toString());
+    // An empty "more" (id "_") means the thread continues on its own page.
+    c.kind = (c.moreChildren.isEmpty() || c.id == QLatin1String("_")) ? Comment::Kind::Continue
+                                                                      : Comment::Kind::More;
+    return c;
+}
+
+void flattenThings(const QJsonArray &things, const QString &linkAuthor, int depth,
+                   QList<Comment> &out)
+{
+    for (const auto &v : things) {
+        const QJsonObject thing = v.toObject();
+        const QString kind = thing.value(QLatin1String("kind")).toString();
+        const QJsonObject d = thing.value(QLatin1String("data")).toObject();
+        if (kind == QLatin1String("t1")) {
+            Comment c = parseCommentData(d, linkAuthor);
+            c.depth = depth;
+            out.append(c);
+            const QJsonValue replies = d.value(QLatin1String("replies"));
+            if (replies.isObject()) { // "" when there are none
+                flattenThings(replies.toObject().value(QLatin1String("data")).toObject()
+                                  .value(QLatin1String("children")).toArray(),
+                              linkAuthor, depth + 1, out);
+            }
+        } else if (kind == QLatin1String("more")) {
+            Comment c = parseMoreData(d);
+            c.depth = depth;
+            // A childless "more" directly under the post carries no information.
+            if (c.kind == Comment::Kind::More || !c.parentId.startsWith(QLatin1String("t3_")))
+                out.append(c);
+        }
+    }
+}
+
+QJsonDocument parseDoc(const QByteArray &json, QString *error)
+{
+    QJsonParseError err;
+    QJsonDocument doc = QJsonDocument::fromJson(json, &err);
+    if (err.error != QJsonParseError::NoError)
+        *error = QStringLiteral("Invalid JSON: %1").arg(err.errorString());
+    return doc;
+}
+
+} // namespace
+
+CommentsPage parseCommentsPage(const QByteArray &json)
+{
+    CommentsPage page;
+    const QJsonDocument doc = parseDoc(json, &page.error);
+    if (!page.error.isEmpty())
+        return page;
+    const QJsonArray parts = doc.array();
+    if (parts.size() < 2) {
+        page.error = QStringLiteral("Unexpected response (no comment listing)");
+        return page;
+    }
+    const QJsonArray postChildren = parts.at(0).toObject().value(QLatin1String("data")).toObject()
+                                        .value(QLatin1String("children")).toArray();
+    if (postChildren.isEmpty()) {
+        page.error = QStringLiteral("Post not found");
+        return page;
+    }
+    page.post = parsePost(postChildren.first().toObject().value(QLatin1String("data")).toObject());
+    flattenThings(parts.at(1).toObject().value(QLatin1String("data")).toObject()
+                      .value(QLatin1String("children")).toArray(),
+                  page.post.author, 0, page.comments);
+    page.ok = true;
+    return page;
+}
+
+QList<Comment> parseMoreChildren(const QByteArray &json, const QString &linkAuthor, int baseDepth,
+                                 QString *error)
+{
+    QString err;
+    const QJsonDocument doc = parseDoc(json, &err);
+    QList<Comment> out;
+    if (!err.isEmpty()) {
+        if (error)
+            *error = err;
+        return out;
+    }
+    const QJsonArray things = doc.object().value(QLatin1String("json")).toObject()
+                                  .value(QLatin1String("data")).toObject()
+                                  .value(QLatin1String("things")).toArray();
+
+    // Things come back flat; rebuild the tree from parent ids, keeping Reddit's order.
+    QList<Comment> flat;
+    for (const auto &v : things) {
+        const QJsonObject thing = v.toObject();
+        const QString kind = thing.value(QLatin1String("kind")).toString();
+        const QJsonObject d = thing.value(QLatin1String("data")).toObject();
+        if (kind == QLatin1String("t1"))
+            flat.append(parseCommentData(d, linkAuthor));
+        else if (kind == QLatin1String("more"))
+            flat.append(parseMoreData(d));
+    }
+    QSet<QString> present;
+    for (const Comment &c : flat)
+        present.insert(c.fullname);
+    QHash<QString, QList<int>> childrenOf;
+    QList<int> roots;
+    for (int i = 0; i < flat.size(); ++i) {
+        if (present.contains(flat[i].parentId))
+            childrenOf[flat[i].parentId].append(i);
+        else
+            roots.append(i);
+    }
+    std::function<void(int, int)> visit = [&](int idx, int depth) {
+        Comment c = flat[idx];
+        c.depth = depth;
+        out.append(c);
+        for (int child : childrenOf.value(c.fullname))
+            visit(child, depth + 1);
+    };
+    for (int r : roots)
+        visit(r, baseDepth);
+    return out;
+}
+
+QList<Comment> parseCommentListing(const QByteArray &json, QString *after, QString *error)
+{
+    QString err;
+    const QJsonDocument doc = parseDoc(json, &err);
+    QList<Comment> out;
+    if (!err.isEmpty() || doc.object().value(QLatin1String("kind")).toString() != QLatin1String("Listing")) {
+        if (error)
+            *error = err.isEmpty() ? QStringLiteral("Unexpected response (not a Listing)") : err;
+        return out;
+    }
+    const QJsonObject data = doc.object().value(QLatin1String("data")).toObject();
+    if (after)
+        *after = data.value(QLatin1String("after")).toString();
+    for (const auto &v : data.value(QLatin1String("children")).toArray()) {
+        const QJsonObject thing = v.toObject();
+        if (thing.value(QLatin1String("kind")).toString() == QLatin1String("t1"))
+            out.append(parseCommentData(thing.value(QLatin1String("data")).toObject(), {}));
+    }
+    return out;
 }
 
 } // namespace quokka::parsers

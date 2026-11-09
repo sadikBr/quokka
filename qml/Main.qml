@@ -49,7 +49,6 @@ ApplicationWindow {
             isRoot: true
             onMenuRequested: drawer.open()
             onPickerRequested: picker.open()
-            onSubredditRequested: (name) => window.openSubreddit(name)
         }
     }
 
@@ -59,15 +58,42 @@ ApplicationWindow {
             isRoot: false
             onBackRequested: stack.pop()
             onPickerRequested: picker.open()
-            onSubredditRequested: (name) => {
-                if (name.toLowerCase() !== initialFeed.toLowerCase())
-                    window.openSubreddit(name)
+        }
+    }
+
+    Component {
+        id: postPage
+        PostPage {}
+    }
+
+    // `quokka <reddit link>` opens that link on start.
+    Component.onCompleted: {
+        const args = Qt.application.arguments
+        for (let i = 1; i < args.length; ++i) {
+            if (/^(https?:\/\/|\/?(r|u|user)\/)/.test(args[i])) {
+                const link = args[i]
+                Qt.callLater(() => Nav.openLink(link))
+                break
             }
         }
     }
 
-    function openSubreddit(name) {
-        stack.push(subFeed, { initialFeed: name })
+    // Page routing
+    Connections {
+        target: Nav
+        function onSubredditRequested(name) { stack.push(subFeed, { initialFeed: name }) }
+        function onPostRequested(post) {
+            stack.push(postPage, { postId: post.postId, initialPost: post })
+        }
+        function onThreadRequested(postId, commentId) {
+            stack.push(postPage, { postId: postId, focusCommentId: commentId })
+        }
+        function onMediaRequested(post, index) {
+            // Full-screen viewer arrives in M3; until then open the post.
+            stack.push(postPage, { postId: post.postId, initialPost: post })
+        }
+        function onImageRequested(url) { Qt.openUrlExternally(url) }
+        function onUserRequested(name) { Qt.openUrlExternally("https://www.reddit.com/user/" + name) }
     }
 
     // Picking a community from the sheet changes the current page's feed.

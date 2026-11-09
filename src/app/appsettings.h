@@ -15,6 +15,7 @@ class AppSettings : public QObject
     Q_PROPERTY(bool showNsfw READ showNsfw WRITE setShowNsfw NOTIFY showNsfwChanged)
     Q_PROPERTY(QString lastFeed READ lastFeed WRITE setLastFeed NOTIFY lastFeedChanged)
     Q_PROPERTY(QString defaultSort READ defaultSort WRITE setDefaultSort NOTIFY defaultSortChanged)
+    Q_PROPERTY(QString commentSort READ commentSort WRITE setCommentSort NOTIFY commentSortChanged)
 
 public:
     enum ThemeMode { System, Light, Dark };
@@ -30,12 +31,15 @@ public:
     void setLastFeed(const QString &feed);
     QString defaultSort() const;
     void setDefaultSort(const QString &sort);
+    QString commentSort() const;
+    void setCommentSort(const QString &sort);
 
 signals:
     void themeModeChanged();
     void showNsfwChanged();
     void lastFeedChanged();
     void defaultSortChanged();
+    void commentSortChanged();
 
 private:
     QSettings m_settings;

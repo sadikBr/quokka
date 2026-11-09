@@ -1,6 +1,8 @@
 # Networking, transports and JSON parsing. No QML / UI dependencies so it is easy to test.
 add_library(quokka_core STATIC
     post.h
+    comment.h
+    html.h html.cpp
     parsers.h parsers.cpp
     transport.h transport.cpp
     redditclient.h redditclient.cpp

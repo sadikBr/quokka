@@ -54,11 +54,13 @@ jobs:
         run: |
           ./build/quokka
           test -s screenshot-linux.png
+          QUOKKA_SCREENSHOT="$GITHUB_WORKSPACE/screenshot-linux-post.png:4000" ./build/quokka /r/test/comments/abc/
+          test -s screenshot-linux-post.png
 
       - uses: actions/upload-artifact@v4
         with:
           name: screenshot-linux
-          path: screenshot-linux.png
+          path: screenshot-linux*.png
 
       - name: Package AppImage
         env:

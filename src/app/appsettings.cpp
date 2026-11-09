@@ -5,6 +5,7 @@ const QString kTheme = QStringLiteral("ui/themeMode");
 const QString kNsfw = QStringLiteral("content/showNsfw");
 const QString kLastFeed = QStringLiteral("browse/lastFeed");
 const QString kDefaultSort = QStringLiteral("browse/defaultSort");
+const QString kCommentSort = QStringLiteral("browse/commentSort");
 } // namespace
 
 AppSettings::AppSettings(QObject *parent)
@@ -64,4 +65,17 @@ void AppSettings::setDefaultSort(const QString &sort)
         return;
     m_settings.setValue(kDefaultSort, sort);
     emit defaultSortChanged();
+}
+
+QString AppSettings::commentSort() const
+{
+    return m_settings.value(kCommentSort, QStringLiteral("confidence")).toString();
+}
+
+void AppSettings::setCommentSort(const QString &sort)
+{
+    if (sort == commentSort())
+        return;
+    m_settings.setValue(kCommentSort, sort);
+    emit commentSortChanged();
 }

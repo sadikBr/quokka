@@ -1,6 +1,7 @@
 #include "postlistmodel.h"
 
 #include "parsers.h"
+#include "postmap.h"
 #include "redditclient.h"
 #include "services.h"
 
@@ -30,18 +31,6 @@ QString normalizeFeed(QString feed)
         feed.chop(1);
     feed.remove(QLatin1Char(' '));
     return feed.isEmpty() ? QStringLiteral("popular") : feed;
-}
-
-PostListModel::Kind toModelKind(Post::Kind k)
-{
-    switch (k) {
-    case Post::Kind::Self: return PostListModel::SelfPost;
-    case Post::Kind::Image: return PostListModel::ImagePost;
-    case Post::Kind::Gallery: return PostListModel::GalleryPost;
-    case Post::Kind::Video: return PostListModel::VideoPost;
-    case Post::Kind::Link: break;
-    }
-    return PostListModel::LinkPost;
 }
 
 } // namespace
@@ -87,7 +76,7 @@ QVariant PostListModel::data(const QModelIndex &index, int role) const
     case SpoilerRole: return p.spoiler;
     case StickiedRole: return p.stickied;
     case LockedRole: return p.locked;
-    case KindRole: return int(toModelKind(p.kind));
+    case KindRole: return postKindValue(p.kind);
     case PreviewUrlRole: return p.previewUrl;
     case PreviewWidthRole: return p.previewWidth;
     case PreviewHeightRole: return p.previewHeight;
@@ -125,6 +114,13 @@ QHash<int, QByteArray> PostListModel::roleNames() const
         {VideoUrlRole, "videoUrl"},
         {GalleryCountRole, "galleryCount"},
     };
+}
+
+QVariantMap PostListModel::get(int row) const
+{
+    if (row < 0 || row >= m_posts.size())
+        return {};
+    return postToVariantMap(m_posts.at(row));
 }
 
 void PostListModel::setFeed(const QString &feed)
