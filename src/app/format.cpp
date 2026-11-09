@@ -28,6 +28,25 @@ QString Format::relativeTime(qint64 createdUtc, qint64 nowUtc)
     return QStringLiteral("%1y").arg(s / (86400 * 365));
 }
 
+QString Format::age(qint64 createdUtc)
+{
+    return age(createdUtc, QDateTime::currentSecsSinceEpoch());
+}
+
+QString Format::age(qint64 createdUtc, qint64 nowUtc)
+{
+    const qint64 days = qMax<qint64>(0, nowUtc - createdUtc) / 86400;
+    auto plural = [](qint64 n, const char *one, const char *many) {
+        return n == 1 ? QStringLiteral("1 %1").arg(QLatin1String(one))
+                      : QStringLiteral("%1 %2").arg(n).arg(QLatin1String(many));
+    };
+    if (days < 31)
+        return plural(days, "day", "days");
+    if (days < 365)
+        return plural(days / 30, "month", "months");
+    return plural(days / 365, "year", "years");
+}
+
 QString Format::compact(qint64 n)
 {
     const bool negative = n < 0;

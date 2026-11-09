@@ -12,7 +12,8 @@ using quokka::Post;
 namespace {
 
 const QStringList kSorts = {QStringLiteral("hot"), QStringLiteral("new"), QStringLiteral("top"),
-                            QStringLiteral("rising"), QStringLiteral("controversial")};
+                            QStringLiteral("rising"), QStringLiteral("controversial"),
+                            QStringLiteral("relevance"), QStringLiteral("comments")};
 const QStringList kRanges = {QStringLiteral("hour"), QStringLiteral("day"), QStringLiteral("week"),
                              QStringLiteral("month"), QStringLiteral("year"), QStringLiteral("all")};
 constexpr int kPageSize = 25;
@@ -150,7 +151,7 @@ void PostListModel::setTimeRange(const QString &range)
         return;
     m_timeRange = r;
     emit timeRangeChanged();
-    if (m_sort == QLatin1String("top") || m_sort == QLatin1String("controversial"))
+    if (m_sort == QLatin1String("top") || m_sort == QLatin1String("controversial") || !m_search.isEmpty())
         scheduleReload();
 }
 
@@ -163,9 +164,51 @@ void PostListModel::setShowNsfw(bool show)
     scheduleReload();
 }
 
+void PostListModel::setSearchQuery(const QString &q)
+{
+    const QString v = q.trimmed();
+    if (v == m_search)
+        return;
+    m_search = v;
+    emit searchQueryChanged();
+    scheduleReload();
+}
+
+void PostListModel::setUserName(const QString &name)
+{
+    QString v = name.trimmed();
+    for (const auto prefix : {"/u/", "u/", "/user/", "user/"})
+        if (v.startsWith(QLatin1String(prefix), Qt::CaseInsensitive))
+            v = v.mid(int(qstrlen(prefix)));
+    if (v == m_user)
+        return;
+    m_user = v;
+    emit userNameChanged();
+    scheduleReload();
+}
+
+void PostListModel::setEnabled(bool enabled)
+{
+    if (enabled == m_enabled)
+        return;
+    m_enabled = enabled;
+    emit enabledChanged();
+    scheduleReload();
+}
+
 QString PostListModel::apiPath() const
 {
-    return QStringLiteral("/r/%1/%2").arg(m_feed, m_sort);
+    if (!m_user.isEmpty())
+        return QStringLiteral("/user/%1/submitted").arg(m_user);
+    if (!m_search.isEmpty()) {
+        const QString f = m_feed.toLower();
+        return (f == QLatin1String("popular") || f == QLatin1String("all"))
+            ? QStringLiteral("/search")
+            : QStringLiteral("/r/%1/search").arg(m_feed);
+    }
+    // Search-only sorts make no sense for plain feeds.
+    const bool feedSort = m_sort != QLatin1String("relevance") && m_sort != QLatin1String("comments");
+    return QStringLiteral("/r/%1/%2").arg(m_feed, feedSort ? m_sort : QStringLiteral("hot"));
 }
 
 void PostListModel::scheduleReload()
@@ -202,6 +245,17 @@ void PostListModel::request(bool reset)
         m_reply->abort();
         m_reply = nullptr;
     }
+    if (!m_enabled) {
+        if (reset && !m_posts.isEmpty()) {
+            beginResetModel();
+            m_posts.clear();
+            m_seen.clear();
+            endResetModel();
+            emit countChanged();
+        }
+        emit loadingChanged();
+        return;
+    }
     if (reset) {
         m_after.clear();
         m_hasMore = true;
@@ -214,8 +268,18 @@ void PostListModel::request(bool reset)
     q.addQueryItem(QStringLiteral("limit"), QString::number(kPageSize));
     if (!reset && !m_after.isEmpty())
         q.addQueryItem(QStringLiteral("after"), m_after);
-    if (m_sort == QLatin1String("top") || m_sort == QLatin1String("controversial"))
+    const bool timed = m_sort == QLatin1String("top") || m_sort == QLatin1String("controversial")
+        || (!m_search.isEmpty() && m_sort != QLatin1String("new"));
+    if (timed)
         q.addQueryItem(QStringLiteral("t"), m_timeRange);
+    if (!m_user.isEmpty() || !m_search.isEmpty())
+        q.addQueryItem(QStringLiteral("sort"), m_sort);
+    if (!m_search.isEmpty()) {
+        q.addQueryItem(QStringLiteral("q"), m_search);
+        q.addQueryItem(QStringLiteral("type"), QStringLiteral("link"));
+        if (!apiPath().startsWith(QLatin1String("/search")))
+            q.addQueryItem(QStringLiteral("restrict_sr"), QStringLiteral("on"));
+    }
     if (m_showNsfw)
         q.addQueryItem(QStringLiteral("include_over_18"), QStringLiteral("on"));
 

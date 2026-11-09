@@ -1,0 +1,17 @@
+{
+ "kind": "t2",
+ "data": {
+  "name": "quokka_fan",
+  "is_suspended": false,
+  "snoovatar_img": "",
+  "icon_img": "https://styles.redditmedia.com/avatar.png?a=1&amp;b=2",
+  "link_karma": 1200,
+  "comment_karma": 3400,
+  "total_karma": 4700,
+  "created_utc": 1668067200.0,
+  "subreddit": {
+   "public_description": "I like marsupials",
+   "banner_img": ""
+  }
+ }
+}

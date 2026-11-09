@@ -126,6 +126,54 @@ private slots:
         QVERIFY(vid.videoFallbackUrl.endsWith(QLatin1String("DASH_720.mp4")));
     }
 
+    void subredditAbout()
+    {
+        QString err;
+        const auto s = parseSubredditAbout(fixture("r_pics_about.json"), &err);
+        QVERIFY2(err.isEmpty(), qPrintable(err));
+        QCOMPARE(s.name, QStringLiteral("pics"));
+        QCOMPARE(s.subscribers, 32000000);
+        QCOMPARE(s.activeUsers, 12345);
+        QCOMPARE(s.iconUrl, QStringLiteral("https://styles.redditmedia.com/icon.png?width=256&s=abc"));
+        QVERIFY(s.descriptionHtml.contains("be nice"));
+        QCOMPARE(s.color, QStringLiteral("#0079D3"));
+
+        parseSubredditAbout(fixture("listing.json"), &err);
+        QVERIFY(!err.isEmpty());
+    }
+
+    void subredditSearch()
+    {
+        QString after, err;
+        const auto list = parseSubredditListing(fixture("subreddits_search.json"), &after, &err);
+        QCOMPARE(list.size(), 3);
+        QCOMPARE(after, QStringLiteral("t5_x"));
+        QVERIFY(list[1].nsfw);
+        QCOMPARE(list[2].activeUsers, -1);
+        QVERIFY(list[2].iconUrl.isEmpty());
+    }
+
+    void userAbout()
+    {
+        QString err;
+        const auto u = parseUserAbout(fixture("user_quokka_fan_about.json"), &err);
+        QVERIFY2(err.isEmpty(), qPrintable(err));
+        QCOMPARE(u.name, QStringLiteral("quokka_fan"));
+        QCOMPARE(u.totalKarma, 4700);
+        QCOMPARE(u.iconUrl, QStringLiteral("https://styles.redditmedia.com/avatar.png?a=1&b=2"));
+        QCOMPARE(u.description, QStringLiteral("I like marsupials"));
+    }
+
+    void userComments()
+    {
+        QString after, err;
+        const auto list = parseCommentListing(fixture("user_quokka_fan_comments.json"), &after, &err);
+        QCOMPARE(list.size(), 1);
+        QCOMPARE(list[0].linkTitle, QStringLiteral("A quokka smiling"));
+        QCOMPARE(list[0].subreddit, QStringLiteral("aww"));
+        QVERIFY(after.isEmpty());
+    }
+
     void rejectsGarbage()
     {
         QVERIFY(!parsePostListing("not json").ok);

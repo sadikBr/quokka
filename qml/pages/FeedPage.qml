@@ -24,6 +24,12 @@ Page {
 
     background: Rectangle { color: Theme.bg }
 
+    SubredditInfo {
+        id: about
+        name: posts.feed
+    }
+    readonly property bool realSubreddit: about.loaded
+
     PostListModel {
         id: posts
         feed: page.initialFeed
@@ -50,7 +56,7 @@ Page {
             radius: 28
             gradient: Gradient {
                 orientation: Gradient.Horizontal
-                GradientStop { position: 0.0; color: Theme.berry }
+                GradientStop { position: 0.0; color: about.color !== "" ? about.color : Theme.berry }
                 GradientStop { position: 1.0; color: Theme.caramel }
             }
             // Playful confetti dots
@@ -96,8 +102,8 @@ Page {
                     iconName: "search"
                     fill: Theme.alpha("white", 0.22)
                     tint: "white"
-                    tooltip: qsTr("Go to community")
-                    onClicked: page.pickerRequested()
+                    tooltip: page.realSubreddit ? qsTr("Search r/%1").arg(posts.feed) : qsTr("Search")
+                    onClicked: Nav.openSearch("", page.realSubreddit ? posts.feed : "")
                 }
                 RoundButton2 {
                     id: refreshBtn
@@ -134,6 +140,8 @@ Page {
                         Avatar {
                             anchors.centerIn: parent
                             name: posts.feed
+                            imageUrl: about.iconUrl
+                            backgroundColor: "white"
                             size: 44
                         }
                     }
@@ -158,7 +166,10 @@ Page {
                             }
                         }
                         Text {
-                            text: posts.count === 1 ? qsTr("1 post loaded")
+                            text: page.realSubreddit
+                                ? qsTr("%1 members").arg(Format.compact(about.subscribers))
+                                  + (about.activeUsers >= 0 ? qsTr("  ·  %1 online").arg(Format.compact(about.activeUsers)) : "")
+                                : posts.count === 1 ? qsTr("1 post loaded")
                                 : posts.count > 1 ? qsTr("%1 posts loaded").arg(posts.count)
                                 : (posts.loading ? qsTr("Fetching the good stuff…") : " ")
                             color: Theme.alpha("white", 0.85)
@@ -169,6 +180,17 @@ Page {
                 }
                 TapHandler { onTapped: page.pickerRequested() }
                 HoverHandler { cursorShape: Qt.PointingHandCursor }
+            }
+
+            Text {
+                Layout.fillWidth: true
+                visible: page.realSubreddit && about.description !== ""
+                text: about.description
+                color: Theme.alpha("white", 0.92)
+                font.pixelSize: Theme.fontMeta
+                wrapMode: Text.Wrap
+                maximumLineCount: 2
+                elide: Text.ElideRight
             }
         }
     }

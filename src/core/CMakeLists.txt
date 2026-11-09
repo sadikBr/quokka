@@ -2,6 +2,7 @@
 add_library(quokka_core STATIC
     post.h
     comment.h
+    community.h
     html.h html.cpp
     parsers.h parsers.cpp
     transport.h transport.cpp

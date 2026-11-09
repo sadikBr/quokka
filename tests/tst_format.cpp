@@ -27,6 +27,15 @@ private slots:
         QCOMPARE(Format::relativeTime(now - age, now), expected);
     }
 
+    void age()
+    {
+        const qint64 now = 1'700'000'000;
+        QCOMPARE(Format::age(now - 86400, now), QStringLiteral("1 day"));
+        QCOMPARE(Format::age(now - 5 * 86400, now), QStringLiteral("5 days"));
+        QCOMPARE(Format::age(now - 70 * 86400, now), QStringLiteral("2 months"));
+        QCOMPARE(Format::age(now - 400 * 86400, now), QStringLiteral("1 year"));
+    }
+
     void compact_data()
     {
         QTest::addColumn<qint64>("n");

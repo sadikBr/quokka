@@ -1,5 +1,6 @@
 #include "commenttreemodel.h"
 #include "html.h"
+#include "postlistmodel.h"
 #include "parsers.h"
 
 #include <QAbstractItemModelTester>
@@ -116,6 +117,24 @@ private slots:
         // Collapsing c1 now hides the newly loaded rows too.
         model.toggleCollapsed(0);
         QCOMPARE(ids(model), QStringList({"t1_c1", "t1_c6", "t1_m2"}));
+    }
+
+    void postListPaths()
+    {
+        PostListModel m;
+        QCOMPARE(m.apiPath(), QStringLiteral("/r/popular/hot"));
+        m.setFeed("r/Pics/");
+        m.setSort("top");
+        QCOMPARE(m.apiPath(), QStringLiteral("/r/Pics/top"));
+        m.setSearchQuery("  quokka ");
+        QCOMPARE(m.apiPath(), QStringLiteral("/r/Pics/search"));
+        m.setFeed("all");
+        QCOMPARE(m.apiPath(), QStringLiteral("/search"));
+        m.setSearchQuery("");
+        m.setSort("relevance"); // search-only sort falls back to hot for feeds
+        QCOMPARE(m.apiPath(), QStringLiteral("/r/all/hot"));
+        m.setUserName("u/someone");
+        QCOMPARE(m.apiPath(), QStringLiteral("/user/someone/submitted"));
     }
 };
 

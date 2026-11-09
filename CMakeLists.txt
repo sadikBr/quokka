@@ -33,6 +33,8 @@ set(QUOKKA_QML_FILES
     qml/pages/FeedPage.qml
     qml/pages/PostPage.qml
     qml/pages/MediaViewer.qml
+    qml/pages/SearchPage.qml
+    qml/pages/UserPage.qml
     qml/components/Avatar.qml
     qml/components/Chip.qml
     qml/components/CommentRow.qml
@@ -44,11 +46,14 @@ set(QUOKKA_QML_FILES
     qml/components/RedditText.qml
     qml/components/RoundButton2.qml
     qml/components/RoundedImage.qml
+    qml/components/SegmentedTabs.qml
     qml/components/SettingsDrawer.qml
     qml/components/SkeletonCard.qml
     qml/components/SortBar.qml
     qml/components/SubredditPicker.qml
+    qml/components/SubredditRow.qml
     qml/components/TopBar.qml
+    qml/components/UserCommentCard.qml
     qml/components/VideoPlayer.qml
     qml/components/ZoomableImage.qml
 )
@@ -72,6 +77,9 @@ qt_add_qml_module(quokka
         src/app/postlistmodel.h src/app/postlistmodel.cpp
         src/app/commenttreemodel.h src/app/commenttreemodel.cpp
         src/app/postmap.h src/app/postmap.cpp
+        src/app/profiles.h src/app/profiles.cpp
+        src/app/subredditlistmodel.h src/app/subredditlistmodel.cpp
+        src/app/usercommentmodel.h src/app/usercommentmodel.cpp
     RESOURCES
         resources/logo.svg
         ${QUOKKA_ICONS}

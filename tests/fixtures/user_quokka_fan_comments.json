@@ -1,0 +1,23 @@
+{
+ "kind": "Listing",
+ "data": {
+  "after": null,
+  "children": [
+   {
+    "kind": "t1",
+    "data": {
+     "id": "uc1",
+     "name": "t1_uc1",
+     "author": "quokka_fan",
+     "body_html": "<div class=\"md\"><p>So cute!</p></div>",
+     "score": 42,
+     "created_utc": 1762671600.0,
+     "subreddit": "aww",
+     "link_title": "A quokka smiling",
+     "permalink": "/r/aww/comments/q1/a_quokka/uc1/",
+     "parent_id": "t3_q1"
+    }
+   }
+  ]
+ }
+}

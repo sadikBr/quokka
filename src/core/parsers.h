@@ -1,6 +1,7 @@
 #pragma once
 
 #include "comment.h"
+#include "community.h"
 #include "post.h"
 
 #include <QJsonObject>
@@ -46,5 +47,14 @@ QList<Comment> parseMoreChildren(const QByteArray &json, const QString &linkAuth
 
 // Parses a Listing of t1 things (e.g. /user/<name>/comments).
 QList<Comment> parseCommentListing(const QByteArray &json, QString *after, QString *error = nullptr);
+
+// Parses /r/<name>/about.json.
+Subreddit parseSubredditAbout(const QByteArray &json, QString *error = nullptr);
+
+// Parses a Listing of t5 things (/subreddits/search, /subreddits/popular).
+QList<Subreddit> parseSubredditListing(const QByteArray &json, QString *after, QString *error = nullptr);
+
+// Parses /user/<name>/about.json.
+UserAccount parseUserAbout(const QByteArray &json, QString *error = nullptr);
 
 } // namespace quokka::parsers

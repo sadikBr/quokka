@@ -18,6 +18,10 @@ public:
     Q_INVOKABLE static QString relativeTime(qint64 createdUtc);
     static QString relativeTime(qint64 createdUtc, qint64 nowUtc);
 
+    // Long form: "12 days", "5 months", "3 years".
+    Q_INVOKABLE static QString age(qint64 createdUtc);
+    static QString age(qint64 createdUtc, qint64 nowUtc);
+
     // 999 -> "999", 1234 -> "1.2k", 45678 -> "45.7k", 1234567 -> "1.2M"
     Q_INVOKABLE static QString compact(qint64 n);
 

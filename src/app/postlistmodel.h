@@ -17,6 +17,12 @@ class PostListModel : public QAbstractListModel
     Q_PROPERTY(QString feed READ feed WRITE setFeed NOTIFY feedChanged)
     Q_PROPERTY(QString sort READ sort WRITE setSort NOTIFY sortChanged)
     Q_PROPERTY(QString timeRange READ timeRange WRITE setTimeRange NOTIFY timeRangeChanged)
+    // When set, lists posts matching this search (inside `feed` unless it is popular/all).
+    Q_PROPERTY(QString searchQuery READ searchQuery WRITE setSearchQuery NOTIFY searchQueryChanged)
+    // When set, lists the posts submitted by this user instead of a feed.
+    Q_PROPERTY(QString userName READ userName WRITE setUserName NOTIFY userNameChanged)
+    // When false, nothing is fetched (e.g. a search page with an empty query).
+    Q_PROPERTY(bool enabled READ enabled WRITE setEnabled NOTIFY enabledChanged)
     Q_PROPERTY(bool showNsfw READ showNsfw WRITE setShowNsfw NOTIFY showNsfwChanged)
     Q_PROPERTY(bool loading READ loading NOTIFY loadingChanged)
     Q_PROPERTY(bool refreshing READ refreshing NOTIFY loadingChanged)
@@ -70,6 +76,12 @@ public:
     void setTimeRange(const QString &range);
     bool showNsfw() const { return m_showNsfw; }
     void setShowNsfw(bool show);
+    QString searchQuery() const { return m_search; }
+    void setSearchQuery(const QString &q);
+    QString userName() const { return m_user; }
+    void setUserName(const QString &name);
+    bool enabled() const { return m_enabled; }
+    void setEnabled(bool enabled);
 
     bool loading() const { return m_reply != nullptr; }
     bool refreshing() const { return m_reply != nullptr && m_refreshing; }
@@ -83,7 +95,7 @@ public:
     // Everything about one post as a map (role names as keys), for the post page.
     Q_INVOKABLE QVariantMap get(int row) const;
 
-    // Builds the API path for the current feed + sort, e.g. "/r/pics/top".
+    // Builds the API path for the current mode, e.g. "/r/pics/top" or "/search".
     QString apiPath() const;
 
 signals:
@@ -91,6 +103,9 @@ signals:
     void sortChanged();
     void timeRangeChanged();
     void showNsfwChanged();
+    void searchQueryChanged();
+    void userNameChanged();
+    void enabledChanged();
     void loadingChanged();
     void hasMoreChanged();
     void errorChanged();
@@ -105,6 +120,9 @@ private:
     QString m_sort = QStringLiteral("hot");
     QString m_timeRange = QStringLiteral("day");
     bool m_showNsfw = false;
+    QString m_search;
+    QString m_user;
+    bool m_enabled = true;
 
     QList<quokka::Post> m_posts;
     QSet<QString> m_seen;

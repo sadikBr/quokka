@@ -474,4 +474,113 @@ QList<Comment> parseCommentListing(const QByteArray &json, QString *after, QStri
     return out;
 }
 
+namespace {
+
+// Reddit image URLs sometimes come back empty, as "self"/"default", or with escaped &amp;.
+QString imageUrl(const QJsonValue &v)
+{
+    QString u = v.toString();
+    if (!u.startsWith(QLatin1String("http")))
+        return {};
+    u.replace(QLatin1String("&amp;"), QLatin1String("&"));
+    return u;
+}
+
+QString firstImage(const QJsonObject &d, std::initializer_list<const char *> keys)
+{
+    for (const char *k : keys) {
+        const QString u = imageUrl(d.value(QLatin1String(k)));
+        if (!u.isEmpty())
+            return u;
+    }
+    return {};
+}
+
+Subreddit subredditFromData(const QJsonObject &d)
+{
+    Subreddit s;
+    s.name = d.value(QLatin1String("display_name")).toString();
+    s.title = d.value(QLatin1String("title")).toString();
+    s.publicDescription = d.value(QLatin1String("public_description")).toString().trimmed();
+    s.descriptionHtml = html::cleanRedditHtml(d.value(QLatin1String("description_html")).toString());
+    s.subscribers = qint64(d.value(QLatin1String("subscribers")).toDouble());
+    const QJsonValue active = d.value(QLatin1String("active_user_count"));
+    s.activeUsers = active.isDouble() ? qint64(active.toDouble()) : -1;
+    s.iconUrl = firstImage(d, {"community_icon", "icon_img"});
+    s.bannerUrl = firstImage(d, {"banner_background_image", "mobile_banner_image", "banner_img"});
+    s.color = d.value(QLatin1String("primary_color")).toString();
+    if (s.color.isEmpty())
+        s.color = d.value(QLatin1String("key_color")).toString();
+    s.nsfw = d.value(QLatin1String("over18")).toBool();
+    s.createdUtc = qint64(d.value(QLatin1String("created_utc")).toDouble());
+    return s;
+}
+
+} // namespace
+
+Subreddit parseSubredditAbout(const QByteArray &json, QString *error)
+{
+    QString err;
+    const QJsonDocument doc = parseDoc(json, &err);
+    const QJsonObject root = doc.object();
+    if (err.isEmpty() && root.value(QLatin1String("kind")).toString() != QLatin1String("t5"))
+        err = QStringLiteral("Community not found");
+    if (!err.isEmpty()) {
+        if (error)
+            *error = err;
+        return {};
+    }
+    return subredditFromData(root.value(QLatin1String("data")).toObject());
+}
+
+QList<Subreddit> parseSubredditListing(const QByteArray &json, QString *after, QString *error)
+{
+    QString err;
+    const QJsonDocument doc = parseDoc(json, &err);
+    QList<Subreddit> out;
+    if (!err.isEmpty() || doc.object().value(QLatin1String("kind")).toString() != QLatin1String("Listing")) {
+        if (error)
+            *error = err.isEmpty() ? QStringLiteral("Unexpected response (not a Listing)") : err;
+        return out;
+    }
+    const QJsonObject data = doc.object().value(QLatin1String("data")).toObject();
+    if (after)
+        *after = data.value(QLatin1String("after")).toString();
+    for (const auto &v : data.value(QLatin1String("children")).toArray()) {
+        const QJsonObject thing = v.toObject();
+        if (thing.value(QLatin1String("kind")).toString() == QLatin1String("t5"))
+            out.append(subredditFromData(thing.value(QLatin1String("data")).toObject()));
+    }
+    return out;
+}
+
+UserAccount parseUserAbout(const QByteArray &json, QString *error)
+{
+    QString err;
+    const QJsonDocument doc = parseDoc(json, &err);
+    const QJsonObject root = doc.object();
+    if (err.isEmpty() && root.value(QLatin1String("kind")).toString() != QLatin1String("t2"))
+        err = QStringLiteral("User not found");
+    if (!err.isEmpty()) {
+        if (error)
+            *error = err;
+        return {};
+    }
+    const QJsonObject d = root.value(QLatin1String("data")).toObject();
+    UserAccount u;
+    u.name = d.value(QLatin1String("name")).toString();
+    u.suspended = d.value(QLatin1String("is_suspended")).toBool();
+    u.iconUrl = firstImage(d, {"snoovatar_img", "icon_img"});
+    const QJsonObject profile = d.value(QLatin1String("subreddit")).toObject();
+    u.bannerUrl = imageUrl(profile.value(QLatin1String("banner_img")));
+    u.description = profile.value(QLatin1String("public_description")).toString().trimmed();
+    u.linkKarma = qint64(d.value(QLatin1String("link_karma")).toDouble());
+    u.commentKarma = qint64(d.value(QLatin1String("comment_karma")).toDouble());
+    u.totalKarma = qint64(d.value(QLatin1String("total_karma")).toDouble());
+    if (u.totalKarma == 0)
+        u.totalKarma = u.linkKarma + u.commentKarma;
+    u.createdUtc = qint64(d.value(QLatin1String("created_utc")).toDouble());
+    return u;
+}
+
 } // namespace quokka::parsers

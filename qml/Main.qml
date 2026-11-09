@@ -71,6 +71,16 @@ ApplicationWindow {
         MediaViewer {}
     }
 
+    Component {
+        id: userPage
+        UserPage {}
+    }
+
+    Component {
+        id: searchPage
+        SearchPage {}
+    }
+
     // `quokka <reddit link>` opens that link on start.
     Component.onCompleted: {
         Nav.window = window
@@ -102,7 +112,10 @@ ApplicationWindow {
             stack.push(mediaViewer, { post: { media: [{ url: url, caption: "", animated: /\.gif/i.test(url) }] },
                                       showCommentsButton: false })
         }
-        function onUserRequested(name) { Qt.openUrlExternally("https://www.reddit.com/user/" + name) }
+        function onUserRequested(name) { stack.push(userPage, { userName: name }) }
+        function onSearchRequested(query, subreddit) {
+            stack.push(searchPage, { initialQuery: query, subreddit: subreddit })
+        }
     }
 
     // Picking a community from the sheet changes the current page's feed.

@@ -1,0 +1,17 @@
+{
+ "kind": "t5",
+ "data": {
+  "display_name": "pics",
+  "title": "Reddit Pics",
+  "public_description": "A place for photographs.",
+  "description_html": "<!-- SC_OFF --><div class=\"md\"><p>Rules: be nice</p></div><!-- SC_ON -->",
+  "subscribers": 32000000,
+  "active_user_count": 12345,
+  "community_icon": "https://styles.redditmedia.com/icon.png?width=256&amp;s=abc",
+  "icon_img": "",
+  "banner_background_image": "https://styles.redditmedia.com/banner.png",
+  "primary_color": "#0079D3",
+  "over18": false,
+  "created_utc": 1201231119.0
+ }
+}
