@@ -45,9 +45,13 @@ Item {
     signal openSubreddit(string name)
     signal openLink(string link)
 
-    readonly property bool hasBigMedia: !compact && hasMedia && (previewUrl !== "" || kind !== PostListModel.ImagePost)
+    // YouTube links get a big poster with a play button; tapping opens YouTube.
+    readonly property bool isYoutube: kind === PostListModel.LinkPost && previewUrl !== ""
+                                      && /^https?:\/\/((www|m|music)\.)?(youtube\.com|youtu\.be)\//i.test(url)
+    readonly property bool hasBigMedia: !compact && ((hasMedia && (previewUrl !== "" || kind !== PostListModel.ImagePost))
+                                                     || isYoutube)
     // Small square picture beside the title: link previews, and media in compact mode.
-    readonly property bool hasThumb: previewUrl !== "" && !covered
+    readonly property bool hasThumb: previewUrl !== "" && !covered && !hasBigMedia
                                      && (kind === PostListModel.LinkPost || (compact && hasMedia))
     readonly property int columnWidth: Math.min(width - 24, Theme.contentMaxWidth)
     readonly property int vpad: 14
@@ -212,7 +216,7 @@ Item {
                 Layout.fillWidth: true
                 Layout.topMargin: 2
                 Layout.preferredHeight: visible ? implicitHeight : 0
-                kind: card.kind
+                kind: card.isYoutube ? PostListModel.VideoPost : card.kind
                 previewUrl: card.hasBigMedia ? card.previewUrl : ""
                 previewFallbackUrl: card.hasBigMedia ? card.previewFallbackUrl : ""
                 previewWidth: card.previewWidth
@@ -221,7 +225,7 @@ Item {
                 spoiler: card.spoiler
                 nsfw: card.nsfw
                 backgroundColor: card.rowColor
-                onActivated: card.openMedia()
+                onActivated: card.isYoutube ? card.openLink(card.url) : card.openMedia()
             }
 
             // Self-text excerpt

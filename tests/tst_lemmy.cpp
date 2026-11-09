@@ -303,6 +303,31 @@ private slots:
         QCOMPARE(rg->resolve, QStringLiteral("redgifs"));
         QVERIFY(rg->video);
         QCOMPARE(classify("https://streamable.com/abc12")->resolve, QStringLiteral("streamable"));
+        const auto vreddit = classify("https://v.redd.it/k3j2h1g0");
+        QVERIFY(vreddit && vreddit->video);
+        QCOMPARE(vreddit->url, QStringLiteral("https://v.redd.it/k3j2h1g0/HLSPlaylist.m3u8"));
+        const auto giphy = classify("https://giphy.com/gifs/cat-funny-JIX9t2j0ZTN9S");
+        QVERIFY(giphy && giphy->video);
+        QCOMPARE(giphy->url, QStringLiteral("https://i.giphy.com/media/JIX9t2j0ZTN9S/giphy.mp4"));
+        QVERIFY(!classify("https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif")->video); // already a file
+
+        using quokka::media::youtubeId;
+        QCOMPARE(youtubeId("https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=10"), QStringLiteral("dQw4w9WgXcQ"));
+        QCOMPARE(youtubeId("https://youtu.be/dQw4w9WgXcQ"), QStringLiteral("dQw4w9WgXcQ"));
+        QCOMPARE(youtubeId("https://m.youtube.com/shorts/dQw4w9WgXcQ"), QStringLiteral("dQw4w9WgXcQ"));
+        QVERIFY(youtubeId("https://www.youtube.com/@channel").isEmpty());
+
+        // A failing resized copy falls back to other variants, then the original file.
+        const QStringList sources = quokka::media::imageSources(
+            "https://a.org/pictrs/image/x.png?thumbnail=640&format=jpg", "https://b.org/pictrs/image/y.webp");
+        QCOMPARE(sources, (QStringList{
+            "https://a.org/pictrs/image/x.png?thumbnail=640&format=jpg",
+            "https://b.org/pictrs/image/y.webp",
+            "https://a.org/pictrs/image/x.png?thumbnail=640&format=png",
+            "https://a.org/pictrs/image/x.png?thumbnail=640",
+            "https://a.org/pictrs/image/x.png"}));
+        QCOMPARE(quokka::media::imageSources("https://i.redd.it/a.jpg"), QStringList{"https://i.redd.it/a.jpg"});
+        QVERIFY(quokka::media::imageSources({}).isEmpty());
 
         const auto found = quokka::media::extractFromText(
             "Original Source : https://www.redgifs.com/watch/steelbothpeafowl\n\n"

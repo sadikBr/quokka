@@ -6,6 +6,9 @@ Item {
     id: root
     property url source
     property url fallbackSource      // tried when `source` fails to load
+    // Every copy to try, in order (see media::imageSources): a failed one moves on to the next.
+    readonly property var sources: MediaResolver.imageSources(source.toString(), fallbackSource.toString())
+    property int attempt: 0
     property bool showBroken: true   // show an "image unavailable" mark when nothing loads
     // Width to decode the picture at. Defaults to our width; callers whose width follows the
     // picture's shape pass a fixed width to avoid a feedback loop.
@@ -18,11 +21,8 @@ Item {
     // height / width of the loaded picture, 0 until it has loaded. Set once on load (not a
     // binding): the image's implicit size follows its width, which may itself follow this ratio.
     property real naturalRatio: 0
-    readonly property bool broken: img.status === Image.Error
-                                   && (useFallback || fallbackSource.toString() === "")
-
-    property bool useFallback: false
-    onSourceChanged: { useFallback = false; naturalRatio = 0 }
+    readonly property bool broken: img.status === Image.Error && attempt >= sources.length - 1
+    onSourcesChanged: { attempt = 0; naturalRatio = 0 }
 
     Rectangle {
         anchors.fill: parent
@@ -55,10 +55,10 @@ Item {
     Image {
         id: img
         anchors.fill: parent
-        source: root.useFallback ? root.fallbackSource : root.source
+        source: root.attempt < root.sources.length ? root.sources[root.attempt] : ""
         onStatusChanged: {
-            if (status === Image.Error && !root.useFallback && root.fallbackSource.toString() !== "")
-                root.useFallback = true
+            if (status === Image.Error && root.attempt < root.sources.length - 1)
+                Qt.callLater(() => root.attempt++)
             if (status === Image.Ready && implicitWidth > 0)
                 root.naturalRatio = implicitHeight / implicitWidth
         }

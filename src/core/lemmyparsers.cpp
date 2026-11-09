@@ -40,7 +40,8 @@ bool hasExtension(const QString &url, std::initializer_list<const char *> exts)
 }
 
 // pict-rs (Lemmy's image server) resizes on request; ask for a card-sized thumbnail. JPEG, not
-// WebP: Qt only decodes WebP when the optional qtimageformats plugin is installed.
+// WebP: Qt only decodes WebP when the optional qtimageformats plugin is installed. If a server
+// cannot produce it, media::imageSources() lists the other copies the UI falls back to.
 QString sizedImage(const QString &url, int width)
 {
     if (!url.contains(QLatin1String("/pictrs/image/")) || url.contains(QLatin1String("thumbnail=")))
@@ -182,9 +183,22 @@ Post postFromView(const QJsonObject &pv, const QString &webBase)
         post.previewFallbackUrl = thumb.isEmpty() ? QString() : linked->url;
         post.media.append({linked->url, post.previewWidth, post.previewHeight, str(p, "alt_text"),
                            linked->animated, thumb});
+    } else if (const QString yt = media::youtubeId(post.url); !yt.isEmpty()) {
+        // YouTube can't play inside the app, but gets a full-size poster that opens it.
+        post.kind = Post::Kind::Link;
+        // The server's thumbnail is normally YouTube's full 16:9 picture; theirs (4:3) is the backup.
+        const QString poster = QStringLiteral("https://i.ytimg.com/vi/%1/hqdefault.jpg").arg(yt);
+        post.previewUrl = thumb.isEmpty() ? poster : sizedImage(thumb, 640);
+        post.previewFallbackUrl = thumb.isEmpty() ? QString() : poster;
+        post.previewWidth = 16;
+        post.previewHeight = 9;
     } else {
         post.kind = Post::Kind::Link;
         post.previewUrl = sizedImage(thumb, 320);
+        // No thumbnail? Linked pictures in the post's text still give it one.
+        if (post.previewUrl.isEmpty())
+            for (const MediaItem &m : media::extractFromText(post.selftext, 4))
+                if (!m.video) { post.previewUrl = m.animated ? m.url : sizedImage(m.url, 320); break; }
     }
     return post;
 }

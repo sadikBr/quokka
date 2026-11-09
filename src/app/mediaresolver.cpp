@@ -1,6 +1,7 @@
 #include "mediaresolver.h"
 
 #include "apiclient.h"
+#include "medialinks.h"
 
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -133,4 +134,9 @@ void MediaResolver::resolveRedgifs(const QString &pageUrl, bool retried)
         }
         fetchGif();
     });
+}
+
+QStringList MediaResolver::imageSources(const QString &primary, const QString &fallback) const
+{
+    return quokka::media::imageSources(primary, fallback);
 }

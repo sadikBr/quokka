@@ -21,6 +21,8 @@ public:
     explicit MediaResolver(QObject *parent = nullptr);
 
     Q_INVOKABLE void resolve(const QString &pageUrl, const QString &kind);
+    // Copies of a picture to try in turn (see quokka::media::imageSources).
+    Q_INVOKABLE QStringList imageSources(const QString &primary, const QString &fallback = {}) const;
     Q_INVOKABLE QString cached(const QString &pageUrl) const { return m_cache.value(pageUrl); }
 
     // Pure helpers, exposed for tests.

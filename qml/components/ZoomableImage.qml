@@ -5,18 +5,20 @@ Flickable {
     id: flick
     property url source
     property url fallbackSource   // tried when `source` fails (e.g. the server's own thumbnail)
-    property bool useFallback: false
-    onSourceChanged: useFallback = false
-    readonly property url effectiveSource: useFallback ? fallbackSource : source
-    readonly property bool broken: status === Image.Error && (useFallback || fallbackSource.toString() === "")
+    // Every copy to try, in order (see media::imageSources): a failed one moves on to the next.
+    readonly property var sources: MediaResolver.imageSources(source.toString(), fallbackSource.toString())
+    property int attempt: 0
+    onSourcesChanged: attempt = 0
+    readonly property url effectiveSource: attempt < sources.length ? sources[attempt] : ""
+    readonly property bool broken: status === Image.Error && attempt >= sources.length - 1
     property bool animated: false
     property real zoom: 1
     readonly property real maxZoom: 6
     readonly property bool zoomed: zoom > 1.01
     readonly property int status: content.item ? content.item.status : Image.Null
     onStatusChanged: {
-        if (status === Image.Error && !useFallback && fallbackSource.toString() !== "")
-            useFallback = true
+        if (status === Image.Error && attempt < sources.length - 1)
+            Qt.callLater(() => attempt++)
     }
     signal tapped()
 
