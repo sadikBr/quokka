@@ -1,4 +1,4 @@
-find_package(Qt6 REQUIRED COMPONENTS Test Gui Qml)
+find_package(Qt6 REQUIRED COMPONENTS Test Gui Qml Sql)
 
 function(quokka_add_test name)
     qt_add_executable(${name} ${ARGN})
@@ -19,6 +19,15 @@ quokka_add_test(tst_comments tst_comments.cpp
     ${PROJECT_SOURCE_DIR}/tests/test_services.cpp)
 target_include_directories(tst_comments PRIVATE ${PROJECT_SOURCE_DIR}/src/app)
 target_link_libraries(tst_comments PRIVATE Qt6::Gui Qt6::Qml)
+
+quokka_add_test(tst_library tst_library.cpp
+    ${PROJECT_SOURCE_DIR}/src/app/library.cpp
+    ${PROJECT_SOURCE_DIR}/src/app/networkfactory.cpp
+    ${PROJECT_SOURCE_DIR}/src/app/postmap.cpp
+    ${PROJECT_SOURCE_DIR}/src/app/postlistmodel.cpp
+    ${PROJECT_SOURCE_DIR}/tests/test_services.cpp)
+target_include_directories(tst_library PRIVATE ${PROJECT_SOURCE_DIR}/src/app)
+target_link_libraries(tst_library PRIVATE Qt6::Gui Qt6::Qml Qt6::Sql)
 
 quokka_add_test(tst_format tst_format.cpp ${PROJECT_SOURCE_DIR}/src/app/format.cpp)
 target_include_directories(tst_format PRIVATE ${PROJECT_SOURCE_DIR}/src/app)

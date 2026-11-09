@@ -5,6 +5,8 @@ const QString kTheme = QStringLiteral("ui/themeMode");
 const QString kNsfw = QStringLiteral("content/showNsfw");
 const QString kLastFeed = QStringLiteral("browse/lastFeed");
 const QString kDefaultSort = QStringLiteral("browse/defaultSort");
+const QString kCompact = QStringLiteral("ui/compactCards");
+const QString kDimVisited = QStringLiteral("ui/dimVisited");
 const QString kVideoMuted = QStringLiteral("media/videoMuted");
 const QString kCommentSort = QStringLiteral("browse/commentSort");
 } // namespace
@@ -92,4 +94,30 @@ void AppSettings::setVideoMuted(bool muted)
         return;
     m_settings.setValue(kVideoMuted, muted);
     emit videoMutedChanged();
+}
+
+bool AppSettings::compactCards() const
+{
+    return m_settings.value(kCompact, false).toBool();
+}
+
+void AppSettings::setCompactCards(bool compact)
+{
+    if (compact == compactCards())
+        return;
+    m_settings.setValue(kCompact, compact);
+    emit compactCardsChanged();
+}
+
+bool AppSettings::dimVisited() const
+{
+    return m_settings.value(kDimVisited, true).toBool();
+}
+
+void AppSettings::setDimVisited(bool dim)
+{
+    if (dim == dimVisited())
+        return;
+    m_settings.setValue(kDimVisited, dim);
+    emit dimVisitedChanged();
 }

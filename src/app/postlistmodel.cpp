@@ -57,7 +57,11 @@ QVariant PostListModel::data(const QModelIndex &index, int role) const
 {
     if (!index.isValid() || index.row() >= m_posts.size())
         return {};
-    const Post &p = m_posts.at(index.row());
+    return postRoleData(m_posts.at(index.row()), role);
+}
+
+QVariant PostListModel::postRoleData(const Post &p, int role)
+{
     switch (role) {
     case IdRole: return p.id;
     case FullnameRole: return p.fullname;
@@ -88,6 +92,11 @@ QVariant PostListModel::data(const QModelIndex &index, int role) const
 }
 
 QHash<int, QByteArray> PostListModel::roleNames() const
+{
+    return postRoleNames();
+}
+
+QHash<int, QByteArray> PostListModel::postRoleNames()
 {
     return {
         {IdRole, "postId"},

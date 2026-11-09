@@ -17,6 +17,8 @@ class AppSettings : public QObject
     Q_PROPERTY(QString defaultSort READ defaultSort WRITE setDefaultSort NOTIFY defaultSortChanged)
     Q_PROPERTY(QString commentSort READ commentSort WRITE setCommentSort NOTIFY commentSortChanged)
     Q_PROPERTY(bool videoMuted READ videoMuted WRITE setVideoMuted NOTIFY videoMutedChanged)
+    Q_PROPERTY(bool compactCards READ compactCards WRITE setCompactCards NOTIFY compactCardsChanged)
+    Q_PROPERTY(bool dimVisited READ dimVisited WRITE setDimVisited NOTIFY dimVisitedChanged)
 
 public:
     enum ThemeMode { System, Light, Dark };
@@ -36,6 +38,10 @@ public:
     void setCommentSort(const QString &sort);
     bool videoMuted() const;
     void setVideoMuted(bool muted);
+    bool compactCards() const;
+    void setCompactCards(bool compact);
+    bool dimVisited() const;
+    void setDimVisited(bool dim);
 
 signals:
     void themeModeChanged();
@@ -44,6 +50,8 @@ signals:
     void defaultSortChanged();
     void commentSortChanged();
     void videoMutedChanged();
+    void compactCardsChanged();
+    void dimVisitedChanged();
 
 private:
     QSettings m_settings;

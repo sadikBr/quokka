@@ -196,6 +196,9 @@ Page {
                     previewWidth: m.previewWidth
                     previewHeight: m.previewHeight
                     galleryCount: m.galleryCount
+                    saved: Library.savedRevision >= 0 && Library.isSaved(postId)
+                    visited: Library.historyRevision >= 0 && Library.isVisited(postId)
+                    onToggleSave: Library.toggleSaved(posts.get(rowLoader.index))
                     onOpenPost: Nav.openPost(posts.get(rowLoader.index))
                     onOpenMedia: Nav.openMedia(posts.get(rowLoader.index), 0)
                     onOpenSubreddit: (name) => Nav.openSubreddit(name)

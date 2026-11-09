@@ -17,12 +17,16 @@ QtObject {
     signal searchRequested(string query, string subreddit)
     signal savedRequested()
     signal historyRequested()
+    signal rootFeedRequested(string feed)   // switch the main feed (drawer)
 
     function openPost(post) { postRequested(post) }
     function openThread(postId, commentId) { threadRequested(postId, commentId || "") }
     function openSubreddit(name) { subredditRequested(name) }
     function openUser(name) { if (name && name !== "[deleted]") userRequested(name) }
     function openMedia(post, index) { mediaRequested(post, index || 0) }
+    function openSaved() { savedRequested() }
+    function openHistory() { historyRequested() }
+    function goToFeed(feed) { rootFeedRequested(feed) }
     function openSearch(query, subreddit) { searchRequested(query || "", subreddit || "") }
 
     // Routes any URL: Reddit links open inside the app, images in the viewer,

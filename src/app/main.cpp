@@ -1,3 +1,4 @@
+#include "library.h"
 #include "networkfactory.h"
 #include "redditclient.h"
 #include "services.h"
@@ -54,6 +55,9 @@ int main(int argc, char *argv[])
     }
     quokka::RedditClient reddit(std::move(transport));
     services::setReddit(&reddit);
+
+    Library library;
+    Library::setInstance(&library);
 
     QQmlApplicationEngine engine;
     engine.setNetworkAccessManagerFactory(&networkFactory);

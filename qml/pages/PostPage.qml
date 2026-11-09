@@ -29,6 +29,14 @@ Page {
         onActivated: comments.refresh()
     }
 
+    // Remember what was read (for History and dimming visited posts).
+    Component.onCompleted: if (initialPost.postId) Library.markVisited(initialPost)
+    Connections {
+        target: comments
+        function onPostChanged() { Library.markVisited(comments.post) }
+    }
+    readonly property bool saved: Library.savedRevision >= 0 && Library.isSaved(page.postId)
+
     header: TopBar {
         title: page.post.subreddit ? "r/" + page.post.subreddit : qsTr("Post")
         subtitle: page.post.numComments !== undefined
@@ -38,6 +46,14 @@ Page {
         onBack: page.back()
         onTitleClicked: if (page.post.subreddit) Nav.openSubreddit(page.post.subreddit)
 
+        RoundButton2 {
+            iconName: page.saved ? "bookmark-filled" : "bookmark"
+            tooltip: page.saved ? qsTr("Unsave") : qsTr("Save")
+            tint: page.saved ? Theme.caramel : Theme.text
+            fill: page.saved ? Theme.alpha(Theme.caramel, 0.16) : Theme.surfaceAlt
+            enabled: !!page.post.title
+            onClicked: Library.toggleSaved(page.post)
+        }
         RoundButton2 {
             iconName: "refresh"
             tooltip: qsTr("Refresh")

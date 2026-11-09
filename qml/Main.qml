@@ -81,6 +81,11 @@ ApplicationWindow {
         SearchPage {}
     }
 
+    Component {
+        id: localPostsPage
+        LocalPostsPage {}
+    }
+
     // `quokka <reddit link>` opens that link on start.
     Component.onCompleted: {
         Nav.window = window
@@ -113,6 +118,12 @@ ApplicationWindow {
                                       showCommentsButton: false })
         }
         function onUserRequested(name) { stack.push(userPage, { userName: name }) }
+        function onSavedRequested() { stack.push(localPostsPage, { source: "saved" }) }
+        function onHistoryRequested() { stack.push(localPostsPage, { source: "history" }) }
+        function onRootFeedRequested(feed) {
+            stack.pop(null)
+            stack.currentItem.goTo(feed)
+        }
         function onSearchRequested(query, subreddit) {
             stack.push(searchPage, { initialQuery: query, subreddit: subreddit })
         }
@@ -131,6 +142,11 @@ ApplicationWindow {
     SettingsDrawer {
         id: drawer
         height: window.height
+        onImportRequested: { drawer.close(); importDialog.open() }
+    }
+
+    ImportDialog {
+        id: importDialog
     }
 
     // Back navigation: Esc / Backspace on desktop, the system back button on Android.
@@ -146,6 +162,9 @@ ApplicationWindow {
             return
         if (drawer.opened) {
             drawer.close()
+            close.accepted = false
+        } else if (importDialog.opened) {
+            importDialog.close()
             close.accepted = false
         } else if (picker.opened) {
             picker.close()

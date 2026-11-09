@@ -9,6 +9,9 @@ Page {
     // The root feed remembers the last community; pushed feeds (tap on a subreddit) do not.
     property bool isRoot: true
     property string initialFeed: AppSettings.lastFeed
+    // What the user picked: "home", "popular", "all", "pics", "pics+aww"...
+    property string feedKey: initialFeed.replace(/^\/?r\//i, "")
+    readonly property bool isHome: feedKey.toLowerCase() === "home"
     readonly property bool active: StackView.status === StackView.Active || StackView.view === null
 
     signal menuRequested()
@@ -16,9 +19,9 @@ Page {
     signal backRequested()
 
     function goTo(feed) {
-        posts.feed = feed
+        feedKey = feed.replace(/^\/?r\//i, "").replace(/\/+$/, "") || "popular"
         if (isRoot)
-            AppSettings.lastFeed = posts.feed
+            AppSettings.lastFeed = feedKey
         list.positionViewAtBeginning()
     }
 
@@ -26,13 +29,13 @@ Page {
 
     SubredditInfo {
         id: about
-        name: posts.feed
+        name: page.isHome ? "" : posts.feed
     }
     readonly property bool realSubreddit: about.loaded
 
     PostListModel {
         id: posts
-        feed: page.initialFeed
+        feed: page.isHome ? (Library.homeFeed !== "" ? Library.homeFeed : "popular") : page.feedKey
         sort: AppSettings.defaultSort
         showNsfw: AppSettings.showNsfw
     }
@@ -139,8 +142,8 @@ Page {
                         color: "white"
                         Avatar {
                             anchors.centerIn: parent
-                            name: posts.feed
-                            imageUrl: about.iconUrl
+                            name: page.isHome ? "Home" : posts.feed
+                            imageUrl: page.isHome ? Theme.logo : about.iconUrl
                             backgroundColor: "white"
                             size: 44
                         }
@@ -151,8 +154,9 @@ Page {
                         Row {
                             spacing: 4
                             Text {
-                                width: Math.min(implicitWidth, titleRow.width - titleAvatar.width - 50)
-                                text: "r/" + posts.feed
+                                width: Math.min(implicitWidth, titleRow.width - titleAvatar.width - 50
+                                                - (joinChip.visible ? joinChip.width + 12 : 0))
+                                text: page.isHome ? qsTr("Home") : "r/" + posts.feed
                                 color: "white"
                                 font.pixelSize: 28
                                 font.weight: Font.Black
@@ -166,7 +170,10 @@ Page {
                             }
                         }
                         Text {
-                            text: page.realSubreddit
+                            text: page.isHome
+                                ? (Library.subscriptions.length === 0 ? qsTr("Join communities to fill your home feed")
+                                   : Library.subscriptions.length === 1 ? qsTr("1 community") : qsTr("%1 communities").arg(Library.subscriptions.length))
+                                : page.realSubreddit
                                 ? qsTr("%1 members").arg(Format.compact(about.subscribers))
                                   + (about.activeUsers >= 0 ? qsTr("  ·  %1 online").arg(Format.compact(about.activeUsers)) : "")
                                 : posts.count === 1 ? qsTr("1 post loaded")
@@ -180,6 +187,25 @@ Page {
                 }
                 TapHandler { onTapped: page.pickerRequested() }
                 HoverHandler { cursorShape: Qt.PointingHandCursor }
+
+                Chip {
+                    id: joinChip
+                    visible: page.realSubreddit
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    readonly property bool joined: Library.subscriptions.length >= 0 && Library.isSubscribed(posts.feed)
+                    text: joined ? qsTr("Joined") : qsTr("Join")
+                    iconName: joined ? "check" : "plus"
+                    clickable: true
+                    fontSize: Theme.fontMeta
+                    hpad: 14
+                    implicitHeight: 34
+                    fillColor: joined ? Theme.alpha("white", 0.25) : "white"
+                    textColor: joined ? "white" : Theme.berry
+                    border.width: joined ? 1 : 0
+                    border.color: "white"
+                    onClicked: Library.toggleSubscription(posts.feed)
+                }
             }
 
             Text {
@@ -238,6 +264,9 @@ Page {
         delegate: PostCard {
             width: list.contentWidth2
             x: (list.width - width) / 2
+            saved: Library.savedRevision >= 0 && Library.isSaved(postId)
+            visited: Library.historyRevision >= 0 && Library.isVisited(postId)
+            onToggleSave: Library.toggleSaved(posts.get(index))
             onOpenPost: Nav.openPost(posts.get(index))
             onOpenMedia: Nav.openMedia(posts.get(index), 0)
             onOpenSubreddit: (name) => {

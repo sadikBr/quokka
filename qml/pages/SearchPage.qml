@@ -161,6 +161,9 @@ Page {
         delegate: PostCard {
             width: postList.contentWidth2
             x: (postList.width - width) / 2
+            saved: Library.savedRevision >= 0 && Library.isSaved(postId)
+            visited: Library.historyRevision >= 0 && Library.isVisited(postId)
+            onToggleSave: Library.toggleSaved(results.get(index))
             onOpenPost: Nav.openPost(results.get(index))
             onOpenMedia: Nav.openMedia(results.get(index), 0)
             onOpenSubreddit: (name) => Nav.openSubreddit(name)
@@ -221,9 +224,11 @@ Page {
             font.letterSpacing: 1.2
         }
         delegate: SubredditRow {
+            id: subRow
             width: subList.contentWidth2
             x: (subList.width - width) / 2
             onClicked: Nav.openSubreddit(name)
+            action: JoinButton { name: subRow.name }
         }
         footer: Item {
             width: subList.width

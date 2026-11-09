@@ -68,6 +68,10 @@ public:
     QVariant data(const QModelIndex &index, int role) const override;
     QHash<int, QByteArray> roleNames() const override;
 
+    // Shared with other post models so PostCard works with all of them.
+    static QHash<int, QByteArray> postRoleNames();
+    static QVariant postRoleData(const quokka::Post &post, int role);
+
     QString feed() const { return m_feed; }
     void setFeed(const QString &feed);
     QString sort() const { return m_sort; }

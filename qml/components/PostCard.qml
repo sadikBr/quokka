@@ -29,14 +29,19 @@ Item {
     required property int previewHeight
     required property int galleryCount
 
+    property bool saved: false
+    property bool visited: false
+    property bool compact: AppSettings.compactCards
+    readonly property bool hasMedia: kind === PostListModel.ImagePost || kind === PostListModel.GalleryPost
+                                     || kind === PostListModel.VideoPost
+
     signal openPost()
+    signal toggleSave()
     signal openMedia()
     signal openSubreddit(string name)
     signal openLink(string link)
 
-    readonly property bool hasBigMedia: previewUrl !== "" && (kind === PostListModel.ImagePost
-                                        || kind === PostListModel.GalleryPost
-                                        || kind === PostListModel.VideoPost)
+    readonly property bool hasBigMedia: !compact && previewUrl !== "" && hasMedia
 
     implicitHeight: body.implicitHeight + 2 * Theme.pad + shadowOffset
     readonly property int shadowOffset: 4
@@ -118,16 +123,53 @@ Item {
                 Icon { visible: card.locked; name: "lock"; size: 18; color: Theme.caramel }
             }
 
-            Text {
+            RowLayout {
                 Layout.fillWidth: true
-                text: card.title
-                color: Theme.text
-                font.pixelSize: Theme.fontTitle
-                font.weight: Font.Bold
-                wrapMode: Text.Wrap
-                lineHeight: 1.08
-                maximumLineCount: 6
-                elide: Text.ElideRight
+                spacing: 12
+                Text {
+                    Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignTop
+                    text: card.title
+                    color: card.visited && AppSettings.dimVisited ? Theme.textMuted : Theme.text
+                    font.pixelSize: card.compact ? Theme.fontBody + 1 : Theme.fontTitle
+                    font.weight: Font.Bold
+                    wrapMode: Text.Wrap
+                    lineHeight: 1.08
+                    maximumLineCount: 6
+                    elide: Text.ElideRight
+                }
+                // Compact mode: small thumbnail beside the title
+                Item {
+                    visible: card.compact && card.previewUrl !== "" && !card.nsfw && !card.spoiler
+                    Layout.preferredWidth: 76
+                    Layout.preferredHeight: 76
+                    Layout.alignment: Qt.AlignTop
+                    RoundedImage {
+                        anchors.fill: parent
+                        radius: 14
+                        source: parent.visible ? card.previewUrl : ""
+                    }
+                    Rectangle {
+                        visible: card.kind === PostListModel.VideoPost || card.kind === PostListModel.GalleryPost
+                        anchors.right: parent.right
+                        anchors.bottom: parent.bottom
+                        anchors.margins: 4
+                        width: 24
+                        height: 24
+                        radius: 12
+                        color: "#B3000000"
+                        Icon {
+                            anchors.centerIn: parent
+                            name: card.kind === PostListModel.VideoPost ? "play" : "gallery"
+                            size: 14
+                            color: "white"
+                        }
+                    }
+                    TapHandler {
+                        gesturePolicy: TapHandler.ReleaseWithinBounds
+                        onTapped: card.hasMedia ? card.openMedia() : card.openLink(card.url)
+                    }
+                }
             }
 
             // Flair and content warnings
@@ -165,7 +207,7 @@ Item {
 
             // External link preview
             Rectangle {
-                visible: card.kind === PostListModel.LinkPost
+                visible: card.kind === PostListModel.LinkPost && !card.compact
                 Layout.fillWidth: true
                 Layout.preferredHeight: visible ? 72 : 0
                 radius: Theme.radiusMedia
@@ -225,7 +267,7 @@ Item {
                 color: Theme.textMuted
                 font.pixelSize: Theme.fontBody
                 wrapMode: Text.Wrap
-                maximumLineCount: 4
+                maximumLineCount: card.compact ? 2 : 4
                 elide: Text.ElideRight
                 lineHeight: 1.15
             }
@@ -254,6 +296,14 @@ Item {
                     onClicked: card.openPost()
                 }
                 Item { Layout.fillWidth: true }
+                RoundButton2 {
+                    iconName: card.saved ? "bookmark-filled" : "bookmark"
+                    size: 34
+                    tooltip: card.saved ? qsTr("Unsave") : qsTr("Save")
+                    tint: card.saved ? Theme.caramel : Theme.textMuted
+                    fill: card.saved ? Theme.alpha(Theme.caramel, 0.16) : Theme.surfaceAlt
+                    onClicked: card.toggleSave()
+                }
                 RoundButton2 {
                     iconName: "external"
                     size: 34

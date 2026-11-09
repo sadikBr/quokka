@@ -9,7 +9,7 @@ project(Quokka
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt6 6.8 REQUIRED COMPONENTS Core Gui Network Qml Quick QuickControls2 Svg Multimedia)
+find_package(Qt6 6.8 REQUIRED COMPONENTS Core Gui Network Qml Quick QuickControls2 Svg Multimedia Sql)
 qt_standard_project_setup(REQUIRES 6.8)
 
 option(QUOKKA_BUILD_TESTS "Build the unit tests" ON)
@@ -31,6 +31,7 @@ set(QUOKKA_QML_FILES
     qml/Nav.qml
     qml/theme/Theme.qml
     qml/pages/FeedPage.qml
+    qml/pages/LocalPostsPage.qml
     qml/pages/PostPage.qml
     qml/pages/MediaViewer.qml
     qml/pages/SearchPage.qml
@@ -38,8 +39,11 @@ set(QUOKKA_QML_FILES
     qml/components/Avatar.qml
     qml/components/Chip.qml
     qml/components/CommentRow.qml
+    qml/components/DrawerContent.qml
     qml/components/EmptyState.qml
     qml/components/Icon.qml
+    qml/components/ImportDialog.qml
+    qml/components/JoinButton.qml
     qml/components/LoadingDots.qml
     qml/components/PostCard.qml
     qml/components/PostMedia.qml
@@ -80,6 +84,7 @@ qt_add_qml_module(quokka
         src/app/profiles.h src/app/profiles.cpp
         src/app/subredditlistmodel.h src/app/subredditlistmodel.cpp
         src/app/usercommentmodel.h src/app/usercommentmodel.cpp
+        src/app/library.h src/app/library.cpp
     RESOURCES
         resources/logo.svg
         ${QUOKKA_ICONS}
@@ -96,6 +101,7 @@ target_link_libraries(quokka PRIVATE
     Qt6::QuickControls2
     Qt6::Svg
     Qt6::Multimedia
+    Qt6::Sql
 )
 
 set_target_properties(quokka PROPERTIES
