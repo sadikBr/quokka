@@ -11,6 +11,7 @@ Popup {
     SubredditListModel {
         id: popular
         showNsfw: AppSettings.showNsfw
+        nsfwOnly: AppSettings.showNsfw && AppSettings.nsfwOnly
     }
 
     modal: true

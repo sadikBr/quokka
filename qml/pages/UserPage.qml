@@ -22,12 +22,14 @@ Page {
         userName: page.userName
         sort: "new"
         showNsfw: AppSettings.showNsfw
+        nsfwOnly: AppSettings.showNsfw && AppSettings.nsfwOnly
         enabled: page.tab === 0 || posts.count > 0
     }
     UserCommentModel {
         id: userComments
         userName: page.userName
         showNsfw: AppSettings.showNsfw
+        nsfwOnly: AppSettings.showNsfw && AppSettings.nsfwOnly
         enabled: page.tab === 1
     }
 
@@ -43,6 +45,11 @@ Page {
                   : user.hasKarma ? qsTr("%1 karma").arg(Format.compact(user.totalKarma))
                   : qsTr("%1 posts · %2 comments").arg(Format.compact(user.postCount)).arg(Format.compact(user.commentCount))
         onBack: page.back()
+        RoundButton2 {
+            iconName: "reels"
+            tooltip: qsTr("Swipe through their pictures and videos")
+            onClicked: Nav.openMediaFeed({ userName: page.userName, sort: "new", title: Api.user(page.userName) })
+        }
         RoundButton2 {
             iconName: "external"
             tooltip: qsTr("Open in browser")

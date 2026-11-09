@@ -24,6 +24,8 @@ QtObject {
     signal shortcutsRequested()
     signal signInRequested()
     signal settingsRequested()
+    // The swipe-through media feed. params: feed, sort, timeRange, searchQuery, userName, title.
+    signal mediaFeedRequested(var params)
 
     function openPost(post) { postRequested(post) }
     function openThread(postId, commentId) { threadRequested(postId, commentId || "") }
@@ -33,6 +35,7 @@ QtObject {
     function openAbout() { aboutRequested() }
     function openSignIn() { signInRequested() }
     function openSettings() { settingsRequested() }
+    function openMediaFeed(params) { mediaFeedRequested(params) }
     function openSaved() { savedRequested() }
     function openHistory() { historyRequested() }
     function goToFeed(feed) { rootFeedRequested(feed) }

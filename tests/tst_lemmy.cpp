@@ -1,6 +1,7 @@
 #include "apiclient.h"
 #include "backend.h"
 #include "commenttreemodel.h"
+#include "postlistmodel.h"
 #include "lemmyparsers.h"
 #include "markdown.h"
 #include "medialinks.h"
@@ -386,6 +387,37 @@ private slots:
         QCOMPARE(g.galleryCount, 2);
         QCOMPARE(g.media[0].url, QStringLiteral("https://i.redd.it/main.jpg"));
         QCOMPARE(g.media[1].url, QStringLiteral("https://i.redd.it/two.png"));
+    }
+
+    void listFilters()
+    {
+        // The fixture feed: a link, an image, a text post, a video and an NSFW image (two NSFW posts).
+        PostListModel all;
+        all.setFeed("all");
+        all.setShowNsfw(true);
+        QTRY_VERIFY(all.count() > 0 && !all.loading());
+        const int total = all.count();
+
+        PostListModel media;
+        media.setFeed("all");
+        media.setShowNsfw(true);
+        media.setMediaOnly(true);
+        QTRY_VERIFY(media.count() > 0 && !media.loading());
+        QVERIFY(media.count() < total);
+        for (int i = 0; i < media.count(); ++i) {
+            const int kind = media.get(i).value("kind").toInt();
+            QVERIFY(kind == PostListModel::ImagePost || kind == PostListModel::GalleryPost
+                    || kind == PostListModel::VideoPost);
+        }
+
+        PostListModel nsfw;
+        nsfw.setFeed("all");
+        nsfw.setShowNsfw(true);
+        nsfw.setNsfwOnly(true);
+        QTRY_VERIFY(nsfw.count() > 0 && !nsfw.loading());
+        QVERIFY(nsfw.count() < total);
+        for (int i = 0; i < nsfw.count(); ++i)
+            QVERIFY(nsfw.get(i).value("nsfw").toBool());
     }
 
     void markdownRendering()

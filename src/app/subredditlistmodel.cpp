@@ -56,6 +56,15 @@ void SubredditListModel::setQuery(const QString &q)
     scheduleReload();
 }
 
+void SubredditListModel::setNsfwOnly(bool on)
+{
+    if (on == m_nsfwOnly)
+        return;
+    m_nsfwOnly = on;
+    emit nsfwOnlyChanged();
+    scheduleReload();
+}
+
 void SubredditListModel::setShowNsfw(bool show)
 {
     if (show == m_showNsfw)
@@ -120,6 +129,8 @@ void SubredditListModel::request(bool reset)
         }
         if (!m_showNsfw)
             items.removeIf([](const quokka::Subreddit &s) { return s.nsfw; });
+        if (m_nsfwOnly)
+            items.removeIf([](const quokka::Subreddit &x) { return !x.nsfw; });
         if (reset) {
             beginResetModel();
             m_items = items;

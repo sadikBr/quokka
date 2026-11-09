@@ -64,6 +64,15 @@ void UserCommentModel::setSort(const QString &sort)
     scheduleReload();
 }
 
+void UserCommentModel::setNsfwOnly(bool on)
+{
+    if (on == m_nsfwOnly)
+        return;
+    m_nsfwOnly = on;
+    emit nsfwOnlyChanged();
+    scheduleReload();
+}
+
 void UserCommentModel::setShowNsfw(bool show)
 {
     if (show == m_showNsfw)
@@ -138,6 +147,8 @@ void UserCommentModel::request(bool reset)
         }
         if (!m_showNsfw)
             items.removeIf([](const quokka::Comment &c) { return c.nsfw; });
+        if (m_nsfwOnly)
+            items.removeIf([](const quokka::Comment &x) { return !x.nsfw; });
         if (reset) {
             beginResetModel();
             m_items = items;

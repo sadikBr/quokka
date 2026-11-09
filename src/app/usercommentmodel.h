@@ -17,6 +17,8 @@ class UserCommentModel : public QAbstractListModel
     Q_PROPERTY(QString sort READ sort WRITE setSort NOTIFY sortChanged)
     Q_PROPERTY(bool enabled READ enabled WRITE setEnabled NOTIFY enabledChanged)
     Q_PROPERTY(bool showNsfw READ showNsfw WRITE setShowNsfw NOTIFY showNsfwChanged)
+    // Only NSFW items (the "Show only NSFW" setting).
+    Q_PROPERTY(bool nsfwOnly READ nsfwOnly WRITE setNsfwOnly NOTIFY nsfwOnlyChanged)
     Q_PROPERTY(bool loading READ loading NOTIFY loadingChanged)
     Q_PROPERTY(bool hasMore READ hasMore NOTIFY loadingChanged)
     Q_PROPERTY(QString error READ error NOTIFY errorChanged)
@@ -48,6 +50,8 @@ public:
     bool enabled() const { return m_enabled; }
     void setEnabled(bool enabled);
     bool showNsfw() const { return m_showNsfw; }
+    bool nsfwOnly() const { return m_nsfwOnly; }
+    void setNsfwOnly(bool on);
     void setShowNsfw(bool show);
     bool loading() const { return m_reply != nullptr; }
     bool hasMore() const { return !m_after.isEmpty(); }
@@ -62,6 +66,7 @@ signals:
     void sortChanged();
     void enabledChanged();
     void showNsfwChanged();
+    void nsfwOnlyChanged();
     void loadingChanged();
     void errorChanged();
     void countChanged();
@@ -74,6 +79,7 @@ private:
     QString m_sort = QStringLiteral("new");
     bool m_enabled = true;
     bool m_showNsfw = false;
+    bool m_nsfwOnly = false;
     bool m_reloadPending = false;
     QList<quokka::Comment> m_items;
     QString m_after;

@@ -7,6 +7,7 @@ const QString kLastFeed = QStringLiteral("browse/lastFeed");
 const QString kDefaultSort = QStringLiteral("browse/defaultSort");
 const QString kCompact = QStringLiteral("ui/compactCards");
 const QString kDimVisited = QStringLiteral("ui/dimVisited");
+const QString kNsfwOnly = QStringLiteral("content/nsfwOnly");
 const QString kCoverNsfw = QStringLiteral("content/coverNsfw");
 const QString kScrollSpeed = QStringLiteral("ui/scrollSpeed");
 const QString kVideoMuted = QStringLiteral("media/videoMuted");
@@ -173,4 +174,17 @@ void AppSettings::setAutoplayFeed(bool on)
         return;
     m_settings.setValue(kAutoplayFeed, on);
     emit autoplayFeedChanged();
+}
+
+bool AppSettings::nsfwOnly() const
+{
+    return m_settings.value(kNsfwOnly, false).toBool();
+}
+
+void AppSettings::setNsfwOnly(bool on)
+{
+    if (on == nsfwOnly())
+        return;
+    m_settings.setValue(kNsfwOnly, on);
+    emit nsfwOnlyChanged();
 }

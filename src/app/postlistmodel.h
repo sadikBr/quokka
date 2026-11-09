@@ -25,6 +25,10 @@ class PostListModel : public QAbstractListModel
     // When false, nothing is fetched (e.g. a search page with an empty query).
     Q_PROPERTY(bool enabled READ enabled WRITE setEnabled NOTIFY enabledChanged)
     Q_PROPERTY(bool showNsfw READ showNsfw WRITE setShowNsfw NOTIFY showNsfwChanged)
+    // Only NSFW items (the "Show only NSFW" setting).
+    Q_PROPERTY(bool nsfwOnly READ nsfwOnly WRITE setNsfwOnly NOTIFY nsfwOnlyChanged)
+    // Only posts with pictures or videos (the swipe-through media feed).
+    Q_PROPERTY(bool mediaOnly READ mediaOnly WRITE setMediaOnly NOTIFY mediaOnlyChanged)
     Q_PROPERTY(bool loading READ loading NOTIFY loadingChanged)
     Q_PROPERTY(bool refreshing READ refreshing NOTIFY loadingChanged)
     Q_PROPERTY(bool hasMore READ hasMore NOTIFY hasMoreChanged)
@@ -82,7 +86,11 @@ public:
     QString timeRange() const { return m_timeRange; }
     void setTimeRange(const QString &range);
     bool showNsfw() const { return m_showNsfw; }
+    bool nsfwOnly() const { return m_nsfwOnly; }
+    void setNsfwOnly(bool on);
     void setShowNsfw(bool show);
+    bool mediaOnly() const { return m_mediaOnly; }
+    void setMediaOnly(bool on);
     QString searchQuery() const { return m_search; }
     void setSearchQuery(const QString &q);
     QString userName() const { return m_user; }
@@ -110,6 +118,8 @@ signals:
     void sortChanged();
     void timeRangeChanged();
     void showNsfwChanged();
+    void nsfwOnlyChanged();
+    void mediaOnlyChanged();
     void searchQueryChanged();
     void userNameChanged();
     void enabledChanged();
@@ -123,10 +133,12 @@ private:
     void setError(const QString &error);
     void scheduleReload();
 
+    bool m_mediaOnly = false;
     QString m_feed = QStringLiteral("popular");
     QString m_sort = QStringLiteral("hot");
     QString m_timeRange = QStringLiteral("day");
     bool m_showNsfw = false;
+    bool m_nsfwOnly = false;
     QString m_search;
     QString m_user;
     bool m_enabled = true;

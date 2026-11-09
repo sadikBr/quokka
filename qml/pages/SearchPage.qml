@@ -24,11 +24,13 @@ Page {
         sort: "relevance"
         timeRange: "all"
         showNsfw: AppSettings.showNsfw
+        nsfwOnly: AppSettings.showNsfw && AppSettings.nsfwOnly
     }
     SubredditListModel {
         id: communities
         query: page.tab === 1 ? page.query : ""
         showNsfw: AppSettings.showNsfw
+        nsfwOnly: AppSettings.showNsfw && AppSettings.nsfwOnly
     }
 
     Timer {
@@ -94,6 +96,14 @@ Page {
                             onClicked: { field.text = ""; page.query = ""; field.forceActiveFocus() }
                         }
                     }
+                }
+                RoundButton2 {
+                    visible: page.query !== "" && page.tab === 0
+                    iconName: "reels"
+                    tint: Theme.text
+                    tooltip: qsTr("Swipe through the pictures and videos")
+                    onClicked: Nav.openMediaFeed({ feed: results.feed, sort: results.sort, timeRange: results.timeRange,
+                                                   searchQuery: results.searchQuery, title: page.query })
                 }
             }
 

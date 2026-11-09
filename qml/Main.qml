@@ -134,6 +134,11 @@ ApplicationWindow {
         SettingsPage {}
     }
 
+    Component {
+        id: mediaFeedPage
+        MediaFeedPage {}
+    }
+
     // `quokka <link>` opens that Lemmy (or Reddit) link on start.
     Component.onCompleted: {
         Nav.window = window
@@ -181,6 +186,7 @@ ApplicationWindow {
         function onShortcutsRequested() { shortcutsHelp.open() }
         function onSignInRequested() { signInDialog.open() }
         function onSettingsRequested() { stack.push(settingsPage) }
+        function onMediaFeedRequested(params) { stack.push(mediaFeedPage, { params: params }) }
         function onSavedRequested() { stack.push(localPostsPage, { source: "saved" }) }
         function onHistoryRequested() { stack.push(localPostsPage, { source: "history" }) }
         function onRootFeedRequested(feed) {

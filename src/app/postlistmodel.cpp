@@ -167,12 +167,30 @@ void PostListModel::setTimeRange(const QString &range)
         scheduleReload();
 }
 
+void PostListModel::setNsfwOnly(bool on)
+{
+    if (on == m_nsfwOnly)
+        return;
+    m_nsfwOnly = on;
+    emit nsfwOnlyChanged();
+    scheduleReload();
+}
+
 void PostListModel::setShowNsfw(bool show)
 {
     if (show == m_showNsfw)
         return;
     m_showNsfw = show;
     emit showNsfwChanged();
+    scheduleReload();
+}
+
+void PostListModel::setMediaOnly(bool on)
+{
+    if (on == m_mediaOnly)
+        return;
+    m_mediaOnly = on;
+    emit mediaOnlyChanged();
     scheduleReload();
 }
 
@@ -304,6 +322,11 @@ void PostListModel::request(bool reset)
         for (const Post &p : listing.posts) {
             if (p.nsfw && !m_showNsfw)
                 continue;
+            if (m_nsfwOnly && !p.nsfw)
+                continue;
+            if (m_mediaOnly && p.kind != Post::Kind::Image && p.kind != Post::Kind::Gallery
+                && p.kind != Post::Kind::Video)
+                continue;
             if (m_seen.contains(p.id))
                 continue;
             m_seen.insert(p.id);
@@ -330,7 +353,8 @@ void PostListModel::request(bool reset)
 
         // Skip ahead when a whole page was filtered out (e.g. NSFW), but not forever.
         m_emptyPages = fresh.isEmpty() ? m_emptyPages + 1 : 0;
-        if (fresh.isEmpty() && more && m_emptyPages < kMaxEmptyPagesInARow)
+        // Media-only lists skip text and link posts, so a page can easily come back empty.
+        if (fresh.isEmpty() && more && m_emptyPages < ((m_mediaOnly || m_nsfwOnly) ? 4 * kMaxEmptyPagesInARow : kMaxEmptyPagesInARow))
             request(false);
     });
     connect(reply, &quokka::ApiReply::failed, this, [this, reply](const QString &message, int) {

@@ -223,6 +223,13 @@ Page {
                 }
                 SwitchRow {
                     visible: AppSettings.showNsfw
+                    text: qsTr("Show only NSFW")
+                    detail: qsTr("Feeds, searches and community lists show only NSFW posts and communities. Works best on an NSFW server such as lemmynsfw.com.")
+                    checked: AppSettings.nsfwOnly
+                    onToggled: (on) => AppSettings.nsfwOnly = on
+                }
+                SwitchRow {
+                    visible: AppSettings.showNsfw
                     text: qsTr("Cover NSFW media")
                     detail: qsTr("Pictures and videos stay covered until you tap them. Turn off to show them right away.")
                     checked: AppSettings.coverNsfw

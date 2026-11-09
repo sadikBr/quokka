@@ -83,6 +83,10 @@ Item {
         useSource(i)
     }
     function retry() { switchTo(sourceIndex) }
+    function togglePlay() {
+        player.playbackState === MediaPlayer.PlayingState ? player.pause() : player.play()
+    }
+    readonly property bool paused: player.playbackState === MediaPlayer.PausedState
 
     onCurrentFailedChanged: {
         if (!currentFailed)
@@ -124,14 +128,15 @@ Item {
         anchors.centerIn: parent
         width: parent.width
         height: parent.height
-        visible: root.failed && root.poster.toString() !== ""
+        // Until the first frame arrives (and dimmed if the video can't play).
+        visible: root.poster.toString() !== "" && !root.quiet && (root.failed || !root.playing)
         source: visible ? root.poster : ""
         fillMode: Image.PreserveAspectFit
         radius: 0
         showBroken: false
         backgroundColor: "transparent"
         placeholderColor: "transparent"
-        opacity: 0.35
+        opacity: root.failed ? 0.35 : 1
     }
 
     VideoOutput {
@@ -185,6 +190,17 @@ Item {
     TapHandler {
         onSingleTapped: root.tapped()
         onDoubleTapped: player.playbackState === MediaPlayer.PlayingState ? player.pause() : player.play()
+    }
+
+    // While the controls are hidden: a thin progress line along the bottom.
+    Rectangle {
+        anchors.left: parent.left
+        anchors.bottom: parent.bottom
+        visible: !root.showControls && !root.quiet && player.duration > 0
+        height: 3
+        width: parent.width * Math.min(1, player.position / Math.max(1, player.duration))
+        color: Theme.accent
+        opacity: 0.9
     }
 
     // Several links to this video: say which one plays, and switch to the next on click.

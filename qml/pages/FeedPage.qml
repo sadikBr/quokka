@@ -49,6 +49,7 @@ Page {
                           : page.feedKey
         sort: AppSettings.defaultSort
         showNsfw: AppSettings.showNsfw
+        nsfwOnly: AppSettings.showNsfw && AppSettings.nsfwOnly
     }
 
     Shortcut {
@@ -180,6 +181,13 @@ Page {
                         TapHandler { onTapped: page.pickerRequested() }
                     }
 
+                    RoundButton2 {
+                        iconName: "reels"
+                        tint: Theme.text
+                        tooltip: qsTr("Swipe through the pictures and videos")
+                        onClicked: Nav.openMediaFeed({ feed: posts.feed, sort: posts.sort, timeRange: posts.timeRange,
+                                                       title: page.feedTitle })
+                    }
                     RoundButton2 {
                         iconName: "search"
                         tint: Theme.text
