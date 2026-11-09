@@ -31,6 +31,9 @@ Item {
     required property int previewHeight
     required property int galleryCount
     required property var media
+    required property string source     // media site ("redgifs", "eporner"), empty for Lemmy posts
+    required property string origin     // the Lemmy server it came from, in the combined feed
+    required property var tags
 
     property bool highlighted: false   // keyboard selection
     property bool saved: false
@@ -43,6 +46,10 @@ Item {
                                      || kind === PostListModel.VideoPost
     readonly property bool covered: (nsfw && AppSettings.coverNsfw) || spoiler
 
+    readonly property string sourceName: source === "redgifs" ? "Redgifs" : source === "eporner" ? "Eporner" : ""
+    function openWhere() {
+        source !== "" ? Nav.openSource({ source: source }) : openSubreddit(subreddit)
+    }
     signal openPost()
     signal toggleSave()
     signal openMedia(int mediaIndex)
@@ -110,24 +117,31 @@ Item {
                 Layout.fillWidth: true
                 spacing: 6
                 Avatar {
-                    name: card.subreddit
+                    name: card.source !== "" ? card.sourceName : card.subreddit
                     size: 20
                     backgroundColor: card.rowColor
-                    TapHandler { gesturePolicy: TapHandler.ReleaseWithinBounds; onTapped: card.openSubreddit(card.subreddit) }
+                    TapHandler { gesturePolicy: TapHandler.ReleaseWithinBounds; onTapped: card.openWhere() }
                 }
                 Text {
-                    text: Api.community(card.subreddit)
+                    text: card.source !== "" ? card.sourceName : Api.community(card.subreddit)
                     color: Theme.text
                     font.pixelSize: Theme.fontSmall + 1
                     font.weight: Font.DemiBold
                     elide: Text.ElideRight
                     Layout.maximumWidth: face.width * 0.5
-                    TapHandler { gesturePolicy: TapHandler.ReleaseWithinBounds; onTapped: card.openSubreddit(card.subreddit) }
+                    TapHandler { gesturePolicy: TapHandler.ReleaseWithinBounds; onTapped: card.openWhere() }
                     HoverHandler { cursorShape: Qt.PointingHandCursor }
                 }
                 Text {
                     Layout.fillWidth: true
-                    text: "·  " + Api.shortName(card.author) + "  ·  " + Format.relativeTime(card.createdUtc)
+                    text: (card.author !== "" ? "·  " + (card.source !== "" ? "@" + card.author : Api.shortName(card.author)) + "  " : "")
+                          + "·  " + Format.relativeTime(card.createdUtc)
+                    // A Redgifs creator: tap for their clips.
+                    TapHandler {
+                        enabled: card.source === "redgifs" && card.author !== ""
+                        gesturePolicy: TapHandler.ReleaseWithinBounds
+                        onTapped: Nav.openSource({ source: card.source, user: card.author })
+                    }
                     color: Theme.textMuted
                     font.pixelSize: Theme.fontSmall + 1
                     elide: Text.ElideRight
@@ -188,6 +202,26 @@ Item {
                         onTapped: card.hasMedia ? card.openMedia(0) : card.openLink(card.url)
                     }
                     HoverHandler { cursorShape: Qt.PointingHandCursor }
+                }
+            }
+
+            // Media-site tags: tap one to browse it.
+            Flow {
+                Layout.fillWidth: true
+                spacing: 6
+                visible: card.source !== "" && card.tags && card.tags.length > 0
+                Repeater {
+                    model: card.source !== "" && card.tags ? card.tags.slice(0, 5) : []
+                    Chip {
+                        required property string modelData
+                        text: "#" + modelData
+                        fillColor: Theme.surfaceAlt
+                        textColor: Theme.textMuted
+                        fontSize: 11
+                        hpad: 8
+                        clickable: true
+                        onClicked: Nav.openSource({ source: card.source, tag: modelData })
+                    }
                 }
             }
 
@@ -271,6 +305,7 @@ Item {
                 }
                 ActionButton {
                     iconName: "comment"
+                    visible: card.source === ""
                     label: Format.compact(card.numComments)
                     onClicked: card.openPost()
                 }
@@ -286,7 +321,7 @@ Item {
                     iconName: "external"
                     size: 34
                     tooltip: qsTr("Open in browser")
-                    onClicked: card.openLink(Api.webUrl(card.permalink))
+                    onClicked: card.source !== "" ? Qt.openUrlExternally(card.permalink) : card.openLink(Api.webUrl(card.permalink))
                 }
             }
         }

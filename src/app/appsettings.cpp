@@ -1,5 +1,7 @@
 #include "appsettings.h"
 
+#include <QRegularExpression>
+
 namespace {
 const QString kTheme = QStringLiteral("ui/themeMode");
 const QString kNsfw = QStringLiteral("content/showNsfw");
@@ -13,12 +15,19 @@ const QString kCoverNsfw = QStringLiteral("content/coverNsfw");
 const QString kScrollSpeed = QStringLiteral("ui/scrollSpeed");
 const QString kVideoMuted = QStringLiteral("media/videoMuted");
 const QString kAutoplayFeed = QStringLiteral("media/autoplayFeed");
+const QString kPrivate = QStringLiteral("ui/privateUnlocked");
+const QString kServers = QStringLiteral("browse/servers");
+const QString kNsfwServers = QStringLiteral("content/nsfwServers");
 const QString kCommentSort = QStringLiteral("browse/commentSort");
 } // namespace
 
 AppSettings::AppSettings(QObject *parent)
     : QObject(parent)
 {
+    // The combined feed changes with these.
+    for (auto sig : {&AppSettings::serversChanged, &AppSettings::nsfwServersChanged,
+                     &AppSettings::showNsfwChanged, &AppSettings::privateUnlockedChanged})
+        connect(this, sig, this, &AppSettings::serversSourceChanged);
 }
 
 AppSettings::ThemeMode AppSettings::themeMode() const
@@ -201,4 +210,62 @@ void AppSettings::setHideBrokenMedia(bool on)
         return;
     m_settings.setValue(kHideBroken, on);
     emit hideBrokenMediaChanged();
+}
+
+bool AppSettings::privateUnlocked() const
+{
+    // Installs that already show NSFW keep their settings reachable.
+    return m_settings.value(kPrivate, showNsfw()).toBool();
+}
+
+void AppSettings::setPrivateUnlocked(bool on)
+{
+    if (on == privateUnlocked() && m_settings.contains(kPrivate))
+        return;
+    m_settings.setValue(kPrivate, on);
+    emit privateUnlockedChanged();
+}
+
+QString AppSettings::servers() const
+{
+    return m_settings.value(kServers, QStringLiteral("lemmy.world, lemmy.ml, sh.itjust.works")).toString();
+}
+
+void AppSettings::setServers(const QString &list)
+{
+    if (list == servers())
+        return;
+    m_settings.setValue(kServers, list);
+    emit serversChanged();
+}
+
+QString AppSettings::nsfwServers() const
+{
+    return m_settings.value(kNsfwServers, QStringLiteral("lemmynsfw.com")).toString();
+}
+
+void AppSettings::setNsfwServers(const QString &list)
+{
+    if (list == nsfwServers())
+        return;
+    m_settings.setValue(kNsfwServers, list);
+    emit nsfwServersChanged();
+}
+
+QString AppSettings::serversSource() const
+{
+    QStringList hosts;
+    auto add = [&hosts](const QString &list) {
+        for (QString h : list.split(QRegularExpression(QStringLiteral("[,\\s]+")), Qt::SkipEmptyParts)) {
+            h = h.toLower().remove(QStringLiteral("https://")).remove(QStringLiteral("http://"));
+            while (h.endsWith(QLatin1Char('/')))
+                h.chop(1);
+            if (!h.isEmpty() && !hosts.contains(h))
+                hosts.append(h);
+        }
+    };
+    add(servers());
+    if (showNsfw() && privateUnlocked())
+        add(nsfwServers());
+    return QStringLiteral("servers:") + hosts.join(QLatin1Char(','));
 }

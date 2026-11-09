@@ -138,11 +138,9 @@ void MediaProbe::probe(const QString &url)
             return; // no answer yet, or a redirect being followed
         *decided = true;
         if (finished && status == 0) {
-            // No HTTP answer at all: offline, DNS, timeout. Don't condemn the link for that.
-            const auto err = reply->error();
-            const bool hostGone = err == QNetworkReply::HostNotFoundError
-                || err == QNetworkReply::ConnectionRefusedError;
-            settle(url, !hostGone);
+            // No HTTP answer at all (offline, DNS, refused, timeout, a proxy in the way): that says
+            // nothing about the link, so it isn't condemned; only a server's own answer can.
+            settle(url, true);
         } else {
             settle(url, looksLikeMedia(status, reply->header(QNetworkRequest::ContentTypeHeader).toByteArray()));
         }

@@ -89,6 +89,26 @@ Flickable {
             onClicked: root.navigate(() => Nav.goToFeed("local"))
         }
         NavRow {
+            visible: Api.isLemmy
+            iconName: "layout"
+            text: qsTr("All servers")
+            detail: qsTr("Several servers in one feed")
+            current: root.currentFeed === "servers"
+            onClicked: root.navigate(() => Nav.goToFeed("servers"))
+        }
+        NavRow {
+            visible: AppSettings.privateUnlocked && AppSettings.showNsfw
+            iconName: "reels"
+            text: "Redgifs"
+            onClicked: root.navigate(() => Nav.openSource({ source: "redgifs" }))
+        }
+        NavRow {
+            visible: AppSettings.privateUnlocked && AppSettings.showNsfw
+            iconName: "play"
+            text: "Eporner"
+            onClicked: root.navigate(() => Nav.openSource({ source: "eporner" }))
+        }
+        NavRow {
             iconName: "search"
             text: qsTr("Search")
             onClicked: root.navigate(() => Nav.openSearch("", ""))

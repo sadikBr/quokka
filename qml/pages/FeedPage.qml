@@ -12,9 +12,11 @@ Page {
     // What the user picked: "home", "popular", "all", "pics", "pics+aww"...
     property string feedKey: initialFeed.replace(/^\/?r\//i, "")
     readonly property bool isHome: feedKey.toLowerCase() === "home"
+    readonly property bool isServers: feedKey.toLowerCase() === "servers"
     readonly property string feedTitle: {
         const k = feedKey.toLowerCase()
         if (k === "home") return qsTr("Home")
+        if (k === "servers") return qsTr("All servers")
         if (k === "all") return qsTr("All")
         if (k === "local") return qsTr("Local")
         if (k === "popular") return qsTr("Popular")
@@ -38,7 +40,7 @@ Page {
 
     SubredditInfo {
         id: about
-        name: page.isHome ? "" : posts.feed
+        name: page.isHome || page.isServers ? "" : posts.feed
     }
     readonly property bool realSubreddit: about.loaded
 
@@ -46,7 +48,10 @@ Page {
         id: posts
         // Home: the account's subscriptions when signed in, otherwise the local list.
         feed: page.isHome ? (Account.signedIn ? "subscribed" : Library.homeFeed !== "" ? Library.homeFeed : "all")
-                          : page.feedKey
+              : page.isServers ? "all"
+              : page.feedKey
+        // "All servers": the same feed from several servers, mixed.
+        source: page.isServers ? AppSettings.serversSource : ""
         sort: AppSettings.defaultSort
         showNsfw: AppSettings.showNsfw
         hideBroken: AppSettings.hideBrokenMedia
@@ -100,6 +105,7 @@ Page {
         const k = feedKey.toLowerCase()
         if (k === "local") return qsTr("Posts from %1").arg(Api.serviceName)
         if (k === "all" || k === "popular") return qsTr("Everything on %1").arg(Api.serviceName)
+        if (k === "servers") return AppSettings.serversSource.slice(8).split(",").join(" · ")
         if (isHome)
             return Account.signedIn ? qsTr("Your subscriptions")
                  : Library.subscriptions.length === 0 ? qsTr("Join communities to fill Home")
@@ -187,6 +193,7 @@ Page {
                         tint: Theme.text
                         tooltip: qsTr("Swipe through the pictures and videos")
                         onClicked: Nav.openMediaFeed({ feed: posts.feed, sort: posts.sort, timeRange: posts.timeRange,
+                                                       source: posts.source,
                                                        title: page.feedTitle })
                     }
                     RoundButton2 {

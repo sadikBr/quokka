@@ -26,8 +26,12 @@ QtObject {
     signal settingsRequested()
     // The swipe-through media feed. params: feed, sort, timeRange, searchQuery, userName, title.
     signal mediaFeedRequested(var params)
+    // A media site's page. params: source ("redgifs" | "eporner"), and optionally user, tag, search.
+    signal sourceRequested(var params)
 
-    function openPost(post) { postRequested(post) }
+    // Media-site posts have no comments: they open in the viewer.
+    function openPost(post) { post && post.source ? mediaRequested(post, 0) : postRequested(post) }
+    function openSource(params) { sourceRequested(params) }
     function openThread(postId, commentId) { threadRequested(postId, commentId || "") }
     function openSubreddit(name) { subredditRequested(name) }
     function openUser(name) { if (name && name !== "[deleted]") userRequested(name) }

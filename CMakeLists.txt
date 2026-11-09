@@ -37,6 +37,7 @@ set(QUOKKA_QML_FILES
     qml/pages/PostPage.qml
     qml/pages/MediaViewer.qml
     qml/pages/MediaFeedPage.qml
+    qml/pages/SourcePage.qml
     qml/pages/SearchPage.qml
     qml/pages/SettingsPage.qml
     qml/pages/UserPage.qml

@@ -50,11 +50,38 @@ Page {
                 }
             }
             Text {
+                id: versionText
                 Layout.alignment: Qt.AlignHCenter
                 text: "Quokka " + Qt.application.version
                 color: Theme.text
                 font.pixelSize: Theme.fontHuge
                 font.weight: Font.Bold
+                // Seven quick taps show (or hide) the private section of Settings.
+                property int taps: 0
+                Timer { id: tapReset; interval: 1500; onTriggered: versionText.taps = 0 }
+                TapHandler {
+                    onTapped: {
+                        versionText.taps += 1
+                        tapReset.restart()
+                        if (versionText.taps >= 7) {
+                            versionText.taps = 0
+                            AppSettings.privateUnlocked = !AppSettings.privateUnlocked
+                            unlockNote.show(AppSettings.privateUnlocked ? qsTr("Private settings are now in Settings.")
+                                                                        : qsTr("Private settings hidden."))
+                        }
+                    }
+                }
+            }
+            Text {
+                id: unlockNote
+                Layout.alignment: Qt.AlignHCenter
+                function show(message) { text = message; opacity = 1; noteFade.restart() }
+                opacity: 0
+                visible: opacity > 0
+                color: Theme.textMuted
+                font.pixelSize: Theme.fontSmall + 1
+                Behavior on opacity { NumberAnimation { duration: Theme.smooth } }
+                Timer { id: noteFade; interval: 2500; onTriggered: unlockNote.opacity = 0 }
             }
             Text {
                 Layout.fillWidth: true

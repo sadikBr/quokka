@@ -47,7 +47,7 @@ Page {
                     onClicked: Nav.openUser(Account.name)
                 }
                 SwitchRow {
-                    visible: Account.signedIn
+                    visible: Account.signedIn && AppSettings.privateUnlocked
                     text: qsTr("Show NSFW on my account")
                     detail: qsTr("Saved on %1. Needed for NSFW results in search.").arg(Api.instance)
                     checked: Account.showNsfw
@@ -146,6 +146,16 @@ Page {
                 }
             }
 
+            Group {
+                visible: Api.isLemmy
+                SettingField {
+                    label: qsTr("“All servers” feed")
+                    hint: qsTr("Servers mixed into one feed, separated by commas.")
+                    value: AppSettings.servers
+                    onSaved: (text) => AppSettings.servers = text
+                }
+            }
+
             // ---- Appearance ----
             SectionTitle { text: qsTr("Appearance") }
             Group {
@@ -215,26 +225,6 @@ Page {
             // ---- Content ----
             SectionTitle { text: qsTr("Content") }
             Group {
-                SwitchRow {
-                    text: qsTr("Show NSFW posts")
-                    detail: qsTr("Hidden unless you turn this on.")
-                    checked: AppSettings.showNsfw
-                    onToggled: (on) => AppSettings.showNsfw = on
-                }
-                SwitchRow {
-                    visible: AppSettings.showNsfw
-                    text: qsTr("Show only NSFW")
-                    detail: qsTr("Feeds, searches and community lists show only NSFW posts and communities. Works best on an NSFW server such as lemmynsfw.com.")
-                    checked: AppSettings.nsfwOnly
-                    onToggled: (on) => AppSettings.nsfwOnly = on
-                }
-                SwitchRow {
-                    visible: AppSettings.showNsfw
-                    text: qsTr("Cover NSFW media")
-                    detail: qsTr("Pictures and videos stay covered until you tap them. Turn off to show them right away.")
-                    checked: AppSettings.coverNsfw
-                    onToggled: (on) => AppSettings.coverNsfw = on
-                }
                 SwitchRow {
                     text: qsTr("Hide posts whose media won't load")
                     detail: qsTr("Checks each picture and video link in the background (about 1 KB each) and hides posts whose links are dead. Dead links are remembered for a week.")
@@ -326,10 +316,95 @@ Page {
                     onClicked: Qt.openUrlExternally("https://github.com/sadikBr/Reddit-Client")
                 }
             }
+
+            // ---- Private (hidden until unlocked on the About page) ----
+            SectionTitle { text: qsTr("Private"); visible: AppSettings.privateUnlocked }
+            Group {
+                visible: AppSettings.privateUnlocked
+                SwitchRow {
+                    text: qsTr("Show NSFW posts")
+                    detail: qsTr("Hidden unless you turn this on.")
+                    checked: AppSettings.showNsfw
+                    onToggled: (on) => AppSettings.showNsfw = on
+                }
+                SwitchRow {
+                    visible: AppSettings.showNsfw
+                    text: qsTr("Show only NSFW")
+                    detail: qsTr("Feeds, searches and community lists show only NSFW posts and communities. Works best on an NSFW server such as lemmynsfw.com.")
+                    checked: AppSettings.nsfwOnly
+                    onToggled: (on) => AppSettings.nsfwOnly = on
+                }
+                SwitchRow {
+                    visible: AppSettings.showNsfw
+                    text: qsTr("Cover NSFW media")
+                    detail: qsTr("Pictures and videos stay covered until you tap them. Turn off to show them right away.")
+                    checked: AppSettings.coverNsfw
+                    onToggled: (on) => AppSettings.coverNsfw = on
+                }
+                SettingField {
+                    visible: AppSettings.showNsfw
+                    label: qsTr("NSFW servers")
+                    hint: qsTr("Added to the “All servers” feed while NSFW is shown.")
+                    value: AppSettings.nsfwServers
+                    onSaved: (text) => AppSettings.nsfwServers = text
+                }
+                ActionRow {
+                    text: qsTr("Hide this section")
+                    detail: qsTr("Settings stay as they are. Tap the version on the About page 7 times to show it again.")
+                    chevron: false
+                    onClicked: AppSettings.privateUnlocked = false
+                }
+            }
         }
     }
     WheelScroller {
         flickable: scroller
+    }
+
+    // A labelled one-line text setting, saved when editing finishes.
+    component SettingField: Item {
+        id: sf
+        property string label
+        property string hint
+        property string value
+        signal saved(string text)
+        Layout.fillWidth: true
+        implicitHeight: sfCol.implicitHeight + 24
+        ColumnLayout {
+            id: sfCol
+            x: 16
+            y: 12
+            width: parent.width - 32
+            spacing: 6
+            Text { text: sf.label; color: Theme.text; font.pixelSize: Theme.fontBody }
+            Text {
+                Layout.fillWidth: true
+                visible: sf.hint !== ""
+                text: sf.hint
+                color: Theme.textMuted
+                font.pixelSize: Theme.fontSmall + 1
+                wrapMode: Text.Wrap
+            }
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 38
+                radius: 10
+                color: Theme.surfaceAlt
+                border.width: sfInput.activeFocus ? 1 : 0
+                border.color: Theme.accent
+                PlainField {
+                    id: sfInput
+                    anchors.fill: parent
+                    anchors.leftMargin: 12
+                    anchors.rightMargin: 12
+                    text: sf.value
+                    color: Theme.text
+                    font.pixelSize: Theme.fontMeta + 1
+                    inputMethodHints: Qt.ImhUrlCharactersOnly | Qt.ImhNoAutoUppercase
+                    onEditingFinished: if (text !== sf.value) sf.saved(text)
+                }
+            }
+        }
     }
 
     component SectionTitle: Text {

@@ -25,6 +25,15 @@ class AppSettings : public QObject
     Q_PROPERTY(bool hideBrokenMedia READ hideBrokenMedia WRITE setHideBrokenMedia NOTIFY hideBrokenMediaChanged)
     // Cover NSFW pictures and videos until tapped (when NSFW posts are shown at all).
     Q_PROPERTY(bool coverNsfw READ coverNsfw WRITE setCoverNsfw NOTIFY coverNsfwChanged)
+    // The private section of Settings (NSFW and adult sources) is shown. Unlocked by tapping
+    // the version on the About page seven times; on for installs that already show NSFW.
+    Q_PROPERTY(bool privateUnlocked READ privateUnlocked WRITE setPrivateUnlocked NOTIFY privateUnlockedChanged)
+    // Servers mixed in the "All servers" feed (comma-separated hosts).
+    Q_PROPERTY(QString servers READ servers WRITE setServers NOTIFY serversChanged)
+    // Extra servers mixed in when NSFW is shown (private section).
+    Q_PROPERTY(QString nsfwServers READ nsfwServers WRITE setNsfwServers NOTIFY nsfwServersChanged)
+    // The combined feed's source name for PostListModel ("servers:a,b,c").
+    Q_PROPERTY(QString serversSource READ serversSource NOTIFY serversSourceChanged)
     // Multiplier for mouse-wheel / touchpad scrolling distance (1 = normal).
     // Play videos and GIFs muted in the feed while they're in the middle of the screen.
     Q_PROPERTY(bool autoplayFeed READ autoplayFeed WRITE setAutoplayFeed NOTIFY autoplayFeedChanged)
@@ -60,6 +69,13 @@ public:
     void setCoverNsfw(bool cover);
     bool autoplayFeed() const;
     void setAutoplayFeed(bool on);
+    bool privateUnlocked() const;
+    void setPrivateUnlocked(bool on);
+    QString servers() const;
+    void setServers(const QString &list);
+    QString nsfwServers() const;
+    void setNsfwServers(const QString &list);
+    QString serversSource() const;
     double scrollSpeed() const;
     void setScrollSpeed(double speed);
 
@@ -80,6 +96,10 @@ signals:
     void hideBrokenMediaChanged();
     void nsfwOnlyChanged();
     void scrollSpeedChanged();
+    void privateUnlockedChanged();
+    void serversChanged();
+    void nsfwServersChanged();
+    void serversSourceChanged();
     void autoplayFeedChanged();
 
 private:

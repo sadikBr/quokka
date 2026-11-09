@@ -26,6 +26,7 @@ Page {
     PostListModel {
         id: posts
         mediaOnly: true
+        source: page.params.source || ""
         animatedOnly: page.videosOnly
         feed: page.params.feed || "all"
         sort: page.params.sort || AppSettings.defaultSort
@@ -47,7 +48,7 @@ Page {
     Shortcut { sequences: ["Space"]; enabled: page.active; onActivated: pager.currentItem && pager.currentItem.togglePlay() }
     Shortcut { sequences: ["V"]; enabled: page.active; onActivated: page.videosOnly = !page.videosOnly }
     Shortcut { sequences: ["M"]; enabled: page.active; onActivated: AppSettings.videoMuted = !AppSettings.videoMuted }
-    Shortcut { sequences: ["C"]; enabled: page.active && posts.count > 0; onActivated: Nav.openPost(posts.get(pager.currentIndex)) }
+    Shortcut { sequences: ["C"]; enabled: page.active && posts.count > 0 && !(page.params.source); onActivated: Nav.openPost(posts.get(pager.currentIndex)) }
 
     ListView {
         id: pager
@@ -228,18 +229,31 @@ Page {
                 Row {
                     spacing: 8
                     Avatar {
-                        name: slot.model.subreddit
+                        name: slot.model.source ? slot.model.source : slot.model.subreddit
                         size: 24
                         backgroundColor: "#000000"
                         anchors.verticalCenter: parent.verticalCenter
                     }
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
-                        text: Api.community(slot.model.subreddit) + "  ·  " + Format.relativeTime(slot.model.createdUtc)
+                        readonly property string site: slot.model.source === "redgifs" ? "Redgifs"
+                                                     : slot.model.source === "eporner" ? "Eporner" : ""
+                        text: (site !== "" ? site + (slot.model.author ? "  ·  @" + slot.model.author : "")
+                                           : Api.community(slot.model.subreddit))
+                              + "  ·  " + Format.relativeTime(slot.model.createdUtc)
                         color: "white"
                         font.pixelSize: Theme.fontSmall + 1
                         font.weight: Font.DemiBold
-                        TapHandler { onTapped: Nav.openSubreddit(slot.model.subreddit) }
+                        TapHandler {
+                            onTapped: {
+                                if (slot.model.source === "redgifs" && slot.model.author)
+                                    Nav.openSource({ source: "redgifs", user: slot.model.author })
+                                else if (slot.model.source)
+                                    Nav.openSource({ source: slot.model.source })
+                                else
+                                    Nav.openSubreddit(slot.model.subreddit)
+                            }
+                        }
                     }
                 }
                 Text {
@@ -287,6 +301,7 @@ Page {
                     label: Format.compact(slot.model.score)
                 }
                 SideButton {
+                    visible: !slot.model.source
                     iconName: "comment"
                     label: Format.compact(slot.model.numComments)
                     onClicked: Nav.openPost(posts.get(slot.index))
@@ -300,7 +315,8 @@ Page {
                 SideButton {
                     iconName: "external"
                     label: ""
-                    onClicked: Nav.openLink(slot.model.url !== "" ? slot.model.url : Api.webUrl(slot.model.permalink))
+                    onClicked: slot.model.source ? Qt.openUrlExternally(slot.model.permalink)
+                                                 : Nav.openLink(slot.model.url !== "" ? slot.model.url : Api.webUrl(slot.model.permalink))
                 }
             }
         }

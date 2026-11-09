@@ -203,6 +203,9 @@ Page {
                     previewHeight: m.previewHeight
                     galleryCount: m.galleryCount
                     media: m.media
+                    source: m.source || ""
+                    origin: m.origin || ""
+                    tags: m.tags || []
                     view: list
                     autoplay: page.active && page.tab === 0 && AppSettings.autoplayFeed
                     saved: Library.savedRevision >= 0 && Library.isSaved(postId)

@@ -14,6 +14,7 @@ FocusScope {
     property alias horizontalAlignment: input.horizontalAlignment
     signal accepted()
     signal textEdited()
+    signal editingFinished()
 
     function selectAll() { input.selectAll() }
 
@@ -34,6 +35,7 @@ FocusScope {
         selectedTextColor: Theme.text
         onAccepted: root.accepted()
         onTextEdited: root.textEdited()
+        onEditingFinished: root.editingFinished()
     }
     Text {
         anchors.fill: parent

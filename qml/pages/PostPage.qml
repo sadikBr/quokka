@@ -20,6 +20,8 @@ Page {
         id: comments
         postId: page.postId
         focusCommentId: page.focusCommentId
+        // From the combined feed: comments come from the post's own server.
+        source: page.initialPost && page.initialPost.origin ? page.initialPost.origin : ""
         sort: AppSettings.commentSort
     }
 

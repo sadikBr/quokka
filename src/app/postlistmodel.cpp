@@ -483,9 +483,17 @@ void PostListModel::request(bool reset)
             if (m_mediaOnly && p.kind != Post::Kind::Image && p.kind != Post::Kind::Gallery
                 && p.kind != Post::Kind::Video)
                 continue;
-            if (m_seen.contains(p.id))
+            // Post ids are per server: in the combined feed, key them by server too, and skip the
+            // same post shared to another server (same author, title and link).
+            const QString key = p.origin.isEmpty() ? p.id : p.origin + QLatin1Char('/') + p.id;
+            const QString sameAs = p.origin.isEmpty() ? QString()
+                : QStringLiteral("~") + p.author.section(QLatin1Char('@'), 0, 0) + QLatin1Char('|') + p.title
+                    + QLatin1Char('|') + p.url;
+            if (m_seen.contains(key) || (!sameAs.isEmpty() && m_seen.contains(sameAs)))
                 continue;
-            m_seen.insert(p.id);
+            m_seen.insert(key);
+            if (!sameAs.isEmpty())
+                m_seen.insert(sameAs);
             fresh.append(p);
         }
 
