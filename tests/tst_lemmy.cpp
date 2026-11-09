@@ -3,6 +3,7 @@
 #include "commenttreemodel.h"
 #include "lemmyparsers.h"
 #include "markdown.h"
+#include "medialinks.h"
 #include "services.h"
 
 #include <QAbstractItemModelTester>
@@ -283,6 +284,59 @@ private slots:
         ApiReply *reply = backend->posts(r);
         QVERIFY(reply->url().query().contains("type_=Subscribed"));
         reply->abort();
+    }
+
+    void mediaLinks()
+    {
+        using quokka::media::classify;
+        QVERIFY(!classify("https://example.com/article"));
+        QVERIFY(classify("https://files.catbox.moe/kf2ljs.mp4")->video);
+        QVERIFY(!classify("https://i.redd.it/x.jpeg")->video);
+        QVERIFY(classify("https://x.y/a.gif")->animated);
+        const auto gifv = classify("https://i.imgur.com/AbC123.gifv");
+        QCOMPARE(gifv->url, QStringLiteral("https://i.imgur.com/AbC123.mp4"));
+        QVERIFY(gifv->video);
+        QCOMPARE(classify("https://imgur.com/AbC123")->url, QStringLiteral("https://i.imgur.com/AbC123.jpg"));
+        QVERIFY(!classify("https://imgur.com/a/album1")); // albums need their own page
+        const auto rg = classify("https://www.redgifs.com/watch/steelbothpeafowl");
+        QCOMPARE(rg->resolve, QStringLiteral("redgifs"));
+        QVERIFY(rg->video);
+        QCOMPARE(classify("https://streamable.com/abc12")->resolve, QStringLiteral("streamable"));
+
+        const auto found = quokka::media::extractFromText(
+            "Original Source : https://www.redgifs.com/watch/steelbothpeafowl\n\n"
+            "HD Version : [here](https://files.catbox.moe/kf2ljs.mp4). Also https://files.catbox.moe/kf2ljs.mp4, "
+            "and a page https://example.com/x");
+        QCOMPARE(found.size(), 2);
+        QCOMPARE(found[0].resolve, QStringLiteral("redgifs"));
+        QCOMPARE(found[1].url, QStringLiteral("https://files.catbox.moe/kf2ljs.mp4"));
+    }
+
+    void textPostWithMediaLinks()
+    {
+        QJsonObject post{{"id", 9}, {"name", "Pure heaven"}, {"creator_id", 1}, {"community_id", 2},
+                         {"published", "2024-01-01T00:00:00Z"}, {"nsfw", true},
+                         {"body", "Original Source : https://www.redgifs.com/watch/steelbothpeafowl\n\n"
+                                  "HD Version : https://files.catbox.moe/kf2ljs.mp4"}};
+        QJsonObject view{{"post", post}, {"creator", QJsonObject{{"name", "a"}, {"actor_id", "https://lemmy.world/u/a"}}},
+                         {"community", QJsonObject{{"name", "c"}, {"actor_id", "https://lemmy.world/c/c"}}},
+                         {"counts", QJsonObject{{"score", 91}, {"comments", 1}}}};
+        const Post p = lemmy::postFromView(view, "https://lemmy.world");
+        QCOMPARE(p.kind, Post::Kind::Gallery);
+        QCOMPARE(p.media.size(), 2);
+        QVERIFY(p.media[0].video);
+        QCOMPARE(p.media[0].resolve, QStringLiteral("redgifs"));
+        QCOMPARE(p.media[1].url, QStringLiteral("https://files.catbox.moe/kf2ljs.mp4"));
+
+        // A link post to a video page plays in the app.
+        QJsonObject link = view;
+        QJsonObject lp = post;
+        lp.remove("body");
+        lp.insert("url", "https://www.redgifs.com/watch/steelbothpeafowl");
+        link.insert("post", lp);
+        const Post v = lemmy::postFromView(link, "https://lemmy.world");
+        QCOMPARE(v.kind, Post::Kind::Video);
+        QCOMPARE(v.media.first().resolve, QStringLiteral("redgifs"));
     }
 
     void markdownRendering()

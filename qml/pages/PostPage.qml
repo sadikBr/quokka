@@ -226,9 +226,9 @@ Page {
         }
 
         PostMedia {
-            readonly property bool big: !!page.post.previewUrl && (page.post.kind === PostListModel.ImagePost
-                                        || page.post.kind === PostListModel.GalleryPost
-                                        || page.post.kind === PostListModel.VideoPost)
+            readonly property bool big: (page.post.kind === PostListModel.GalleryPost
+                                         || page.post.kind === PostListModel.VideoPost)
+                                        || (!!page.post.previewUrl && page.post.kind === PostListModel.ImagePost)
             visible: big
             Layout.fillWidth: true
             Layout.preferredHeight: visible ? implicitHeight : 0
@@ -296,6 +296,13 @@ Page {
             visible: html !== ""
             html: page.post.selftextHtml || ""
             font.pixelSize: Theme.fontBody + 1
+        }
+
+        MediaStrip {
+            Layout.fillWidth: true
+            items: page.post.bodyMedia || []
+            title: page.post.title || ""
+            tileHeight: 160
         }
 
         // Score, upvote ratio, comments

@@ -213,6 +213,7 @@ Page {
                     subreddit: m.subreddit
                     linkTitle: m.linkTitle
                     permalink: m.permalink
+                    media: m.media
                 }
             }
         }

@@ -33,7 +33,7 @@ Popup {
         Text {
             Layout.fillWidth: true
             text: qsTr("Paste community names separated by spaces, commas or new lines, "
-                       + "for example: r/pics, aww, linux")
+                       + "for example: linux@lemmy.ml, technology")
             color: Theme.textMuted
             font.pixelSize: Theme.fontMeta
             wrapMode: Text.Wrap
@@ -52,10 +52,17 @@ Popup {
                     id: area
                     wrapMode: TextEdit.Wrap
                     color: Theme.text
-                    placeholderText: "r/pics\nr/aww\nr/linux"
-                    placeholderTextColor: Theme.textMuted
                     background: null
                     selectByMouse: true
+                    // Own placeholder: Material's floats up as a label when typing.
+                    Text {
+                        x: area.leftPadding
+                        y: area.topPadding
+                        visible: area.text.length === 0
+                        text: "linux@lemmy.ml\ntechnology\n!asklemmy@lemmy.world"
+                        color: Theme.textFaint
+                        font: area.font
+                    }
                 }
             }
         }

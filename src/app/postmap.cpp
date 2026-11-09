@@ -1,5 +1,6 @@
 #include "postmap.h"
 
+#include "medialinks.h"
 #include "postlistmodel.h"
 
 #include <QVariantList>
@@ -17,19 +18,30 @@ int postKindValue(quokka::Post::Kind kind)
     return PostListModel::LinkPost;
 }
 
-QVariantMap postToVariantMap(const quokka::Post &p)
+QVariantList mediaToVariantList(const QList<quokka::MediaItem> &items)
 {
-    QVariantList media;
-    for (const auto &m : p.media) {
-        media.append(QVariantMap{
+    QVariantList out;
+    for (const auto &m : items) {
+        out.append(QVariantMap{
             {QStringLiteral("url"), m.url},
             {QStringLiteral("width"), m.width},
             {QStringLiteral("height"), m.height},
             {QStringLiteral("caption"), m.caption},
             {QStringLiteral("animated"), m.animated},
             {QStringLiteral("fallbackUrl"), m.fallbackUrl},
+            {QStringLiteral("video"), m.video},
+            {QStringLiteral("resolve"), m.resolve},
         });
     }
+    return out;
+}
+
+QVariantMap postToVariantMap(const quokka::Post &p)
+{
+    const QVariantList media = mediaToVariantList(p.media);
+    // Media linked in the text of posts that already have a link of their own.
+    const QVariantList bodyMedia = p.url.isEmpty() ? QVariantList{}
+                                                   : mediaToVariantList(quokka::media::extractFromText(p.selftext));
     return {
         {QStringLiteral("postId"), p.id},
         {QStringLiteral("fullname"), p.fullname},
@@ -61,6 +73,7 @@ QVariantMap postToVariantMap(const quokka::Post &p)
         {QStringLiteral("videoFallbackUrl"), p.videoFallbackUrl},
         {QStringLiteral("galleryCount"), p.galleryCount},
         {QStringLiteral("media"), media},
+        {QStringLiteral("bodyMedia"), bodyMedia},
     };
 }
 
@@ -105,12 +118,15 @@ quokka::Post postFromVariantMap(const QVariantMap &m)
     p.galleryCount = m.value(QStringLiteral("galleryCount")).toInt();
     for (const QVariant &v : m.value(QStringLiteral("media")).toList()) {
         const QVariantMap mm = v.toMap();
-        p.media.append({mm.value(QStringLiteral("url")).toString(),
-                        mm.value(QStringLiteral("width")).toInt(),
-                        mm.value(QStringLiteral("height")).toInt(),
-                        mm.value(QStringLiteral("caption")).toString(),
-                        mm.value(QStringLiteral("animated")).toBool(),
-                        mm.value(QStringLiteral("fallbackUrl")).toString()});
+        quokka::MediaItem item{mm.value(QStringLiteral("url")).toString(),
+                               mm.value(QStringLiteral("width")).toInt(),
+                               mm.value(QStringLiteral("height")).toInt(),
+                               mm.value(QStringLiteral("caption")).toString(),
+                               mm.value(QStringLiteral("animated")).toBool(),
+                               mm.value(QStringLiteral("fallbackUrl")).toString()};
+        item.video = mm.value(QStringLiteral("video")).toBool();
+        item.resolve = mm.value(QStringLiteral("resolve")).toString();
+        p.media.append(item);
     }
     return p;
 }

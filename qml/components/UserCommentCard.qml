@@ -10,6 +10,7 @@ Item {
     required property string subreddit
     required property string linkTitle
     required property string permalink
+    required property var media
 
     // The item spans the list; the visible box is a centred column.
     implicitHeight: box.implicitHeight
@@ -74,6 +75,13 @@ Item {
                 id: body
                 Layout.fillWidth: true
                 html: card.bodyHtml
+            }
+            MediaStrip {
+                Layout.fillWidth: true
+                items: card.media || []
+                title: card.linkTitle
+                tileHeight: 120
+                backgroundColor: box.color
             }
         }
 

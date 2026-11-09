@@ -2,6 +2,7 @@
 
 #include "html.h"
 #include "markdown.h"
+#include "medialinks.h"
 
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -312,6 +313,7 @@ Comment parseCommentData(const QJsonObject &d, const QString &linkAuthor)
     if (c.bodyHtml.isEmpty())
         c.bodyHtml = d.value(QLatin1String("body")).toString().toHtmlEscaped();
     c.flair = d.value(QLatin1String("author_flair_text")).toString();
+    c.media = media::extractFromText(d.value(QLatin1String("body")).toString(), 6);
     c.distinguished = d.value(QLatin1String("distinguished")).toString();
     c.score = d.value(QLatin1String("score")).toInt();
     c.createdUtc = qint64(d.value(QLatin1String("created_utc")).toDouble());

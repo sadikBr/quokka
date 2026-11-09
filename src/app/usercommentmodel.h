@@ -31,6 +31,7 @@ public:
         SubredditRole,
         LinkTitleRole,
         PermalinkRole,
+        MediaRole,
     };
 
     explicit UserCommentModel(QObject *parent = nullptr);

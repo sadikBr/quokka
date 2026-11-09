@@ -25,6 +25,7 @@ Item {
     required property int hiddenCount
     required property int moreCount
     required property bool loadingMore
+    required property var media
 
     signal toggle()
     signal loadMore()
@@ -145,6 +146,15 @@ Item {
             visible: !row.collapsed
             Layout.fillWidth: true
             html: row.bodyHtml
+        }
+
+        MediaStrip {
+            visible: !row.collapsed && items.length > 0
+            Layout.fillWidth: true
+            Layout.topMargin: 2
+            items: row.media || []
+            title: qsTr("Comment by %1").arg(Api.shortName(row.author))
+            tileHeight: 130
         }
     }
 

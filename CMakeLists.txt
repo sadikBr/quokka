@@ -48,6 +48,8 @@ set(QUOKKA_QML_FILES
     qml/components/ImportDialog.qml
     qml/components/JoinButton.qml
     qml/components/LoadingDots.qml
+    qml/components/MediaStrip.qml
+    qml/components/PlainField.qml
     qml/components/PostCard.qml
     qml/components/PostMedia.qml
     qml/components/RedditText.qml
@@ -93,6 +95,7 @@ qt_add_qml_module(quokka
         src/app/subredditlistmodel.h src/app/subredditlistmodel.cpp
         src/app/usercommentmodel.h src/app/usercommentmodel.cpp
         src/app/library.h src/app/library.cpp
+        src/app/mediaresolver.h src/app/mediaresolver.cpp
     RESOURCES
         resources/logo.svg
         resources/fonts/Inter-Regular.ttf

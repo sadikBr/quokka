@@ -5,6 +5,7 @@ add_library(quokka_core STATIC
     community.h
     html.h html.cpp
     markdown.h markdown.cpp
+    medialinks.h medialinks.cpp
     parsers.h parsers.cpp
     transport.h transport.cpp
     apiclient.h apiclient.cpp

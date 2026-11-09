@@ -1,6 +1,7 @@
 #include "lemmyparsers.h"
 
 #include "markdown.h"
+#include "medialinks.h"
 
 #include <QDateTime>
 #include <QHash>
@@ -125,14 +126,39 @@ Post postFromView(const QJsonObject &pv, const QString &webBase)
         post.previewHeight = int(num(image, "height"));
     }
 
+    const auto linked = media::classify(post.url); // imgur, redgifs, streamable, ...
+
     if (post.url.isEmpty()) {
         post.kind = Post::Kind::Self;
         post.previewUrl = sizedImage(thumb, 640);
-    } else if (directVideo || embedIsFile) {
+        // A text post that is really media: show the files linked in its body.
+        const QList<MediaItem> bodyMedia = media::extractFromText(post.selftext);
+        if (!bodyMedia.isEmpty()) {
+            post.media = bodyMedia;
+            post.galleryCount = int(bodyMedia.size());
+            const MediaItem &first = bodyMedia.first();
+            if (bodyMedia.size() > 1)
+                post.kind = Post::Kind::Gallery;
+            else
+                post.kind = first.video ? Post::Kind::Video : Post::Kind::Image;
+            if (post.kind == Post::Kind::Video)
+                post.videoUrl = first.url;
+            for (const MediaItem &m : bodyMedia) {
+                if (!m.video && post.previewUrl.isEmpty()) {
+                    post.previewUrl = m.animated ? m.url : sizedImage(m.url, 640);
+                    break;
+                }
+            }
+        }
+    } else if (directVideo || embedIsFile || (linked && linked->video)) {
         post.kind = Post::Kind::Video;
-        post.videoUrl = directVideo ? post.url : embedVideo;
+        post.videoUrl = directVideo ? post.url : linked && linked->video ? linked->url : embedVideo;
         post.previewUrl = sizedImage(thumb, 640);
-        post.media.append({post.videoUrl, post.previewWidth, post.previewHeight, {}, true});
+        MediaItem m{post.videoUrl, post.previewWidth, post.previewHeight, {}, true};
+        m.video = true;
+        if (linked && linked->video)
+            m.resolve = linked->resolve;
+        post.media.append(m);
     } else if (isImage) {
         post.kind = Post::Kind::Image;
         // Prefer the thumbnail: for posts from other servers it is usually a copy kept by the
@@ -148,6 +174,13 @@ Post postFromView(const QJsonObject &pv, const QString &webBase)
             post.previewFallbackUrl = local;
         }
         post.media.append({post.url, post.previewWidth, post.previewHeight, str(p, "alt_text"), gif, thumb});
+    } else if (linked) {
+        // An image page we can show directly (e.g. imgur).
+        post.kind = Post::Kind::Image;
+        post.previewUrl = thumb.isEmpty() ? linked->url : sizedImage(thumb, 640);
+        post.previewFallbackUrl = thumb.isEmpty() ? QString() : linked->url;
+        post.media.append({linked->url, post.previewWidth, post.previewHeight, str(p, "alt_text"),
+                           linked->animated, thumb});
     } else {
         post.kind = Post::Kind::Link;
         post.previewUrl = sizedImage(thumb, 320);
@@ -227,6 +260,8 @@ Comment commentFromView(const QJsonObject &cv, const QString &webBase)
     out.linkTitle = str(post, "name");
     out.permalink = webBase + QStringLiteral("/post/%1/%2").arg(num(post, "id")).arg(out.id);
     out.nsfw = community.value(QLatin1String("nsfw")).toBool() || post.value(QLatin1String("nsfw")).toBool();
+    if (!c.value(QLatin1String("deleted")).toBool() && !c.value(QLatin1String("removed")).toBool())
+        out.media = media::extractFromText(str(c, "content"), 6);
     out.moreCount = int(num(counts, "child_count")); // total replies; used by buildCommentTree
     return out;
 }

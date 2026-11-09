@@ -71,7 +71,7 @@ Page {
                         anchors.rightMargin: 6
                         spacing: 6
                         Icon { name: "search"; size: 18; color: Theme.textMuted }
-                        TextField {
+                        PlainField {
                             id: field
                             Layout.fillWidth: true
                             text: page.initialQuery
@@ -80,7 +80,6 @@ Page {
                             placeholderTextColor: Theme.textMuted
                             color: Theme.text
                             font.pixelSize: Theme.fontBody
-                            background: null
                             inputMethodHints: Qt.ImhNoPredictiveText
                             onTextEdited: debounce.restart()
                             onAccepted: { debounce.stop(); page.query = text.trim() }

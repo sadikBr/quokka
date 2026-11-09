@@ -149,7 +149,7 @@ Popup {
         color: Theme.surfaceAlt
         border.width: input.activeFocus ? 2 : 1
         border.color: input.activeFocus ? Theme.accent : Theme.border
-        TextField {
+        PlainField {
             id: input
             anchors.fill: parent
             anchors.leftMargin: 16
@@ -158,7 +158,6 @@ Popup {
             placeholderTextColor: Theme.textMuted
             color: Theme.text
             font.pixelSize: Theme.fontBody
-            background: null
             echoMode: field.secret ? TextInput.Password : TextInput.Normal
             inputMethodHints: field.digits ? Qt.ImhDigitsOnly
                             : field.secret ? Qt.ImhHiddenText | Qt.ImhSensitiveData | Qt.ImhNoPredictiveText

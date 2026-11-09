@@ -19,6 +19,8 @@ class AppSettings : public QObject
     Q_PROPERTY(bool videoMuted READ videoMuted WRITE setVideoMuted NOTIFY videoMutedChanged)
     Q_PROPERTY(bool compactCards READ compactCards WRITE setCompactCards NOTIFY compactCardsChanged)
     Q_PROPERTY(bool dimVisited READ dimVisited WRITE setDimVisited NOTIFY dimVisitedChanged)
+    // Cover NSFW pictures and videos until tapped (when NSFW posts are shown at all).
+    Q_PROPERTY(bool coverNsfw READ coverNsfw WRITE setCoverNsfw NOTIFY coverNsfwChanged)
 
 public:
     enum ThemeMode { System, Light, Dark };
@@ -42,6 +44,8 @@ public:
     void setCompactCards(bool compact);
     bool dimVisited() const;
     void setDimVisited(bool dim);
+    bool coverNsfw() const;
+    void setCoverNsfw(bool cover);
 
     // Generic storage for small UI state (window geometry and the like).
     Q_INVOKABLE QVariant value(const QString &key, const QVariant &defaultValue = {}) const;
@@ -56,6 +60,7 @@ signals:
     void videoMutedChanged();
     void compactCardsChanged();
     void dimVisitedChanged();
+    void coverNsfwChanged();
 
 private:
     QSettings m_settings;

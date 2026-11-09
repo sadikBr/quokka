@@ -73,14 +73,13 @@ Popup {
                     font.pixelSize: Theme.fontTitle
                     font.weight: Font.Bold
                 }
-                TextField {
+                PlainField {
                     id: field
                     Layout.fillWidth: true
                     placeholderText: Api.isLemmy ? qsTr("community, or name@server") : qsTr("subreddit, or a+b+c")
                     placeholderTextColor: Theme.textMuted
                     color: Theme.text
                     font.pixelSize: Theme.fontTitle
-                    background: null
                     inputMethodHints: Qt.ImhNoAutoUppercase | Qt.ImhNoPredictiveText | Qt.ImhUrlCharactersOnly
                     onAccepted: root.submit(text)
                 }

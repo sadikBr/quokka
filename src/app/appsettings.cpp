@@ -7,6 +7,7 @@ const QString kLastFeed = QStringLiteral("browse/lastFeed");
 const QString kDefaultSort = QStringLiteral("browse/defaultSort");
 const QString kCompact = QStringLiteral("ui/compactCards");
 const QString kDimVisited = QStringLiteral("ui/dimVisited");
+const QString kCoverNsfw = QStringLiteral("content/coverNsfw");
 const QString kVideoMuted = QStringLiteral("media/videoMuted");
 const QString kCommentSort = QStringLiteral("browse/commentSort");
 } // namespace
@@ -130,4 +131,17 @@ QVariant AppSettings::value(const QString &key, const QVariant &defaultValue) co
 void AppSettings::setValue(const QString &key, const QVariant &value)
 {
     m_settings.setValue(key, value);
+}
+
+bool AppSettings::coverNsfw() const
+{
+    return m_settings.value(kCoverNsfw, true).toBool();
+}
+
+void AppSettings::setCoverNsfw(bool cover)
+{
+    if (cover == coverNsfw())
+        return;
+    m_settings.setValue(kCoverNsfw, cover);
+    emit coverNsfwChanged();
 }

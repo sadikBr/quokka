@@ -118,7 +118,7 @@ Page {
                                 color: Theme.surfaceAlt
                                 border.width: serverField.activeFocus ? 1 : 0
                                 border.color: Theme.accent
-                                TextField {
+                                PlainField {
                                     id: serverField
                                     anchors.fill: parent
                                     anchors.leftMargin: 12
@@ -127,7 +127,6 @@ Page {
                                     placeholderTextColor: Theme.textFaint
                                     color: Theme.text
                                     font.pixelSize: Theme.fontMeta + 1
-                                    background: null
                                     inputMethodHints: Qt.ImhUrlCharactersOnly | Qt.ImhNoAutoUppercase
                                     onAccepted: if (Api.setInstance(text)) text = ""
                                 }
@@ -192,9 +191,16 @@ Page {
             Group {
                 SwitchRow {
                     text: qsTr("Show NSFW posts")
-                    detail: qsTr("Hidden unless you turn this on. Pictures stay covered until tapped.")
+                    detail: qsTr("Hidden unless you turn this on.")
                     checked: AppSettings.showNsfw
                     onToggled: (on) => AppSettings.showNsfw = on
+                }
+                SwitchRow {
+                    visible: AppSettings.showNsfw
+                    text: qsTr("Cover NSFW media")
+                    detail: qsTr("Pictures and videos stay covered until you tap them. Turn off to show them right away.")
+                    checked: AppSettings.coverNsfw
+                    onToggled: (on) => AppSettings.coverNsfw = on
                 }
                 SwitchRow {
                     text: qsTr("Start videos muted")

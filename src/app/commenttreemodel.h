@@ -49,6 +49,7 @@ public:
         HiddenCountRole,
         MoreCountRole,
         LoadingMoreRole,
+        MediaRole,
     };
 
     explicit CommentTreeModel(QObject *parent = nullptr);

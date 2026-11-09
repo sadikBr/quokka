@@ -1,6 +1,7 @@
 #include "usercommentmodel.h"
 
 #include "backend.h"
+#include "postmap.h"
 #include "services.h"
 
 
@@ -33,6 +34,7 @@ QVariant UserCommentModel::data(const QModelIndex &index, int role) const
     case SubredditRole: return c.subreddit;
     case LinkTitleRole: return c.linkTitle;
     case PermalinkRole: return c.permalink;
+    case MediaRole: return mediaToVariantList(c.media);
     default: return {};
     }
 }
@@ -41,7 +43,7 @@ QHash<int, QByteArray> UserCommentModel::roleNames() const
 {
     return {{CommentIdRole, "commentId"}, {BodyHtmlRole, "bodyHtml"},   {ScoreRole, "score"},
             {CreatedUtcRole, "createdUtc"}, {SubredditRole, "subreddit"}, {LinkTitleRole, "linkTitle"},
-            {PermalinkRole, "permalink"}};
+            {PermalinkRole, "permalink"}, {MediaRole, "media"}};
 }
 
 void UserCommentModel::setUserName(const QString &name)

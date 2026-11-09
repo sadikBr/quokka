@@ -18,10 +18,11 @@ Item {
     signal activated()
 
     property bool revealed: false
-    readonly property bool covered: (spoiler || nsfw) && !revealed
+    readonly property bool covered: (spoiler || (nsfw && AppSettings.coverNsfw)) && !revealed
     // The loaded picture's own shape wins; the server's size hint (or 2:3) is used until then.
     readonly property real ratio: image.naturalRatio > 0 ? image.naturalRatio
-                                : previewWidth > 0 && previewHeight > 0 ? previewHeight / previewWidth : 0.66
+                                : previewWidth > 0 && previewHeight > 0 ? previewHeight / previewWidth
+                                : previewUrl === "" ? 0.5625 : 0.66   // 16:9 for a video without a picture
 
     implicitHeight: Math.min(maxHeight, Math.round(width * Math.max(0.45, Math.min(maxRatio, ratio))))
 
@@ -31,7 +32,8 @@ Item {
         anchors.top: parent.top
         anchors.bottom: parent.bottom
         anchors.left: parent.left
-        width: Math.max(parent.width * 0.5, Math.min(parent.width, Math.round(parent.height / root.ratio)))
+        width: root.previewUrl === "" ? parent.width
+             : Math.max(parent.width * 0.5, Math.min(parent.width, Math.round(parent.height / root.ratio)))
         decodeWidth: root.width
         source: root.previewUrl
         fallbackSource: root.previewFallbackUrl
@@ -76,6 +78,14 @@ Item {
         fillColor: "#B3000000"
         textColor: "white"
         border.width: 0
+    }
+
+    Icon {
+        visible: root.previewUrl === "" && root.kind === PostListModel.GalleryPost && !root.covered
+        anchors.centerIn: image
+        name: "gallery"
+        size: 36
+        color: Theme.textMuted
     }
 
     Rectangle {

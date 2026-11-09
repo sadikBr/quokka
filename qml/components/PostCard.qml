@@ -37,7 +37,7 @@ Item {
     property bool compact: AppSettings.compactCards
     readonly property bool hasMedia: kind === PostListModel.ImagePost || kind === PostListModel.GalleryPost
                                      || kind === PostListModel.VideoPost
-    readonly property bool covered: nsfw || spoiler
+    readonly property bool covered: (nsfw && AppSettings.coverNsfw) || spoiler
 
     signal openPost()
     signal toggleSave()
@@ -45,7 +45,7 @@ Item {
     signal openSubreddit(string name)
     signal openLink(string link)
 
-    readonly property bool hasBigMedia: !compact && previewUrl !== "" && hasMedia
+    readonly property bool hasBigMedia: !compact && hasMedia && (previewUrl !== "" || kind !== PostListModel.ImagePost)
     // Small square picture beside the title: link previews, and media in compact mode.
     readonly property bool hasThumb: previewUrl !== "" && !covered
                                      && (kind === PostListModel.LinkPost || (compact && hasMedia))

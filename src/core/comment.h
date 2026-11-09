@@ -1,5 +1,8 @@
 #pragma once
 
+#include "post.h"
+
+#include <QList>
 #include <QString>
 #include <QStringList>
 #include <QtGlobal>
@@ -35,6 +38,7 @@ struct Comment
     QString permalink;
 
     bool nsfw = false;     // from the post's community (Lemmy), for filtering
+    QList<MediaItem> media; // images / videos linked in the comment, shown as thumbnails
 
     // Kind::More. Reddit lists the missing ids; Lemmy loads by parent comment or by page.
     QStringList moreChildren;

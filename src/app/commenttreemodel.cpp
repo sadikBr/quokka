@@ -72,6 +72,7 @@ QVariant CommentTreeModel::data(const QModelIndex &index, int role) const
     case HiddenCountRole: return n.collapsed ? hiddenCount(i) : 0;
     case MoreCountRole: return c.moreCount;
     case LoadingMoreRole: return n.loadingMore;
+    case MediaRole: return mediaToVariantList(c.media);
     default: return {};
     }
 }
@@ -99,6 +100,7 @@ QHash<int, QByteArray> CommentTreeModel::roleNames() const
         {HiddenCountRole, "hiddenCount"},
         {MoreCountRole, "moreCount"},
         {LoadingMoreRole, "loadingMore"},
+        {MediaRole, "media"},
     };
 }
 

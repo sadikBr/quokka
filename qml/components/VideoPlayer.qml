@@ -7,6 +7,12 @@ Item {
     id: root
     property url source
     property url fallbackSource
+    // Set for video pages (e.g. "redgifs"): `source` is the page; the file is looked up first.
+    property string resolveKind
+    property url resolvedSource
+    property string resolveError
+    readonly property bool resolving: resolveKind !== "" && resolvedSource.toString() === "" && resolveError === ""
+    readonly property url playSource: resolveKind !== "" ? resolvedSource : source
     property bool active: true
     property bool loop: true
     property bool showControls: true
@@ -15,11 +21,35 @@ Item {
     property bool triedFallback: false
 
     onActiveChanged: active ? player.play() : player.pause()
-    Component.onCompleted: if (active) player.play()
+    Component.onCompleted: {
+        if (resolveKind !== "") {
+            const hit = MediaResolver.cached(source)
+            if (hit !== "")
+                resolvedSource = hit
+            else
+                MediaResolver.resolve(source, resolveKind)
+        }
+        if (active)
+            player.play()
+    }
+    Connections {
+        target: root.resolveKind !== "" ? MediaResolver : null
+        function onResolved(pageUrl, mediaUrl) {
+            if (pageUrl === root.source.toString()) {
+                root.resolvedSource = mediaUrl
+                if (root.active)
+                    Qt.callLater(player.play)
+            }
+        }
+        function onFailed(pageUrl, message) {
+            if (pageUrl === root.source.toString())
+                root.resolveError = message
+        }
+    }
 
     MediaPlayer {
         id: player
-        source: root.source
+        source: root.playSource
         loops: root.loop ? MediaPlayer.Infinite : 1
         videoOutput: video
         audioOutput: AudioOutput { id: audio; muted: AppSettings.videoMuted }
@@ -40,15 +70,36 @@ Item {
 
     LoadingDots {
         anchors.centerIn: parent
-        visible: player.mediaStatus === MediaPlayer.LoadingMedia
+        visible: root.resolving || player.mediaStatus === MediaPlayer.LoadingMedia
                  || player.mediaStatus === MediaPlayer.BufferingMedia
                  || player.mediaStatus === MediaPlayer.StalledMedia
+    }
+
+    Column {
+        anchors.centerIn: parent
+        visible: root.resolveError !== ""
+        spacing: 12
+        Text {
+            anchors.horizontalCenter: parent.horizontalCenter
+            text: root.resolveError
+            color: "white"
+            font.pixelSize: Theme.fontBody
+        }
+        Chip {
+            anchors.horizontalCenter: parent.horizontalCenter
+            text: qsTr("Open the page")
+            iconName: "external"
+            clickable: true
+            selected: true
+            onClicked: Qt.openUrlExternally(root.source)
+        }
     }
 
     Text {
         anchors.centerIn: parent
         width: parent.width - 48
-        visible: player.error !== MediaPlayer.NoError && root.triedFallback === (root.fallbackSource.toString() !== "")
+        visible: root.resolveError === "" && player.error !== MediaPlayer.NoError
+                 && root.triedFallback === (root.fallbackSource.toString() !== "")
         horizontalAlignment: Text.AlignHCenter
         wrapMode: Text.Wrap
         text: qsTr("Can't play this video: %1").arg(player.errorString)

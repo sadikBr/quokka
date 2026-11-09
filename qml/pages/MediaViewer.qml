@@ -21,7 +21,7 @@ Page {
     readonly property var current: items.length > 0 ? items[Math.max(0, pager.currentIndex)] : null
 
     function close() { page.StackView.view.pop() }
-    function isVideoUrl(u) { return /\.(m3u8|mp4)(\?|$)/i.test(u) || /HLSPlaylist|DASH_/i.test(u) }
+    function isVideoUrl(u) { return /\.(m3u8|mp4|webm|mov|m4v)(\?|$)/i.test(u) || /HLSPlaylist|DASH_/i.test(u) }
     function toggleFullScreen() {
         const w = Nav.window
         if (w) w.visibility = w.visibility === Window.FullScreen ? Window.Windowed : Window.FullScreen
@@ -61,7 +61,7 @@ Page {
             width: pager.width
             height: pager.height
             readonly property bool isCurrent: ListView.isCurrentItem
-            readonly property bool isVideo: page.isVideoUrl(modelData.url)
+            readonly property bool isVideo: modelData.video === true || page.isVideoUrl(modelData.url)
             readonly property bool zoomed: loader.item && loader.item.zoomed !== undefined ? loader.item.zoomed : false
 
             Loader {
@@ -112,6 +112,7 @@ Page {
                 id: videoComp
                 VideoPlayer {
                     source: slot.modelData.url
+                    resolveKind: slot.modelData.resolve || ""
                     fallbackSource: slot.index === 0 && page.post.videoFallbackUrl ? page.post.videoFallbackUrl : ""
                     active: slot.isCurrent && page.active
                     showControls: page.chrome
@@ -196,7 +197,7 @@ Page {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: page.current && page.isVideoUrl(page.current.url) ? 64 : 0
+        anchors.bottomMargin: page.current && (page.current.video || page.isVideoUrl(page.current.url)) ? 64 : 0
         height: captionText.implicitHeight + 32
         visible: page.chrome && !!page.current && !!page.current.caption
         gradient: Gradient {
