@@ -21,7 +21,9 @@ Item {
     // height / width of the loaded picture, 0 until it has loaded. Set once on load (not a
     // binding): the image's implicit size follows its width, which may itself follow this ratio.
     property real naturalRatio: 0
-    readonly property bool broken: img.status === Image.Error && attempt >= sources.length - 1
+    // Nothing left to try: every copy failed, or all of them are known dead from earlier.
+    readonly property bool broken: (img.status === Image.Error && attempt >= sources.length - 1)
+                                   || (sources.length === 0 && (source.toString() !== "" || fallbackSource.toString() !== ""))
     onSourcesChanged: { attempt = 0; naturalRatio = 0 }
 
     Rectangle {
@@ -57,8 +59,13 @@ Item {
         anchors.fill: parent
         source: root.attempt < root.sources.length ? root.sources[root.attempt] : ""
         onStatusChanged: {
-            if (status === Image.Error && root.attempt < root.sources.length - 1)
-                Qt.callLater(() => root.attempt++)
+            if (status === Image.Error) {
+                MediaResolver.reportImage(source.toString(), false)
+                if (root.attempt < root.sources.length - 1)
+                    Qt.callLater(() => root.attempt++)
+            }
+            if (status === Image.Ready)
+                MediaResolver.reportImage(source.toString(), true)
             if (status === Image.Ready && implicitWidth > 0)
                 root.naturalRatio = implicitHeight / implicitWidth
         }

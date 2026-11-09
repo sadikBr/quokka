@@ -10,15 +10,21 @@ Flickable {
     property int attempt: 0
     onSourcesChanged: attempt = 0
     readonly property url effectiveSource: attempt < sources.length ? sources[attempt] : ""
-    readonly property bool broken: status === Image.Error && attempt >= sources.length - 1
+    readonly property bool broken: (status === Image.Error && attempt >= sources.length - 1)
+                                   || (sources.length === 0 && (source.toString() !== "" || fallbackSource.toString() !== ""))
     property bool animated: false
     property real zoom: 1
     readonly property real maxZoom: 6
     readonly property bool zoomed: zoom > 1.01
     readonly property int status: content.item ? content.item.status : Image.Null
     onStatusChanged: {
-        if (status === Image.Error && attempt < sources.length - 1)
-            Qt.callLater(() => attempt++)
+        if (status === Image.Error) {
+            MediaResolver.reportImage(effectiveSource.toString(), false)
+            if (attempt < sources.length - 1)
+                Qt.callLater(() => attempt++)
+        }
+        if (status === Image.Ready)
+            MediaResolver.reportImage(effectiveSource.toString(), true)
     }
     signal tapped()
 

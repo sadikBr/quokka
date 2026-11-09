@@ -114,6 +114,7 @@ Page {
                     source: slot.modelData.url
                     resolveKind: slot.modelData.resolve || ""
                     fallbackSource: slot.index === 0 && page.post.videoFallbackUrl ? page.post.videoFallbackUrl : ""
+                    poster: slot.index === 0 && page.post.previewUrl ? page.post.previewUrl : ""
                     active: slot.isCurrent && page.active
                     showControls: page.chrome
                     onTapped: page.chrome = !page.chrome

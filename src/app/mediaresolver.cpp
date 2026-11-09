@@ -88,8 +88,9 @@ void MediaResolver::resolve(const QString &pageUrl, const QString &kind)
         QNetworkReply *reply = get(QUrl(QStringLiteral("https://api.streamable.com/videos/") + code));
         connect(reply, &QNetworkReply::finished, this, [this, reply, pageUrl] {
             reply->deleteLater();
+            const int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
             finish(pageUrl, reply->error() == QNetworkReply::NoError ? parseStreamable(reply->readAll()) : QString(),
-                   reply->errorString());
+                   describeFailure(status, pageUrl));
         });
     } else {
         QMetaObject::invokeMethod(this, [this, pageUrl] { finish(pageUrl, {}, tr("Unsupported video page.")); },
@@ -115,7 +116,7 @@ void MediaResolver::resolveRedgifs(const QString &pageUrl, bool retried)
                 return;
             }
             finish(pageUrl, reply->error() == QNetworkReply::NoError ? parseRedgifs(reply->readAll()) : QString(),
-                   reply->errorString());
+                   describeFailure(status, pageUrl));
         });
     };
     if (!m_redgifsToken.isEmpty()) {
@@ -136,7 +137,67 @@ void MediaResolver::resolveRedgifs(const QString &pageUrl, bool retried)
     });
 }
 
+namespace {
+// A server whose images failed this many times without a single success is treated as down.
+constexpr int kDeadHostFailures = 6;
+}
+
 QStringList MediaResolver::imageSources(const QString &primary, const QString &fallback) const
 {
-    return quokka::media::imageSources(primary, fallback);
+    QStringList out;
+    for (const QString &u : quokka::media::imageSources(primary, fallback)) {
+        const QString host = QUrl(u).host();
+        if (m_deadUrls.contains(u)
+            || (!m_hostsOk.contains(host) && m_hostFailures.value(host) >= kDeadHostFailures))
+            continue;
+        out.append(u);
+    }
+    return out;
+}
+
+void MediaResolver::reportImage(const QString &url, bool ok)
+{
+    const QString host = QUrl(url).host();
+    if (url.isEmpty() || host.isEmpty())
+        return;
+    if (ok) {
+        m_hostsOk.insert(host);
+        m_deadUrls.remove(url);
+    } else if (!m_deadUrls.contains(url)) {
+        m_deadUrls.insert(url);
+        m_hostFailures[host] += 1;
+    }
+}
+
+QString MediaResolver::describeFailure(int status, const QString &url)
+{
+    QString host = QUrl(url).host();
+    if (host.startsWith(QLatin1String("www.")) || host.startsWith(QLatin1String("api.")))
+        host = host.mid(4);
+    if (status == 404 || status == 410)
+        return tr("This video was deleted from %1.").arg(host);
+    if (status == 401 || status == 403)
+        return tr("%1 refused to share this video.").arg(host);
+    if (status == 429)
+        return tr("%1 is limiting requests. Try again in a minute.").arg(host);
+    if (status >= 500)
+        return tr("%1 is having trouble right now (error %2). Try again later.").arg(host).arg(status);
+    return {};
+}
+
+QString MediaResolver::describePlaybackError(const QString &message, const QString &url)
+{
+    const QString host = QUrl(url).host();
+    const QString m = message.toLower();
+    if (m.contains(QLatin1String("5xx")) || m.contains(QLatin1String("server error"))
+        || m.contains(QLatin1String("bad gateway")))
+        return tr("The server hosting this video (%1) is having trouble right now. Try again later.").arg(host);
+    if (m.contains(QLatin1String("404")) || m.contains(QLatin1String("not found")) || m.contains(QLatin1String("410")))
+        return tr("This video was deleted from %1.").arg(host);
+    if (m.contains(QLatin1String("403")) || m.contains(QLatin1String("forbidden")))
+        return tr("%1 refused to share this video.").arg(host);
+    if (m.isEmpty() || m.contains(QLatin1String("could not open")) || m.contains(QLatin1String("resource"))
+        || m.contains(QLatin1String("enough data")))
+        return tr("Couldn't load this video from %1. The server may be down, or the video deleted.").arg(host);
+    return tr("Can't play this video: %1").arg(message);
 }

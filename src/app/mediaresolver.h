@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QHash>
+#include <QSet>
 #include <QObject>
 #include <QQmlEngine>
 
@@ -21,8 +22,15 @@ public:
     explicit MediaResolver(QObject *parent = nullptr);
 
     Q_INVOKABLE void resolve(const QString &pageUrl, const QString &kind);
-    // Copies of a picture to try in turn (see quokka::media::imageSources).
+    // Copies of a picture to try in turn (see quokka::media::imageSources), minus the ones that
+    // already failed this session and those on servers that look down.
     Q_INVOKABLE QStringList imageSources(const QString &primary, const QString &fallback = {}) const;
+    // Images report back whether a URL loaded, so dead copies and servers are skipped next time.
+    Q_INVOKABLE void reportImage(const QString &url, bool ok);
+    // A short, human explanation for an HTTP failure ("deleted", "server down", ...).
+    Q_INVOKABLE static QString describeFailure(int httpStatus, const QString &url);
+    // Same for an FFmpeg / Qt Multimedia error message.
+    Q_INVOKABLE static QString describePlaybackError(const QString &message, const QString &url);
     Q_INVOKABLE QString cached(const QString &pageUrl) const { return m_cache.value(pageUrl); }
 
     // Pure helpers, exposed for tests.
@@ -43,4 +51,7 @@ private:
     QNetworkAccessManager *m_nam;
     QHash<QString, QString> m_cache;
     QByteArray m_redgifsToken;
+    QSet<QString> m_deadUrls;
+    QHash<QString, int> m_hostFailures;
+    QSet<QString> m_hostsOk;
 };

@@ -7,6 +7,7 @@ Item {
     id: root
     property url source
     property url fallbackSource
+    property url poster              // still picture shown when the video can't play
     // Set for video pages (e.g. "redgifs"): `source` is the page; the file is looked up first.
     property string resolveKind
     property url resolvedSource
@@ -19,6 +20,22 @@ Item {
     signal tapped()
 
     property bool triedFallback: false
+    readonly property bool failed: resolveError !== ""
+                                   || (player.error !== MediaPlayer.NoError
+                                       && triedFallback === (fallbackSource.toString() !== ""))
+
+    function retry() {
+        resolveError = ""
+        triedFallback = false
+        player.stop()
+        if (resolveKind !== "" && resolvedSource.toString() === "") {
+            MediaResolver.resolve(source, resolveKind)
+            return
+        }
+        player.source = ""
+        player.source = Qt.binding(() => root.playSource)
+        player.play()
+    }
 
     onActiveChanged: active ? player.play() : player.pause()
     Component.onCompleted: {
@@ -62,6 +79,20 @@ Item {
         }
     }
 
+    RoundedImage {
+        anchors.centerIn: parent
+        width: parent.width
+        height: parent.height
+        visible: root.failed && root.poster.toString() !== ""
+        source: visible ? root.poster : ""
+        fillMode: Image.PreserveAspectFit
+        radius: 0
+        showBroken: false
+        backgroundColor: "transparent"
+        placeholderColor: "transparent"
+        opacity: 0.35
+    }
+
     VideoOutput {
         id: video
         anchors.fill: parent
@@ -75,36 +106,39 @@ Item {
                  || player.mediaStatus === MediaPlayer.StalledMedia
     }
 
+    // Why it can't play, with a retry and a way out to the original page.
     Column {
         anchors.centerIn: parent
-        visible: root.resolveError !== ""
-        spacing: 12
+        width: parent.width - 48
+        visible: root.failed
+        spacing: 14
+        Icon { anchors.horizontalCenter: parent.horizontalCenter; name: "video-off"; size: 36; color: "white" }
         Text {
-            anchors.horizontalCenter: parent.horizontalCenter
-            text: root.resolveError
+            width: parent.width
+            horizontalAlignment: Text.AlignHCenter
+            wrapMode: Text.Wrap
+            text: root.resolveError !== "" ? root.resolveError
+                : MediaResolver.describePlaybackError(player.errorString, player.source.toString())
             color: "white"
             font.pixelSize: Theme.fontBody
         }
-        Chip {
+        Row {
             anchors.horizontalCenter: parent.horizontalCenter
-            text: qsTr("Open the page")
-            iconName: "external"
-            clickable: true
-            selected: true
-            onClicked: Qt.openUrlExternally(root.source)
+            spacing: 10
+            Chip {
+                text: qsTr("Try again")
+                iconName: "refresh"
+                clickable: true
+                onClicked: root.retry()
+            }
+            Chip {
+                text: qsTr("Open the page")
+                iconName: "external"
+                clickable: true
+                selected: true
+                onClicked: Qt.openUrlExternally(root.source)
+            }
         }
-    }
-
-    Text {
-        anchors.centerIn: parent
-        width: parent.width - 48
-        visible: root.resolveError === "" && player.error !== MediaPlayer.NoError
-                 && root.triedFallback === (root.fallbackSource.toString() !== "")
-        horizontalAlignment: Text.AlignHCenter
-        wrapMode: Text.Wrap
-        text: qsTr("Can't play this video: %1").arg(player.errorString)
-        color: "white"
-        font.pixelSize: Theme.fontBody
     }
 
     TapHandler {
