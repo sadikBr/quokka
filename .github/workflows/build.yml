@@ -73,6 +73,8 @@ jobs:
           wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
           wget -q https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage
           chmod +x linuxdeploy*.AppImage
+          # Quokka only needs SQLite; other SQL drivers pull in libraries we don't ship.
+          find "$QT_ROOT_DIR/plugins/sqldrivers" -type f ! -name 'libqsqlite.so' -delete
           DESTDIR=AppDir cmake --install build --prefix /usr
           export VERSION="${GITHUB_REF_NAME//\//-}"
           ./linuxdeploy-x86_64.AppImage --appdir AppDir \
