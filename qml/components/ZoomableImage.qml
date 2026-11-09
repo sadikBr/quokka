@@ -15,6 +15,24 @@ Flickable {
     // Shown (already cached from the feed) while the full-size picture loads.
     property url placeholderSource
     property bool animated: false
+    // GIFs animate only from a checked local copy (Qt's GIF player crashes on damaged files);
+    // until then, or if the check fails, the first frame shows as a still picture.
+    property string gifFile: ""
+    function prepareGif() {
+        gifFile = ""
+        if (!animated || source.toString() === "")
+            return
+        gifFile = MediaResolver.animationFile(source.toString())
+        if (gifFile === "")
+            MediaResolver.prepareAnimation(source.toString())
+    }
+    onSourceChanged: prepareGif()
+    onAnimatedChanged: prepareGif()
+    Component.onCompleted: prepareGif()
+    Connections {
+        target: flick.animated ? MediaResolver : null
+        function onAnimationReady(url, file) { if (url === flick.source.toString()) flick.gifFile = file }
+    }
     property real zoom: 1
     readonly property real maxZoom: 6
     readonly property bool zoomed: zoom > 1.01
@@ -59,7 +77,7 @@ Flickable {
         id: content
         width: flick.contentWidth
         height: flick.contentHeight
-        sourceComponent: flick.animated ? animatedImage : staticImage
+        sourceComponent: flick.animated && flick.gifFile !== "" ? animatedImage : staticImage
     }
     Component {
         id: staticImage
@@ -75,7 +93,7 @@ Flickable {
     Component {
         id: animatedImage
         AnimatedImage {
-            source: flick.effectiveSource
+            source: flick.gifFile
             asynchronous: true
             fillMode: Image.PreserveAspectFit
             playing: true

@@ -14,6 +14,8 @@ public:
     QNetworkAccessManager *create(QObject *parent) override;
 
     static QString cacheDirectory();
+    // Checked local copies of animated GIFs (see MediaResolver::prepareAnimation).
+    static QString animationDirectory();
 
 private:
     QString m_userAgent;

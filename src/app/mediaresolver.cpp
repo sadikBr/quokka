@@ -2,12 +2,23 @@
 
 #include "apiclient.h"
 #include "medialinks.h"
+#include "networkfactory.h"
 
+#include <QBuffer>
+#include <QCryptographicHash>
+#include <QDir>
+#include <QFile>
+#include <QImageReader>
 #include <QJsonDocument>
+#include <QPointer>
+#include <QSaveFile>
+#include <QStandardPaths>
+#include <QThreadPool>
 #include <QJsonObject>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
+#include <QCoreApplication>
 #include <QSettings>
 #include <QUrl>
 #include <QUrlQuery>
@@ -17,6 +28,14 @@ namespace {
 constexpr int kDeadHostFailures = 6;
 const QString kConverterHost = QStringLiteral("wsrv.nl");
 const QString kConverterKey = QStringLiteral("media/imageConverter");
+constexpr qint64 kMaxAnimationBytes = 40 * 1024 * 1024; // bigger GIFs stay still pictures
+constexpr int kMaxAnimationFrames = 5000;
+
+QString animationPath(const QString &url)
+{
+    const QByteArray hash = QCryptographicHash::hash(url.toUtf8(), QCryptographicHash::Sha1).toHex();
+    return NetworkFactory::animationDirectory() + QLatin1Char('/') + QString::fromLatin1(hash) + QStringLiteral(".gif");
+}
 } // namespace
 
 MediaResolver::MediaResolver(QObject *parent)
@@ -240,4 +259,106 @@ QString MediaResolver::describePlaybackError(const QString &message, const QStri
         || m.contains(QLatin1String("enough data")))
         return tr("Couldn't load this video from %1. The server may be down, or the video deleted.").arg(host);
     return tr("Can't play this video: %1").arg(message);
+}
+
+bool MediaResolver::isSafeAnimation(const QByteArray &data, int *frames)
+{
+    // Only real GIFs (Qt's own, well-tested decoder): a ".gif" link that's really WebP/AVIF/MP4
+    // would go through a plugin QMovie handles less carefully.
+    QBuffer buffer;
+    buffer.setData(data);
+    buffer.open(QIODevice::ReadOnly);
+    QImageReader reader(&buffer);
+    reader.setDecideFormatFromContent(true);
+    if (reader.format() != "gif")
+        return false;
+    const int expected = reader.imageCount();
+    int n = 0;
+    while (reader.canRead() && n < kMaxAnimationFrames) {
+        if (reader.read().isNull())
+            return false; // a frame that doesn't decode
+        ++n;
+    }
+    if (n == 0 || (expected > 0 && n < expected))
+        return false;
+    // QMovie loops by reading the file again from the start: make sure that works too.
+    QBuffer again;
+    again.setData(data);
+    again.open(QIODevice::ReadOnly);
+    QImageReader second(&again, "gif");
+    if (!second.canRead() || second.read().isNull())
+        return false;
+    if (frames)
+        *frames = n;
+    return true;
+}
+
+QString MediaResolver::animationFile(const QString &url) const
+{
+    if (url.isEmpty() || m_badAnimations.contains(url))
+        return {};
+    const QString path = animationPath(url);
+    return QFile::exists(path) ? QUrl::fromLocalFile(path).toString() : QString();
+}
+
+bool MediaResolver::animationBroken(const QString &url) const
+{
+    return m_badAnimations.contains(url);
+}
+
+void MediaResolver::prepareAnimation(const QString &url)
+{
+    if (url.isEmpty() || m_badAnimations.contains(url) || m_pendingAnimations.contains(url))
+        return;
+    if (const QString ready = animationFile(url); !ready.isEmpty()) {
+        QMetaObject::invokeMethod(this, [this, url, ready] { emit animationReady(url, ready); }, Qt::QueuedConnection);
+        return;
+    }
+    m_pendingAnimations.insert(url);
+
+    auto fail = [this, url] {
+        m_pendingAnimations.remove(url);
+        m_badAnimations.insert(url);
+        emit animationFailed(url);
+    };
+
+    QNetworkRequest req{QUrl(url)};
+    req.setHeader(QNetworkRequest::UserAgentHeader, quokka::ApiClient::defaultUserAgent());
+    req.setTransferTimeout(30000);
+    QNetworkReply *reply = m_nam->get(req);
+    connect(reply, &QNetworkReply::downloadProgress, reply, [reply](qint64 received, qint64 total) {
+        if (received > kMaxAnimationBytes || total > kMaxAnimationBytes)
+            reply->abort();
+    });
+    connect(reply, &QNetworkReply::finished, this, [this, reply, url, fail] {
+        reply->deleteLater();
+        if (reply->error() != QNetworkReply::NoError) {
+            fail();
+            return;
+        }
+        const QByteArray data = reply->readAll();
+        QPointer<MediaResolver> self(this);
+        // Decoding every frame of a big GIF takes a moment: keep it off the UI thread.
+        QThreadPool::globalInstance()->start([self, url, data] {
+            const bool ok = isSafeAnimation(data);
+            QString file;
+            if (ok) {
+                QDir().mkpath(NetworkFactory::animationDirectory());
+                QSaveFile out(animationPath(url));
+                if (out.open(QIODevice::WriteOnly) && out.write(data) == data.size() && out.commit())
+                    file = QUrl::fromLocalFile(animationPath(url)).toString();
+            }
+            QMetaObject::invokeMethod(qApp, [self, url, file] {
+                if (!self)
+                    return;
+                self->m_pendingAnimations.remove(url);
+                if (file.isEmpty()) {
+                    self->m_badAnimations.insert(url);
+                    emit self->animationFailed(url);
+                } else {
+                    emit self->animationReady(url, file);
+                }
+            }, Qt::QueuedConnection);
+        });
+    });
 }

@@ -41,6 +41,16 @@ public:
     Q_INVOKABLE static QString describePlaybackError(const QString &message, const QString &url);
     Q_INVOKABLE QString cached(const QString &pageUrl) const { return m_cache.value(pageUrl); }
 
+    // Animated GIFs. Qt's GIF player (QMovie) calls itself again for every frame it can't read
+    // and, on a damaged or cut-off GIF, overflows the stack and crashes the app. So GIFs are
+    // played only from a local copy whose every frame decoded: prepareAnimation() downloads and
+    // checks one off the UI thread, then answers animationReady(url, fileUrl) or animationFailed(url).
+    Q_INVOKABLE void prepareAnimation(const QString &url);
+    Q_INVOKABLE QString animationFile(const QString &url) const;   // "" until checked and ready
+    Q_INVOKABLE bool animationBroken(const QString &url) const;
+    // True when every frame of `data` decodes (and there is at least one).
+    static bool isSafeAnimation(const QByteArray &data, int *frames = nullptr);
+
     // Pure helpers, exposed for tests.
     static QString redgifsId(const QString &pageUrl);
     static QString streamableCode(const QString &pageUrl);
@@ -49,6 +59,8 @@ public:
 
 signals:
     void converterEnabledChanged();
+    void animationReady(const QString &url, const QString &fileUrl);
+    void animationFailed(const QString &url);
     void resolved(const QString &pageUrl, const QString &mediaUrl);
     void failed(const QString &pageUrl, const QString &message);
 
@@ -64,4 +76,6 @@ private:
     QHash<QString, int> m_hostFailures;
     QSet<QString> m_hostsOk;
     bool m_converter = true;
+    QSet<QString> m_badAnimations;
+    QSet<QString> m_pendingAnimations;
 };

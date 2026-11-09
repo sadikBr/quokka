@@ -32,6 +32,21 @@ Item {
     readonly property bool gif: /\.gif(\?|$)/i.test(previewUrl)
     readonly property bool inlineVideo: play && !covered && !grid && kind === PostListModel.VideoPost && firstVideo !== null
     readonly property bool inlineGif: play && !covered && !grid && kind === PostListModel.ImagePost && gif
+    // GIFs play only from a checked local copy (see MediaResolver.prepareAnimation): Qt's GIF
+    // player crashes the app on a damaged file.
+    property string gifFile: ""
+    onPreviewUrlChanged: gifFile = ""
+    onInlineGifChanged: {
+        if (!inlineGif || gifFile !== "")
+            return
+        gifFile = MediaResolver.animationFile(previewUrl)
+        if (gifFile === "")
+            MediaResolver.prepareAnimation(previewUrl)
+    }
+    Connections {
+        target: root.gif ? MediaResolver : null
+        function onAnimationReady(url, file) { if (url === root.previewUrl) root.gifFile = file }
+    }
 
     // The loaded picture's own shape wins; the server's size hint (or 2:3) is used until then.
     readonly property real ratio: grid ? 0.66
@@ -79,7 +94,7 @@ Item {
     Loader {
         id: inline
         anchors.fill: image
-        active: root.inlineVideo || root.inlineGif
+        active: root.inlineVideo || (root.inlineGif && root.gifFile !== "")
         sourceComponent: root.inlineVideo ? videoComp : gifComp
         // Shown once frames arrive; the picture stays underneath until then (and if it fails).
         opacity: item && item.showing ? 1 : 0
@@ -103,9 +118,8 @@ Item {
         id: gifComp
         AnimatedImage {
             readonly property bool showing: status === Image.Ready
-            source: root.previewUrl
+            source: root.gifFile
             asynchronous: true
-            cache: false
             fillMode: Image.PreserveAspectCrop
             playing: true
         }

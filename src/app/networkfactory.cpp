@@ -63,6 +63,12 @@ QString NetworkFactory::cacheDirectory()
         + QStringLiteral("/http");
 }
 
+QString NetworkFactory::animationDirectory()
+{
+    return QStandardPaths::writableLocation(QStandardPaths::CacheLocation)
+        + QStringLiteral("/animations");
+}
+
 QNetworkAccessManager *NetworkFactory::create(QObject *parent)
 {
     auto *nam = new UserAgentNam(m_userAgent, parent);

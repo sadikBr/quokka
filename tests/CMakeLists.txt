@@ -45,9 +45,10 @@ quokka_add_test(tst_account tst_account.cpp
 target_include_directories(tst_account PRIVATE ${PROJECT_SOURCE_DIR}/src/app)
 target_link_libraries(tst_account PRIVATE Qt6::Gui Qt6::Qml)
 
-quokka_add_test(tst_mediaresolver tst_mediaresolver.cpp ${PROJECT_SOURCE_DIR}/src/app/mediaresolver.cpp)
+quokka_add_test(tst_mediaresolver tst_mediaresolver.cpp ${PROJECT_SOURCE_DIR}/src/app/mediaresolver.cpp
+    ${PROJECT_SOURCE_DIR}/src/app/networkfactory.cpp)
 target_include_directories(tst_mediaresolver PRIVATE ${PROJECT_SOURCE_DIR}/src/app)
-target_link_libraries(tst_mediaresolver PRIVATE Qt6::Qml)
+target_link_libraries(tst_mediaresolver PRIVATE Qt6::Gui Qt6::Qml)
 
 quokka_add_test(tst_format tst_format.cpp ${PROJECT_SOURCE_DIR}/src/app/format.cpp)
 target_include_directories(tst_format PRIVATE ${PROJECT_SOURCE_DIR}/src/app)

@@ -57,6 +57,21 @@ private slots:
         r.setConverterEnabled(was);
     }
 
+    void animationCheck()
+    {
+        // A 3-frame 8x8 GIF.
+        const QByteArray gif = QByteArray::fromBase64(
+            "R0lGODlhCAAIAPcfMQAAACQAAEgAAGwAAJAAALQAANgAAPwAAAAkACQkAEgkAGwkAJAkALQkANgkAPwkAABIACRIAEhIAGxIAJBIALRIANhIAPxIAABsACRsAEhsAGxsAJBsALRsANhsAPxsAACQACSQAEiQAGyQAJCQALSQANiQAPyQAAC0ACS0AEi0AGy0AJC0ALS0ANi0APy0AADYACTYAEjYAGzYAJDYALTYANjYAPzYAAD8ACT8AEj8AGz8AJD8ALT8ANj8APz8AAAAVSQAVUgAVWwAVZAAVbQAVdgAVfwAVQAkVSQkVUgkVWwkVZAkVbQkVdgkVfwkVQBIVSRIVUhIVWxIVZBIVbRIVdhIVfxIVQBsVSRsVUhsVWxsVZBsVbRsVdhsVfxsVQCQVSSQVUiQVWyQVZCQVbSQVdiQVfyQVQC0VSS0VUi0VWy0VZC0VbS0Vdi0Vfy0VQDYVSTYVUjYVWzYVZDYVbTYVdjYVfzYVQD8VST8VUj8VWz8VZD8VbT8Vdj8Vfz8VQAAqiQAqkgAqmwAqpAAqrQAqtgAqvwAqgAkqiQkqkgkqmwkqpAkqrQkqtgkqvwkqgBIqiRIqkhIqmxIqpBIqrRIqthIqvxIqgBsqiRsqkhsqmxsqpBsqrRsqthsqvxsqgCQqiSQqkiQqmyQqpCQqrSQqtiQqvyQqgC0qiS0qki0qmy0qpC0qrS0qti0qvy0qgDYqiTYqkjYqmzYqpDYqrTYqtjYqvzYqgD8qiT8qkj8qmz8qpD8qrT8qtj8qvz8qgAA/yQA/0gA/2wA/5AA/7QA/9gA//wA/wAk/yQk/0gk/2wk/5Ak/7Qk/9gk//wk/wBI/yRI/0hI/2xI/5BI/7RI/9hI//xI/wBs/yRs/0hs/2xs/5Bs/7Rs/9hs//xs/wCQ/ySQ/0iQ/2yQ/5CQ/7SQ/9iQ//yQ/wC0/yS0/0i0/2y0/5C0/7S0/9i0//y0/wDY/yTY/0jY/2zY/5DY/7TY/9jY//zY/wD8/yT8/0j8/2z8/5D8/7T8/9j8//z8/yH/C05FVFNDQVBFMi4wAwEAAAAh+QQEIQAfACwAAAAACAAIAAAINQABHMDxA9gxfP8EHgP2A8eBhPgWNjwAAEBEhg4rXpyoUWLGAzd44MEHjdihAy924CA57FhAACH5BAUiAAAALAAABgAIAAIAAAgTAC/8yIELXTBjRwQSRAfs2JGAAAAh+QQFIQAAACwAAAYACAACAAAIEwBf8MCBD9uwYwcEEoQ27NCBgAAAOw==");
+        int frames = 0;
+        QVERIFY(MediaResolver::isSafeAnimation(gif, &frames));
+        QCOMPARE(frames, 3);
+        // Cut off in the middle, or damaged: never handed to Qt's GIF player.
+        QVERIFY(!MediaResolver::isSafeAnimation(gif.left(gif.size() * 2 / 3)));
+        QVERIFY(!MediaResolver::isSafeAnimation(gif.left(40)));
+        QVERIFY(!MediaResolver::isSafeAnimation(QByteArray("<html>not a gif</html>")));
+        QVERIFY(!MediaResolver::isSafeAnimation({}));
+    }
+
     void messages()
     {
         QVERIFY(MediaResolver::describeFailure(410, "https://www.redgifs.com/watch/x").contains("deleted from redgifs.com"));
