@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FF5E7E"/>
+      <stop offset="1" stop-color="#FFB547"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="120" fill="url(#bg)"/>
+  <!-- ears -->
+  <circle cx="150" cy="170" r="70" fill="#8A5634"/>
+  <circle cx="362" cy="170" r="70" fill="#8A5634"/>
+  <circle cx="150" cy="170" r="40" fill="#F4A6A0"/>
+  <circle cx="362" cy="170" r="40" fill="#F4A6A0"/>
+  <!-- head -->
+  <ellipse cx="256" cy="290" rx="160" ry="145" fill="#B57A4E"/>
+  <!-- muzzle -->
+  <ellipse cx="256" cy="340" rx="96" ry="72" fill="#F2D2AE"/>
+  <!-- eyes -->
+  <circle cx="196" cy="268" r="20" fill="#24161A"/>
+  <circle cx="316" cy="268" r="20" fill="#24161A"/>
+  <circle cx="203" cy="261" r="7" fill="#FFFFFF"/>
+  <circle cx="323" cy="261" r="7" fill="#FFFFFF"/>
+  <!-- cheeks -->
+  <circle cx="160" cy="320" r="18" fill="#FF8FA3" opacity="0.7"/>
+  <circle cx="352" cy="320" r="18" fill="#FF8FA3" opacity="0.7"/>
+  <!-- nose -->
+  <ellipse cx="256" cy="312" rx="24" ry="16" fill="#24161A"/>
+  <!-- smile -->
+  <path d="M206 348 Q256 400 306 348" fill="none" stroke="#24161A" stroke-width="12" stroke-linecap="round"/>
+  <path d="M256 328 L256 362" stroke="#24161A" stroke-width="10" stroke-linecap="round"/>
+</svg>

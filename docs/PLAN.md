@@ -246,7 +246,7 @@ Each milestone ends with something runnable on **both** desktop and Android.
 | v.redd.it video audio is in a separate stream | Silent video | Prefer HLS (`hls_url`), which muxes audio; MP4 only as fallback |
 | Qt Multimedia backend differences | Video bugs on some platforms | Test on all targets early (M3); the FFmpeg backend is the default on desktop in Qt 6.5+ |
 | Android TLS without OpenSSL | No network at all | android_openssl in M0, checked by CI smoke test |
-| Trademark ("Reddit" in the app name / icon) | Store rejection | Pick a neutral app name (e.g. "Snoobrowse", "Threadline") and follow Reddit's brand guidelines if publishing |
+| Trademark ("Reddit" in the app name / icon) | Store rejection | Pick a neutral app name (we use "Quokka") and follow Reddit's brand guidelines if publishing |
 | Licensing (Qt LGPLv3) | Compliance | Link Qt dynamically, ship a license notice, publish our source or allow relinking |
 
 ---
@@ -277,12 +277,24 @@ Each milestone ends with something runnable on **both** desktop and Android.
 
 ---
 
-## 12. Open decisions (please confirm)
-1. **Qt version**: 6.8 LTS (recommended) or the latest 6.x?
-2. **App name** (avoid "Reddit" in the name if publishing to stores)?
-3. **Desktop priority**: which OS do you develop and test on first?
-4. **NSFW handling**: hidden by default with an opt-in toggle (recommended)?
-5. **Look and feel**: Material on all platforms (recommended), or native-ish styles per platform?
-6. **Distribution**: Play Store, F-Droid, GitHub Releases only?
+## 12. Decisions
 
-Once these are confirmed we start **M0** (skeleton + both platforms building + CI).
+| Question | Decision |
+|---|---|
+| Qt version | **Qt 6.8 LTS** (CI pins 6.8.3) |
+| App name | **Quokka**, package id `io.github.sadikbr.quokka` |
+| First desktop platform | **Linux** (AppImage). Windows/macOS later. |
+| NSFW | **Hidden by default**, opt-in switch in settings |
+| Look and feel | **One custom, playful theme everywhere**: Material controls as a base, own colour tokens (`qml/theme/Theme.qml`), sticker-style cards, bouncy motion, light + dark |
+| Distribution | **GitHub Releases only**: pushing a `v*` tag builds and attaches the AppImage and the APK |
+
+## 13. Progress
+
+- [x] **M0**: skeleton, CMake presets, Android packaging (manifest, icons, OpenSSL), CI for Linux + Android, release workflow
+- [x] **M1 (core)**: network client (queue, rate limits, retries), listing parser, paged feed model, feed UI (cards, sort bar, pull-to-refresh, infinite scroll, skeletons, error states), community picker, settings drawer
+- [ ] M1 polish: verify against live Reddit, card vs compact layout
+- [ ] M2: post page + comments
+- [ ] M3: media viewer + video
+- [ ] M4: search, subreddit and user pages
+- [ ] M5: local library (subscriptions, saved, history)
+- [ ] M6: desktop two-pane layout, keyboard navigation, accessibility, signed release key

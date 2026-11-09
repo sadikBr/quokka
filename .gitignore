@@ -1,0 +1,13 @@
+build/
+build-*/
+*.user
+*.user.*
+CMakeLists.txt.user*
+.qtcreator/
+.vscode/
+.idea/
+*.apk
+*.aab
+*.AppImage
+*.keystore
+*.jks

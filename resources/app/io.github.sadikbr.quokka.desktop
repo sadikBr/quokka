@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Quokka
+GenericName=Reddit Reader
+Comment=A playful, read-only Reddit client
+Exec=quokka
+Icon=quokka
+Terminal=false
+Categories=Network;News;Qt;
+Keywords=reddit;news;forum;

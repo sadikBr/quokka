@@ -1,0 +1,548 @@
+{
+ "kind": "Listing",
+ "data": {
+  "after": "t3_pin001",
+  "dist": 9,
+  "modhash": "",
+  "geo_filter": "",
+  "children": [
+   {
+    "kind": "t3",
+    "data": {
+     "id": "img001",
+     "name": "t3_img001",
+     "title": "My grandpa's 1967 camper, fully restored after 3 years of weekends",
+     "author": "vanlife_gramps",
+     "subreddit": "pics",
+     "permalink": "/r/pics/comments/img001/slug/",
+     "url": "https://i.redd.it/abc.jpeg",
+     "domain": "i.redd.it",
+     "selftext": "",
+     "link_flair_text": "OC",
+     "link_flair_background_color": "#FFD635",
+     "created_utc": 1762657200.0,
+     "score": 48213,
+     "num_comments": 1203,
+     "upvote_ratio": 0.95,
+     "over_18": false,
+     "spoiler": false,
+     "stickied": false,
+     "locked": false,
+     "is_self": false,
+     "thumbnail": "default",
+     "is_video": false,
+     "post_hint": "image",
+     "preview": {
+      "images": [
+       {
+        "source": {
+         "url": "https://preview.redd.it/abc.jpeg?s=src",
+         "width": 3024,
+         "height": 4032
+        },
+        "resolutions": [
+         {
+          "url": "https://preview.redd.it/abc.jpeg?width=108&s=x",
+          "width": 108,
+          "height": 144
+         },
+         {
+          "url": "https://preview.redd.it/abc.jpeg?width=216&s=x",
+          "width": 216,
+          "height": 288
+         },
+         {
+          "url": "https://preview.redd.it/abc.jpeg?width=320&s=x",
+          "width": 320,
+          "height": 426
+         },
+         {
+          "url": "https://preview.redd.it/abc.jpeg?width=640&s=x",
+          "width": 640,
+          "height": 853
+         },
+         {
+          "url": "https://preview.redd.it/abc.jpeg?width=960&s=x",
+          "width": 960,
+          "height": 1280
+         }
+        ],
+        "id": "img"
+       }
+      ],
+      "enabled": true
+     }
+    }
+   },
+   {
+    "kind": "t3",
+    "data": {
+     "id": "self01",
+     "name": "t3_self01",
+     "title": "TIL quokkas carry their joeys in a pouch and are known as the happiest animal on Earth",
+     "author": "marsupial_fan",
+     "subreddit": "todayilearned",
+     "permalink": "/r/todayilearned/comments/self01/slug/",
+     "url": "https://www.reddit.com/r/todayilearned/comments/self01/slug/",
+     "domain": "self.todayilearned",
+     "selftext": "They live mostly on Rottnest Island off Western Australia. Their facial structure makes them look like they're always smiling, which is why tourists love taking selfies with them.\n\n**Please don't feed them**, human food makes them sick.",
+     "link_flair_text": null,
+     "link_flair_background_color": "",
+     "created_utc": 1762668000.0,
+     "score": 12890,
+     "num_comments": 455,
+     "upvote_ratio": 0.95,
+     "over_18": false,
+     "spoiler": false,
+     "stickied": false,
+     "locked": false,
+     "is_self": true,
+     "thumbnail": "default",
+     "is_video": false
+    }
+   },
+   {
+    "kind": "t3",
+    "data": {
+     "id": "gal001",
+     "name": "t3_gal001",
+     "title": "Autumn hike through the Dolomites (6 photos)",
+     "author": "peakseeker",
+     "subreddit": "EarthPorn",
+     "permalink": "/r/EarthPorn/comments/gal001/slug/",
+     "url": "https://www.reddit.com/gallery/gal001",
+     "domain": "reddit.com",
+     "selftext": "",
+     "link_flair_text": null,
+     "link_flair_background_color": "",
+     "created_utc": 1762642800.0,
+     "score": 9021,
+     "num_comments": 188,
+     "upvote_ratio": 0.95,
+     "over_18": false,
+     "spoiler": false,
+     "stickied": false,
+     "locked": false,
+     "is_self": false,
+     "thumbnail": "default",
+     "is_video": false,
+     "is_gallery": true,
+     "gallery_data": {
+      "items": [
+       {
+        "media_id": "m1",
+        "id": 1
+       },
+       {
+        "media_id": "m2",
+        "id": 2
+       },
+       {
+        "media_id": "m3",
+        "id": 3
+       },
+       {
+        "media_id": "m4",
+        "id": 4
+       },
+       {
+        "media_id": "m5",
+        "id": 5
+       },
+       {
+        "media_id": "m6",
+        "id": 6
+       }
+      ]
+     },
+     "media_metadata": {
+      "m1": {
+       "status": "valid",
+       "e": "Image",
+       "m": "image/jpg",
+       "p": [
+        {
+         "y": 81,
+         "x": 108,
+         "u": "https://preview.redd.it/m1.jpg?width=108"
+        },
+        {
+         "y": 540,
+         "x": 720,
+         "u": "https://preview.redd.it/m1.jpg?width=720"
+        }
+       ],
+       "s": {
+        "y": 3000,
+        "x": 4000,
+        "u": "https://preview.redd.it/m1.jpg?src"
+       },
+       "id": "m1"
+      }
+     }
+    }
+   },
+   {
+    "kind": "t3",
+    "data": {
+     "id": "vid001",
+     "name": "t3_vid001",
+     "title": "This otter figured out how to use a vending machine",
+     "author": "otterly",
+     "subreddit": "aww",
+     "permalink": "/r/aww/comments/vid001/slug/",
+     "url": "https://v.redd.it/xyz",
+     "domain": "v.redd.it",
+     "selftext": "",
+     "link_flair_text": null,
+     "link_flair_background_color": "",
+     "created_utc": 1762581600.0,
+     "score": 33102,
+     "num_comments": 640,
+     "upvote_ratio": 0.95,
+     "over_18": false,
+     "spoiler": false,
+     "stickied": false,
+     "locked": false,
+     "is_self": false,
+     "thumbnail": "default",
+     "is_video": true,
+     "post_hint": "hosted:video",
+     "secure_media": {
+      "reddit_video": {
+       "hls_url": "https://v.redd.it/xyz/HLSPlaylist.m3u8",
+       "fallback_url": "https://v.redd.it/xyz/DASH_720.mp4",
+       "width": 720,
+       "height": 1280,
+       "duration": 31
+      }
+     },
+     "preview": {
+      "images": [
+       {
+        "source": {
+         "url": "https://external-preview.redd.it/xyz.png?s=src",
+         "width": 720,
+         "height": 1280
+        },
+        "resolutions": [
+         {
+          "url": "https://external-preview.redd.it/xyz.png?width=108&s=x",
+          "width": 108,
+          "height": 192
+         },
+         {
+          "url": "https://external-preview.redd.it/xyz.png?width=216&s=x",
+          "width": 216,
+          "height": 384
+         },
+         {
+          "url": "https://external-preview.redd.it/xyz.png?width=320&s=x",
+          "width": 320,
+          "height": 568
+         },
+         {
+          "url": "https://external-preview.redd.it/xyz.png?width=640&s=x",
+          "width": 640,
+          "height": 1137
+         }
+        ],
+        "id": "img"
+       }
+      ],
+      "enabled": true
+     }
+    }
+   },
+   {
+    "kind": "t3",
+    "data": {
+     "id": "lnk001",
+     "name": "t3_lnk001",
+     "title": "Linux 7.0 released with a brand new scheduler",
+     "author": "kernel_watcher",
+     "subreddit": "linux",
+     "permalink": "/r/linux/comments/lnk001/slug/",
+     "url": "https://www.phoronix.com/news/linux-7.0-released",
+     "domain": "phoronix.com",
+     "selftext": "",
+     "link_flair_text": "Kernel",
+     "link_flair_background_color": "#0079D3",
+     "created_utc": 1762672800.0,
+     "score": 2210,
+     "num_comments": 301,
+     "upvote_ratio": 0.95,
+     "over_18": false,
+     "spoiler": false,
+     "stickied": false,
+     "locked": false,
+     "is_self": false,
+     "thumbnail": "https://b.thumbs.redditmedia.com/t.jpg",
+     "is_video": false,
+     "post_hint": "link",
+     "thumbnail_width": 140,
+     "thumbnail_height": 78
+    }
+   },
+   {
+    "kind": "t3",
+    "data": {
+     "id": "nsfw01",
+     "name": "t3_nsfw01",
+     "title": "An NSFW post that should be filtered by default",
+     "author": "someone",
+     "subreddit": "pics",
+     "permalink": "/r/pics/comments/nsfw01/slug/",
+     "url": "https://i.redd.it/n.jpg",
+     "domain": "i.redd.it",
+     "selftext": "",
+     "link_flair_text": null,
+     "link_flair_background_color": "",
+     "created_utc": 1762671600.0,
+     "score": 100,
+     "num_comments": 10,
+     "upvote_ratio": 0.95,
+     "over_18": true,
+     "spoiler": false,
+     "stickied": false,
+     "locked": false,
+     "is_self": false,
+     "thumbnail": "default",
+     "is_video": false,
+     "post_hint": "image",
+     "preview": {
+      "images": [
+       {
+        "source": {
+         "url": "https://preview.redd.it/img.jpg?s=src",
+         "width": 1000,
+         "height": 800
+        },
+        "resolutions": [
+         {
+          "url": "https://preview.redd.it/img.jpg?width=108&s=x",
+          "width": 108,
+          "height": 86
+         },
+         {
+          "url": "https://preview.redd.it/img.jpg?width=216&s=x",
+          "width": 216,
+          "height": 172
+         },
+         {
+          "url": "https://preview.redd.it/img.jpg?width=320&s=x",
+          "width": 320,
+          "height": 256
+         },
+         {
+          "url": "https://preview.redd.it/img.jpg?width=640&s=x",
+          "width": 640,
+          "height": 512
+         },
+         {
+          "url": "https://preview.redd.it/img.jpg?width=960&s=x",
+          "width": 960,
+          "height": 768
+         }
+        ],
+        "id": "img"
+       }
+      ],
+      "enabled": true
+     }
+    }
+   },
+   {
+    "kind": "t3",
+    "data": {
+     "id": "spl001",
+     "name": "t3_spl001",
+     "title": "[Spoilers] That finale twist explained",
+     "author": "tv_nerd",
+     "subreddit": "television",
+     "permalink": "/r/television/comments/spl001/slug/",
+     "url": "https://i.redd.it/s.png",
+     "domain": "i.redd.it",
+     "selftext": "",
+     "link_flair_text": null,
+     "link_flair_background_color": "",
+     "created_utc": 1762416000.0,
+     "score": 871,
+     "num_comments": 2033,
+     "upvote_ratio": 0.95,
+     "over_18": false,
+     "spoiler": true,
+     "stickied": false,
+     "locked": true,
+     "is_self": false,
+     "thumbnail": "default",
+     "is_video": false,
+     "post_hint": "image",
+     "preview": {
+      "images": [
+       {
+        "source": {
+         "url": "https://preview.redd.it/s.png?s=src",
+         "width": 1600,
+         "height": 900
+        },
+        "resolutions": [
+         {
+          "url": "https://preview.redd.it/s.png?width=108&s=x",
+          "width": 108,
+          "height": 60
+         },
+         {
+          "url": "https://preview.redd.it/s.png?width=216&s=x",
+          "width": 216,
+          "height": 121
+         },
+         {
+          "url": "https://preview.redd.it/s.png?width=320&s=x",
+          "width": 320,
+          "height": 180
+         },
+         {
+          "url": "https://preview.redd.it/s.png?width=640&s=x",
+          "width": 640,
+          "height": 360
+         },
+         {
+          "url": "https://preview.redd.it/s.png?width=960&s=x",
+          "width": 960,
+          "height": 540
+         }
+        ],
+        "id": "img"
+       }
+      ],
+      "enabled": true
+     }
+    }
+   },
+   {
+    "kind": "t3",
+    "data": {
+     "id": "xpost1",
+     "name": "t3_xpost1",
+     "title": "Crosspost of the otter video",
+     "author": "xposter",
+     "subreddit": "Otters",
+     "permalink": "/r/Otters/comments/xpost1/slug/",
+     "url": "/r/aww/comments/vid001/slug/",
+     "domain": "v.redd.it",
+     "selftext": "",
+     "link_flair_text": null,
+     "link_flair_background_color": "",
+     "created_utc": 1762603200.0,
+     "score": 154,
+     "num_comments": 3,
+     "upvote_ratio": 0.95,
+     "over_18": false,
+     "spoiler": false,
+     "stickied": false,
+     "locked": false,
+     "is_self": false,
+     "thumbnail": "default",
+     "is_video": false,
+     "crosspost_parent_list": [
+      {
+       "id": "vid001",
+       "name": "t3_vid001",
+       "title": "",
+       "author": "someone",
+       "subreddit": "aww",
+       "permalink": "/r/aww/comments/vid001/slug/",
+       "url": "https://v.redd.it/xyz",
+       "domain": "v.redd.it",
+       "selftext": "",
+       "link_flair_text": null,
+       "link_flair_background_color": "",
+       "created_utc": 1762671600.0,
+       "score": 100,
+       "num_comments": 10,
+       "upvote_ratio": 0.95,
+       "over_18": false,
+       "spoiler": false,
+       "stickied": false,
+       "locked": false,
+       "is_self": false,
+       "thumbnail": "default",
+       "is_video": true,
+       "secure_media": {
+        "reddit_video": {
+         "hls_url": "https://v.redd.it/xyz/HLSPlaylist.m3u8",
+         "width": 720,
+         "height": 1280
+        }
+       },
+       "preview": {
+        "images": [
+         {
+          "source": {
+           "url": "https://external-preview.redd.it/xyz.png?s=src",
+           "width": 720,
+           "height": 1280
+          },
+          "resolutions": [
+           {
+            "url": "https://external-preview.redd.it/xyz.png?width=108&s=x",
+            "width": 108,
+            "height": 192
+           },
+           {
+            "url": "https://external-preview.redd.it/xyz.png?width=216&s=x",
+            "width": 216,
+            "height": 384
+           },
+           {
+            "url": "https://external-preview.redd.it/xyz.png?width=320&s=x",
+            "width": 320,
+            "height": 568
+           },
+           {
+            "url": "https://external-preview.redd.it/xyz.png?width=640&s=x",
+            "width": 640,
+            "height": 1137
+           }
+          ],
+          "id": "img"
+         }
+        ],
+        "enabled": true
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "t3",
+    "data": {
+     "id": "pin001",
+     "name": "t3_pin001",
+     "title": "Weekly discussion thread: what are you reading?",
+     "author": "AutoModerator",
+     "subreddit": "books",
+     "permalink": "/r/books/comments/pin001/slug/",
+     "url": "",
+     "domain": "self.books",
+     "selftext": "Share what you are reading this week!",
+     "link_flair_text": null,
+     "link_flair_background_color": "",
+     "created_utc": 1762156800.0,
+     "score": 45,
+     "num_comments": 980,
+     "upvote_ratio": 0.95,
+     "over_18": false,
+     "spoiler": false,
+     "stickied": true,
+     "locked": false,
+     "is_self": true,
+     "thumbnail": "default",
+     "is_video": false
+    }
+   }
+  ],
+  "before": null
+ }
+}
