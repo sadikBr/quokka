@@ -25,9 +25,9 @@ ApplicationWindow {
     Rectangle {
         id: sidebar
         visible: window.wide
-        width: visible ? 300 : 0
+        width: visible ? 272 : 0
         height: parent.height
-        color: Theme.bg
+        color: Theme.sidebar
         DrawerContent {
             anchors.fill: parent
             anchors.rightMargin: 1
@@ -119,6 +119,11 @@ ApplicationWindow {
         AboutPage {}
     }
 
+    Component {
+        id: settingsPage
+        SettingsPage {}
+    }
+
     // `quokka <link>` opens that Lemmy (or Reddit) link on start.
     Component.onCompleted: {
         Nav.window = window
@@ -165,6 +170,7 @@ ApplicationWindow {
         function onAboutRequested() { stack.push(aboutPage) }
         function onShortcutsRequested() { shortcutsHelp.open() }
         function onSignInRequested() { signInDialog.open() }
+        function onSettingsRequested() { stack.push(settingsPage) }
         function onSavedRequested() { stack.push(localPostsPage, { source: "saved" }) }
         function onHistoryRequested() { stack.push(localPostsPage, { source: "history" }) }
         function onRootFeedRequested(feed) {

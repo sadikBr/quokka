@@ -23,18 +23,21 @@ Item {
         width: Math.min(row.width - 24, Theme.contentMaxWidth)
         height: parent.height
         anchors.horizontalCenter: parent.horizontalCenter
-        implicitHeight: content.implicitHeight + 24
-        radius: Theme.radiusMedia + 2
-        color: hover.hovered ? Theme.surfaceAlt : Theme.surface
-        border.width: 1
-        border.color: Theme.border
-        scale: tap.pressed ? 0.98 : 1
-        Behavior on scale { NumberAnimation { duration: Theme.quick } }
+        implicitHeight: content.implicitHeight + 28
+        radius: Theme.radiusCard
+        color: hover.hovered ? Theme.hover : Theme.bg
+        Rectangle {
+            anchors.bottom: parent.bottom
+            x: 12
+            width: parent.width - 24
+            height: 1
+            color: Theme.divider
+        }
 
         RowLayout {
             id: content
             anchors.fill: parent
-            anchors.margins: 12
+            anchors.margins: 14
             spacing: 12
             Avatar {
                 Layout.alignment: Qt.AlignTop
@@ -54,7 +57,7 @@ Item {
                         font.pixelSize: Theme.fontBody
                         font.weight: Font.Bold
                     }
-                    Chip { visible: row.nsfw; text: "NSFW"; fontSize: 10; hpad: 6; fillColor: Theme.nsfw; textColor: "white"; border.width: 0 }
+                    Chip { visible: row.nsfw; text: "NSFW"; fontSize: 10; hpad: 6; fillColor: Theme.alpha(Theme.nsfw, 0.14); textColor: Theme.nsfw }
                 }
                 Text {
                     text: qsTr("%1 members").arg(Format.compact(row.subscribers))

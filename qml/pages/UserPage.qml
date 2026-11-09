@@ -46,7 +46,6 @@ Page {
         RoundButton2 {
             iconName: "external"
             tooltip: qsTr("Open in browser")
-            fill: Theme.surfaceAlt
             onClicked: {
                 Qt.openUrlExternally(Api.isLemmy ? Api.webUrl("/u/" + page.userName)
                                                  : "https://www.reddit.com/user/" + page.userName)
@@ -58,7 +57,7 @@ Page {
         id: list
         anchors.fill: parent
         model: page.tab === 0 ? posts : userComments
-        spacing: 14
+        spacing: 0
         bottomMargin: 24
         cacheBuffer: 1200
         readonly property int contentWidth2: Math.min(width - 24, Theme.contentMaxWidth)
@@ -86,63 +85,44 @@ Page {
                 y: 16
                 spacing: 14
 
-                Rectangle {
+                RowLayout {
                     Layout.fillWidth: true
-                    implicitHeight: profileRow.implicitHeight + 32
-                    radius: Theme.radiusCard
-                    gradient: Gradient {
-                        orientation: Gradient.Horizontal
-                        GradientStop { position: 0; color: Format.nameColor(page.userName) }
-                        GradientStop { position: 1; color: Theme.caramel }
+                    spacing: 16
+                    Avatar {
+                        name: page.userName
+                        imageUrl: user.iconUrl
+                        size: 72
+                        backgroundColor: Theme.bg
                     }
-                    RowLayout {
-                        id: profileRow
-                        anchors.fill: parent
-                        anchors.margins: 16
-                        spacing: 14
-                        Rectangle {
-                            width: 76
-                            height: 76
-                            radius: 38
-                            color: "white"
-                            Avatar {
-                                anchors.centerIn: parent
-                                name: page.userName
-                                imageUrl: user.iconUrl
-                                size: 68
-                                backgroundColor: "white"
-                            }
-                        }
-                        ColumnLayout {
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 3
+                        Text {
                             Layout.fillWidth: true
-                            spacing: 4
-                            Text {
-                                Layout.fillWidth: true
-                                text: Api.user(page.userName)
-                                color: "white"
-                                font.pixelSize: 24
-                                font.weight: Font.Black
-                                elide: Text.ElideRight
-                            }
-                            Text {
-                                visible: user.loaded
-                                text: qsTr("Member for %1").arg(Format.age(user.createdUtc))
-                                color: Theme.alpha("white", 0.9)
-                                font.pixelSize: Theme.fontMeta
-                                font.weight: Font.DemiBold
-                            }
-                            Text {
-                                Layout.fillWidth: true
-                                visible: user.description !== ""
-                                text: user.description
-                                color: "white"
-                                font.pixelSize: Theme.fontMeta
-                                wrapMode: Text.Wrap
-                                maximumLineCount: 3
-                                elide: Text.ElideRight
-                            }
+                            text: Api.user(page.userName)
+                            color: Theme.text
+                            font.pixelSize: 22
+                            font.weight: Font.Bold
+                            elide: Text.ElideRight
+                        }
+                        Text {
+                            visible: user.loaded
+                            text: qsTr("Member for %1").arg(Format.age(user.createdUtc))
+                            color: Theme.textMuted
+                            font.pixelSize: Theme.fontMeta
                         }
                     }
+                }
+                Text {
+                    Layout.fillWidth: true
+                    visible: user.description !== ""
+                    text: user.description
+                    color: Theme.text
+                    font.pixelSize: Theme.fontBody - 1
+                    wrapMode: Text.Wrap
+                    maximumLineCount: 4
+                    elide: Text.ElideRight
+                    lineHeight: 1.2
                 }
 
                 Text {
@@ -255,20 +235,22 @@ Page {
     component StatTile: Rectangle {
         property string label
         property string value
-        property color accent: Theme.accent
+        property color accent: Theme.text
         Layout.fillWidth: true
-        implicitHeight: 64
-        radius: Theme.radiusMedia
-        color: Theme.alpha(accent, 0.12)
+        implicitHeight: 62
+        radius: Theme.radiusCard
+        color: Theme.bg
+        border.width: 1
+        border.color: Theme.border
         Column {
             anchors.centerIn: parent
             spacing: 2
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: parent.parent.value
-                color: parent.parent.accent
-                font.pixelSize: 20
-                font.weight: Font.Black
+                color: Theme.text
+                font.pixelSize: 19
+                font.weight: Font.Bold
             }
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter

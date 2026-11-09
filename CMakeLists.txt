@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 project(Quokka
-    VERSION 0.8.0
+    VERSION 0.9.0
     DESCRIPTION "A playful, read-only Lemmy (and Reddit) client for desktop and Android"
     HOMEPAGE_URL "https://github.com/sadikBr/Reddit-Client"
     LANGUAGES CXX)
@@ -37,6 +37,7 @@ set(QUOKKA_QML_FILES
     qml/pages/PostPage.qml
     qml/pages/MediaViewer.qml
     qml/pages/SearchPage.qml
+    qml/pages/SettingsPage.qml
     qml/pages/UserPage.qml
     qml/components/Avatar.qml
     qml/components/Chip.qml
@@ -60,6 +61,7 @@ set(QUOKKA_QML_FILES
     qml/components/SortBar.qml
     qml/components/SubredditPicker.qml
     qml/components/SubredditRow.qml
+    qml/components/Toggle.qml
     qml/components/TopBar.qml
     qml/components/UserCommentCard.qml
     qml/components/VideoPlayer.qml
@@ -93,6 +95,11 @@ qt_add_qml_module(quokka
         src/app/library.h src/app/library.cpp
     RESOURCES
         resources/logo.svg
+        resources/fonts/Inter-Regular.ttf
+        resources/fonts/Inter-Italic.ttf
+        resources/fonts/Inter-Medium.ttf
+        resources/fonts/Inter-SemiBold.ttf
+        resources/fonts/Inter-Bold.ttf
         ${QUOKKA_ICONS}
 )
 

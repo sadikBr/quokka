@@ -11,6 +11,9 @@ namespace quokka::markdown {
 // `instanceHost` is used to link mentions; needs a QGuiApplication (it uses QTextDocument).
 QString toHtml(const QString &markdown, const QString &instanceHost = {});
 
+// Plain text for previews: markup removed, spoilers hidden, paragraphs joined, cut at maxLength.
+QString toPlainExcerpt(const QString &markdown, int maxLength = 600);
+
 // A short plain-text summary (first paragraph, markup removed), e.g. for community headers.
 QString toPlainSummary(const QString &markdown, int maxLength = 220);
 

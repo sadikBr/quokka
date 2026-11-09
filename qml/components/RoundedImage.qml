@@ -7,19 +7,22 @@ Item {
     property url source
     property url fallbackSource      // tried when `source` fails to load
     property bool showBroken: true   // show an "image unavailable" mark when nothing loads
+    // Width to decode the picture at. Defaults to our width; callers whose width follows the
+    // picture's shape pass a fixed width to avoid a feedback loop.
+    property real decodeWidth: width
     property alias fillMode: img.fillMode
     property alias status: img.status
     property int radius: Theme.radiusMedia
     property color backgroundColor: Theme.surface   // colour of whatever is behind the image
     property color placeholderColor: Theme.surfaceAlt
-    // height / width of the loaded picture, 0 until it has loaded
-    readonly property real naturalRatio: img.status === Image.Ready && img.implicitWidth > 0
-                                         ? img.implicitHeight / img.implicitWidth : 0
+    // height / width of the loaded picture, 0 until it has loaded. Set once on load (not a
+    // binding): the image's implicit size follows its width, which may itself follow this ratio.
+    property real naturalRatio: 0
     readonly property bool broken: img.status === Image.Error
                                    && (useFallback || fallbackSource.toString() === "")
 
     property bool useFallback: false
-    onSourceChanged: useFallback = false
+    onSourceChanged: { useFallback = false; naturalRatio = 0 }
 
     Rectangle {
         anchors.fill: parent
@@ -56,11 +59,13 @@ Item {
         onStatusChanged: {
             if (status === Image.Error && !root.useFallback && root.fallbackSource.toString() !== "")
                 root.useFallback = true
+            if (status === Image.Ready && implicitWidth > 0)
+                root.naturalRatio = implicitHeight / implicitWidth
         }
         asynchronous: true
         cache: true
         fillMode: Image.PreserveAspectCrop
-        sourceSize.width: Math.max(1, Math.ceil(root.width * Screen.devicePixelRatio))
+        sourceSize.width: Math.max(1, Math.ceil(root.decodeWidth * Screen.devicePixelRatio))
         opacity: status === Image.Ready ? 1 : 0
         Behavior on opacity { NumberAnimation { duration: Theme.smooth } }
     }

@@ -5,7 +5,7 @@ import QtQuick.Layouts
 // Side drawer: navigation, your communities and settings.
 Drawer {
     id: root
-    width: Math.min(340, parent ? parent.width * 0.86 : 340)
+    width: Math.min(300, parent ? parent.width * 0.84 : 300)
     edge: Qt.LeftEdge
 
     // When true the drawer is shown permanently as a sidebar (wide desktop windows).
@@ -19,7 +19,7 @@ Drawer {
     }
 
     background: Rectangle {
-        color: Theme.bg
+        color: Theme.sidebar
         Rectangle {
             anchors.right: parent.right
             width: 1

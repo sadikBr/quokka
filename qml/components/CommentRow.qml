@@ -51,7 +51,7 @@ Item {
             height: row.height
             radius: 1
             color: row.railColors[index % row.railColors.length]
-            opacity: 0.35
+            opacity: 0.28
         }
     }
 
@@ -71,7 +71,8 @@ Item {
 
             Avatar {
                 name: row.author
-                size: 22
+                size: 20
+                backgroundColor: Theme.bg
             }
             Text {
                 text: Api.shortName(row.author)
@@ -79,7 +80,7 @@ Item {
                      : row.distinguished === "moderator" ? Theme.mint
                      : row.distinguished === "admin" ? Theme.nsfw : Theme.text
                 font.pixelSize: Theme.fontMeta
-                font.weight: Font.Bold
+                font.weight: Font.DemiBold
                 elide: Text.ElideRight
                 Layout.maximumWidth: 160
                 TapHandler {
@@ -93,18 +94,16 @@ Item {
                 text: "OP"
                 fontSize: 10
                 hpad: 6
-                fillColor: Theme.accent
-                textColor: "white"
-                border.width: 0
+                fillColor: Theme.accentSoft
+                textColor: Theme.accent
             }
             Chip {
                 visible: row.distinguished === "moderator" || row.distinguished === "admin"
                 text: row.distinguished === "admin" ? "ADMIN" : "MOD"
                 fontSize: 10
                 hpad: 6
-                fillColor: row.distinguished === "admin" ? Theme.nsfw : Theme.mint
-                textColor: "white"
-                border.width: 0
+                fillColor: Theme.alpha(row.distinguished === "admin" ? Theme.nsfw : Theme.mint, 0.15)
+                textColor: row.distinguished === "admin" ? Theme.nsfw : Theme.mint
             }
             Icon { visible: row.stickied; name: "pin"; size: 14; color: Theme.stickied }
             Text {
@@ -120,23 +119,22 @@ Item {
                 text: "+" + row.hiddenCount
                 fontSize: 11
                 hpad: 8
-                fillColor: Theme.alpha(Theme.sky, 0.18)
-                textColor: Theme.sky
-                border.width: 0
+                fillColor: Theme.surfaceAlt
+                textColor: Theme.textMuted
             }
             Row {
                 spacing: 3
                 Icon {
                     name: "upvote"
                     size: 14
-                    color: Theme.upvote
+                    color: Theme.textMuted
                     anchors.verticalCenter: parent.verticalCenter
                 }
                 Text {
                     text: row.scoreHidden ? "•" : Format.compact(row.score)
-                    color: Theme.upvote
+                    color: Theme.textMuted
                     font.pixelSize: Theme.fontSmall
-                    font.weight: Font.Bold
+                    font.weight: Font.Medium
                     anchors.verticalCenter: parent.verticalCenter
                 }
             }
@@ -172,9 +170,8 @@ Item {
         clickable: !row.loadingMore
         fontSize: Theme.fontMeta
         hpad: 14
-        fillColor: Theme.alpha(Theme.sky, 0.14)
-        textColor: Theme.sky
-        border.width: 0
+        fillColor: "transparent"
+        textColor: Theme.accent
         iconName: row.kind === CommentTreeModel.ContinueRow ? "comment" : "chevron-down"
         text: row.loadingMore ? qsTr("Loading…")
             : row.kind === CommentTreeModel.ContinueRow ? qsTr("Continue this thread")

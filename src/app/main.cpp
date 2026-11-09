@@ -4,6 +4,8 @@
 #include "account.h"
 #include "apiinfo.h"
 
+#include <QFont>
+#include <QFontDatabase>
 #include <QGuiApplication>
 #include <QIcon>
 #include <QQmlApplicationEngine>
@@ -26,8 +28,19 @@ int main(int argc, char *argv[])
     QGuiApplication::setDesktopFileName(QStringLiteral("io.github.sadikbr.quokka"));
     QGuiApplication::setWindowIcon(QIcon(QStringLiteral(":/qt/qml/Quokka/resources/logo.svg")));
 
-    // One style everywhere; Theme.qml supplies the colours.
+    // One style everywhere; Theme.qml supplies the colours. Inter is bundled so text looks the
+    // same on every system.
     QQuickStyle::setStyle(QStringLiteral("Material"));
+    for (const char *weight : {"Regular", "Italic", "Medium", "SemiBold", "Bold"}) {
+        for (const char *prefix : {":/qt/qml/Quokka", ":/Quokka"}) { // Qt >= 6.5 / older resource prefix
+            if (QFontDatabase::addApplicationFont(QStringLiteral("%1/resources/fonts/Inter-%2.ttf")
+                                                      .arg(QLatin1String(prefix), QLatin1String(weight))) >= 0)
+                break;
+        }
+    }
+    QFont uiFont(QStringLiteral("Inter"));
+    uiFont.setPixelSize(15);
+    QGuiApplication::setFont(uiFont);
 
     NetworkFactory networkFactory(quokka::ApiClient::defaultUserAgent());
 

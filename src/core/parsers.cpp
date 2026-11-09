@@ -1,6 +1,7 @@
 #include "parsers.h"
 
 #include "html.h"
+#include "markdown.h"
 
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -225,6 +226,7 @@ Post parsePost(const QJsonObject &data)
     p.domain = data.value(QLatin1String("domain")).toString();
     p.selftext = data.value(QLatin1String("selftext")).toString();
     p.selftextHtml = html::cleanRedditHtml(data.value(QLatin1String("selftext_html")).toString());
+    p.excerpt = markdown::toPlainExcerpt(p.selftext);
     p.flair = data.value(QLatin1String("link_flair_text")).toString();
     p.flairColor = data.value(QLatin1String("link_flair_background_color")).toString();
 

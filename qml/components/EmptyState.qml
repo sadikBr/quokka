@@ -15,13 +15,13 @@ ColumnLayout {
         id: logo
         Layout.alignment: Qt.AlignHCenter
         source: Theme.logo
-        sourceSize: Qt.size(120, 120)
-        Layout.preferredWidth: 120
-        Layout.preferredHeight: 120
+        sourceSize: Qt.size(84, 84)
+        Layout.preferredWidth: 84
+        Layout.preferredHeight: 84
         SequentialAnimation on rotation {
             loops: Animation.Infinite
-            NumberAnimation { to: -6; duration: 900; easing.type: Easing.InOutSine }
-            NumberAnimation { to: 6; duration: 900; easing.type: Easing.InOutSine }
+            NumberAnimation { to: -4; duration: 1200; easing.type: Easing.InOutSine }
+            NumberAnimation { to: 4; duration: 1200; easing.type: Easing.InOutSine }
         }
     }
     Text {
@@ -29,8 +29,8 @@ ColumnLayout {
         horizontalAlignment: Text.AlignHCenter
         text: root.title
         color: Theme.text
-        font.pixelSize: Theme.fontHuge
-        font.weight: Font.Black
+        font.pixelSize: 20
+        font.weight: Font.Bold
         wrapMode: Text.Wrap
     }
     Text {

@@ -21,14 +21,21 @@ Item {
         anchors.horizontalCenter: parent.horizontalCenter
         implicitHeight: col.implicitHeight + 28
         radius: Theme.radiusCard
-        color: Theme.surface
-        border.width: 1
-        border.color: hover.hovered ? Theme.alpha(Theme.accent, 0.6) : Theme.border
+        color: hover.hovered ? Theme.hover : Theme.bg
+        Rectangle {
+            anchors.bottom: parent.bottom
+            width: parent.width
+            height: 1
+            color: Theme.divider
+        }
 
         ColumnLayout {
             id: col
             anchors.fill: parent
-            anchors.margins: 14
+            anchors.leftMargin: 0
+            anchors.rightMargin: 0
+            anchors.topMargin: 14
+            anchors.bottomMargin: 14
             spacing: 6
             RowLayout {
                 Layout.fillWidth: true
@@ -42,12 +49,15 @@ Item {
                     font.weight: Font.DemiBold
                     elide: Text.ElideRight
                 }
-                Chip {
-                    iconName: "upvote"
-                    text: Format.compact(card.score)
-                    fillColor: Theme.alpha(Theme.upvote, 0.14)
-                    textColor: Theme.upvote
-                    border.width: 0
+                Row {
+                    spacing: 4
+                    Icon { name: "upvote"; size: 14; color: Theme.upvote; anchors.verticalCenter: parent.verticalCenter }
+                    Text {
+                        text: Format.compact(card.score)
+                        color: Theme.textMuted
+                        font.pixelSize: Theme.fontSmall + 1
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
                 }
             }
             Text {
@@ -60,17 +70,10 @@ Item {
                 maximumLineCount: 2
                 elide: Text.ElideRight
             }
-            Rectangle {
+            RedditText {
+                id: body
                 Layout.fillWidth: true
-                implicitHeight: body.implicitHeight + 16
-                radius: 12
-                color: Theme.surfaceAlt
-                RedditText {
-                    id: body
-                    anchors.fill: parent
-                    anchors.margins: 8
-                    html: card.bodyHtml
-                }
+                html: card.bodyHtml
             }
         }
 

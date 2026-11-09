@@ -40,7 +40,7 @@ Page {
     header: Rectangle {
         implicitHeight: headerCol.implicitHeight + 20
         color: Theme.bg
-        Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: Theme.border }
+        Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: Theme.divider }
 
         ColumnLayout {
             id: headerCol
@@ -53,20 +53,18 @@ Page {
                 Layout.fillWidth: true
                 spacing: 10
                 RoundButton2 {
-                    iconName: "chevron-down"
-                    rotation: 90
-                    fill: Theme.alpha(Theme.accent, 0.14)
-                    tint: Theme.accent
+                    iconName: "chevron-left"
+                    tint: Theme.text
                     tooltip: qsTr("Back")
                     onClicked: page.back()
                 }
                 Rectangle {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 46
-                    radius: 23
+                    Layout.preferredHeight: 42
+                    radius: 12
                     color: Theme.surfaceAlt
-                    border.width: field.activeFocus ? 2 : 1
-                    border.color: field.activeFocus ? Theme.accent : Theme.border
+                    border.width: field.activeFocus ? 1 : 0
+                    border.color: Theme.accent
                     RowLayout {
                         anchors.fill: parent
                         anchors.leftMargin: 14
@@ -145,10 +143,13 @@ Page {
                 delegate: Chip {
                     required property var modelData
                     anchors.verticalCenter: parent ? parent.verticalCenter : undefined
+                    readonly property bool current: results.sort === modelData.key
                     text: modelData.label
                     clickable: true
                     hpad: 12
-                    selected: results.sort === modelData.key
+                    fontSize: Theme.fontMeta
+                    fillColor: current ? Theme.surfaceAlt : "transparent"
+                    textColor: current ? Theme.text : Theme.textMuted
                     onClicked: results.sort = modelData.key
                 }
             }
@@ -161,8 +162,8 @@ Page {
         anchors.fill: parent
         visible: page.tab === 0
         model: results
-        spacing: 14
-        topMargin: 14
+        spacing: 0
+        topMargin: 4
         bottomMargin: 24
         cacheBuffer: 1200
         readonly property int contentWidth2: Math.min(width - 24, Theme.contentMaxWidth)
@@ -213,8 +214,8 @@ Page {
         anchors.fill: parent
         visible: page.tab === 1
         model: communities
-        spacing: 10
-        topMargin: 14
+        spacing: 0
+        topMargin: 8
         bottomMargin: 24
         readonly property int contentWidth2: Math.min(width - 24, Theme.contentMaxWidth)
         ScrollBar.vertical: ScrollBar {}
@@ -230,11 +231,9 @@ Page {
             visible: page.query === ""
             height: visible ? implicitHeight : 0
             text: qsTr("Popular communities")
-            color: Theme.accent
-            font.pixelSize: Theme.fontSmall
-            font.weight: Font.Black
-            font.capitalization: Font.AllUppercase
-            font.letterSpacing: 1.2
+            color: Theme.textMuted
+            font.pixelSize: Theme.fontSmall + 1
+            font.weight: Font.DemiBold
         }
         delegate: SubredditRow {
             id: subRow

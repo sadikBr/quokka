@@ -99,6 +99,7 @@ Post postFromView(const QJsonObject &pv, const QString &webBase)
     post.domain = post.url.isEmpty() ? hostOf(webBase) : hostOf(post.url);
     post.selftext = str(p, "body");
     post.selftextHtml = markdown::toHtml(post.selftext);
+    post.excerpt = markdown::toPlainExcerpt(post.selftext);
     post.createdUtc = parseTime(str(p, "published"));
     post.score = int(num(counts, "score"));
     post.numComments = int(num(counts, "comments"));

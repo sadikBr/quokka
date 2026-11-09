@@ -13,8 +13,8 @@ Popup {
     padding: 24
 
     background: Rectangle {
-        radius: Theme.radiusCard + 4
-        color: Theme.surface
+        radius: Theme.radiusCard + 2
+        color: Theme.popup
         border.width: 1
         border.color: Theme.border
     }
@@ -48,7 +48,7 @@ Popup {
                 text: qsTr("Keyboard shortcuts")
                 color: Theme.text
                 font.pixelSize: Theme.fontHuge
-                font.weight: Font.Black
+                font.weight: Font.Bold
                 Layout.bottomMargin: 6
             }
             Repeater {
@@ -61,7 +61,7 @@ Popup {
                         text: modelData.title
                         color: Theme.accent
                         font.pixelSize: Theme.fontSmall
-                        font.weight: Font.Black
+                        font.weight: Font.Bold
                         font.capitalization: Font.AllUppercase
                         font.letterSpacing: 1.2
                         Layout.topMargin: 8

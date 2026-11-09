@@ -2,13 +2,13 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-// The contents of the side drawer / desktop sidebar.
+// Navigation: account, feeds, your communities. Settings live on their own page.
 Flickable {
     id: root
     signal navigate(var action)
     signal importRequested()
 
-    contentHeight: col.implicitHeight + 40
+    contentHeight: col.implicitHeight + 24
     clip: true
     boundsBehavior: Flickable.StopAtBounds
     ScrollBar.vertical: ScrollBar {}
@@ -19,211 +19,127 @@ Flickable {
 
     ColumnLayout {
         id: col
-        x: 16
-        y: 20
-        width: root.width - 32
-        spacing: 6
+        x: 12
+        y: 16
+        width: root.width - 24
+        spacing: 2
 
-        // Brand header
+        // Brand
         RowLayout {
-            spacing: 12
-            Layout.bottomMargin: 10
+            Layout.leftMargin: 6
+            Layout.bottomMargin: 14
+            spacing: 10
             Image {
                 source: Theme.logo
-                sourceSize: Qt.size(56, 56)
-                Layout.preferredWidth: 56
-                Layout.preferredHeight: 56
+                sourceSize: Qt.size(34, 34)
+                Layout.preferredWidth: 34
+                Layout.preferredHeight: 34
             }
             ColumnLayout {
                 spacing: 0
                 Text {
                     text: "Quokka"
                     color: Theme.text
-                    font.pixelSize: Theme.fontHuge
-                    font.weight: Font.Black
+                    font.pixelSize: 18
+                    font.weight: Font.Bold
                 }
                 Text {
-                    text: qsTr("v%1 · reading %2").arg(Qt.application.version).arg(Api.serviceName)
+                    text: Api.serviceName
                     color: Theme.textMuted
                     font.pixelSize: Theme.fontSmall
                 }
             }
         }
 
-        // ---- Account ----
-        Rectangle {
-            visible: Account.supported
-            Layout.fillWidth: true
-            Layout.bottomMargin: 8
-            implicitHeight: accountCol.implicitHeight + 24
-            radius: Theme.radiusMedia
-            color: Theme.surface
-            border.width: 1
-            border.color: Theme.border
-
-            ColumnLayout {
-                id: accountCol
-                anchors.fill: parent
-                anchors.margins: 12
-                spacing: 8
-
-                // Signed out
-                RowLayout {
-                    visible: !Account.signedIn
-                    Layout.fillWidth: true
-                    spacing: 10
-                    Text {
-                        Layout.fillWidth: true
-                        text: qsTr("Sign in to %1 to use your subscriptions and settings.").arg(Api.instance)
-                        color: Theme.textMuted
-                        font.pixelSize: Theme.fontSmall
-                        wrapMode: Text.Wrap
-                    }
-                    Chip {
-                        text: qsTr("Sign in")
-                        selected: true
-                        clickable: true
-                        hpad: 14
-                        onClicked: root.navigate(() => Nav.openSignIn())
-                    }
-                }
-
-                // Signed in
-                RowLayout {
-                    visible: Account.signedIn
-                    Layout.fillWidth: true
-                    spacing: 10
-                    Avatar {
-                        name: Account.name || "?"
-                        imageUrl: Account.avatarUrl
-                        size: 34
-                        backgroundColor: Theme.surface
-                    }
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: 0
-                        Text {
-                            Layout.fillWidth: true
-                            text: Account.name !== "" ? Api.user(Account.name) : qsTr("Signed in")
-                            color: Theme.text
-                            font.pixelSize: Theme.fontBody
-                            font.weight: Font.Bold
-                            elide: Text.ElideRight
-                        }
-                        Text {
-                            text: qsTr("on %1").arg(Api.instance)
-                            color: Theme.textMuted
-                            font.pixelSize: Theme.fontSmall
-                        }
-                    }
-                    Chip {
-                        text: qsTr("Sign out")
-                        clickable: true
-                        onClicked: Account.signOut()
-                    }
-                }
-                RowLayout {
-                    visible: Account.signedIn
-                    Layout.fillWidth: true
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: 0
-                        Text {
-                            text: qsTr("Show NSFW on my account")
-                            color: Theme.text
-                            font.pixelSize: Theme.fontMeta
-                            font.weight: Font.DemiBold
-                        }
-                        Text {
-                            Layout.fillWidth: true
-                            text: qsTr("Saved on %1. Needed for NSFW in search.").arg(Api.instance)
-                            color: Theme.textMuted
-                            font.pixelSize: Theme.fontSmall
-                            wrapMode: Text.Wrap
-                        }
-                    }
-                    Switch {
-                        checked: Account.showNsfw
-                        enabled: !Account.busy
-                        onToggled: Account.setShowNsfw(checked)
-                    }
-                }
-                Text {
-                    visible: Account.error !== "" && !Account.busy
-                    Layout.fillWidth: true
-                    text: Account.error
-                    color: Theme.nsfw
-                    font.pixelSize: Theme.fontSmall
-                    wrapMode: Text.Wrap
-                }
-            }
+        // Account
+        NavRow {
+            visible: Account.supported && !Account.signedIn
+            iconName: "user"
+            text: qsTr("Sign in")
+            detail: Api.instance
+            onClicked: root.navigate(() => Nav.openSignIn())
         }
+        NavRow {
+            visible: Account.signedIn
+            avatarName: Account.name || "?"
+            avatarUrl: Account.avatarUrl
+            text: Account.name !== "" ? Api.user(Account.name) : qsTr("Signed in")
+            onClicked: root.navigate(() => Nav.openUser(Account.name))
+        }
+        Divider {}
 
-        // ---- Navigation ----
         NavRow {
             iconName: "home"
             text: qsTr("Home")
-            detail: root.communities.length > 0 ? String(root.communities.length) : ""
-            accent: Theme.berry
             current: root.currentFeed === "home"
             onClicked: root.navigate(() => Nav.goToFeed("home"))
         }
         NavRow {
             iconName: "globe"
             text: qsTr("All")
-            accent: Theme.mint
             current: root.currentFeed === "all" || root.currentFeed === "popular"
             onClicked: root.navigate(() => Nav.goToFeed("all"))
         }
         NavRow {
-            iconName: "fire"
-            text: Api.isLemmy ? qsTr("Local · %1").arg(Api.instance) : qsTr("Popular")
-            accent: Theme.caramel
-            current: root.currentFeed === (Api.isLemmy ? "local" : "popular")
-            onClicked: root.navigate(() => Nav.goToFeed(Api.isLemmy ? "local" : "popular"))
+            visible: Api.isLemmy
+            iconName: "server"
+            text: qsTr("Local")
+            detail: Api.instance
+            current: root.currentFeed === "local"
+            onClicked: root.navigate(() => Nav.goToFeed("local"))
         }
         NavRow {
             iconName: "search"
             text: qsTr("Search")
-            accent: Theme.sky
             onClicked: root.navigate(() => Nav.openSearch("", ""))
         }
         NavRow {
             iconName: "bookmark"
             text: qsTr("Saved")
             detail: Library.savedCount > 0 ? String(Library.savedCount) : ""
-            accent: Theme.caramel
             onClicked: root.navigate(() => Nav.openSaved())
         }
         NavRow {
             iconName: "history"
             text: qsTr("History")
-            accent: Theme.grape
             onClicked: root.navigate(() => Nav.openHistory())
         }
+        Divider {}
 
-        // ---- Communities ----
+        // Communities
         RowLayout {
             Layout.fillWidth: true
-            Layout.topMargin: 14
-            SectionLabel { text: qsTr("My communities"); Layout.fillWidth: true }
-            Chip {
+            Layout.leftMargin: 10
+            Layout.topMargin: 6
+            Layout.bottomMargin: 4
+            Text {
+                Layout.fillWidth: true
+                text: qsTr("Communities")
+                color: Theme.textMuted
+                font.pixelSize: Theme.fontSmall
+                font.weight: Font.DemiBold
+            }
+            Text {
                 visible: !Account.signedIn
                 text: qsTr("Import")
-                iconName: "upload"
-                clickable: true
-                onClicked: root.importRequested()
+                color: Theme.accent
+                font.pixelSize: Theme.fontSmall
+                font.weight: Font.DemiBold
+                rightPadding: 8
+                HoverHandler { cursorShape: Qt.PointingHandCursor }
+                TapHandler { onTapped: root.importRequested() }
             }
         }
         Text {
             visible: root.communities.length === 0
             Layout.fillWidth: true
-            text: Account.signedIn
-                ? qsTr("Tap Join on any community to subscribe with your account.")
-                : qsTr("Tap Join on any community to add it to your Home feed, or import a list. "
-                       + "Home shows up to 25 of them.")
-            color: Theme.textMuted
-            font.pixelSize: Theme.fontMeta
+            Layout.leftMargin: 10
+            Layout.rightMargin: 10
+            Layout.bottomMargin: 6
+            text: Account.signedIn ? qsTr("Join communities to see them here.")
+                                   : qsTr("Join communities to build your Home feed.")
+            color: Theme.textFaint
+            font.pixelSize: Theme.fontSmall
             wrapMode: Text.Wrap
         }
         Repeater {
@@ -237,308 +153,80 @@ Flickable {
                 onClicked: root.navigate(() => Nav.goToFeed(modelData))
             }
         }
+        Divider {}
 
-        // ---- Server ----
-        SectionLabel { text: qsTr("Server"); Layout.topMargin: 14; visible: Api.isLemmy }
-        Text {
-            visible: Api.isLemmy
-            Layout.fillWidth: true
-            text: qsTr("Lemmy is made of many servers that share content. You can read everything "
-                       + "from any of them; pick the one you like.")
-            color: Theme.textMuted
-            font.pixelSize: Theme.fontSmall
-            wrapMode: Text.Wrap
+        NavRow {
+            iconName: "settings"
+            text: qsTr("Settings")
+            onClicked: root.navigate(() => Nav.openSettings())
         }
-        Flow {
-            visible: Api.isLemmy
-            Layout.fillWidth: true
-            spacing: 6
-            Repeater {
-                model: ["lemmy.world", "lemmy.ml", "programming.dev", "sh.itjust.works", "lemmy.zip", "discuss.tchncs.de"]
-                delegate: Chip {
-                    required property string modelData
-                    text: modelData
-                    clickable: true
-                    selected: Api.instance === modelData
-                    onClicked: Api.setInstance(modelData)
-                }
-            }
-        }
-        Rectangle {
-            visible: Api.isLemmy
-            Layout.fillWidth: true
-            Layout.preferredHeight: 42
-            radius: 21
-            color: Theme.surfaceAlt
-            border.width: serverField.activeFocus ? 2 : 1
-            border.color: serverField.activeFocus ? Theme.accent : Theme.border
-            RowLayout {
-                anchors.fill: parent
-                anchors.leftMargin: 14
-                anchors.rightMargin: 4
-                TextField {
-                    id: serverField
-                    Layout.fillWidth: true
-                    placeholderText: qsTr("Other server, e.g. lemmy.ca")
-                    placeholderTextColor: Theme.textMuted
-                    color: Theme.text
-                    font.pixelSize: Theme.fontMeta
-                    background: null
-                    inputMethodHints: Qt.ImhUrlCharactersOnly | Qt.ImhNoAutoUppercase
-                    onAccepted: if (Api.setInstance(text)) text = ""
-                }
-                Chip {
-                    text: qsTr("Use")
-                    clickable: serverField.text.trim() !== ""
-                    selected: true
-                    onClicked: if (Api.setInstance(serverField.text)) serverField.text = ""
-                }
-            }
-        }
-
-        // ---- Settings ----
-        SectionLabel { text: qsTr("Appearance"); Layout.topMargin: 14 }
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 8
-            Repeater {
-                model: [
-                    { mode: AppSettings.System, label: qsTr("Auto"), icon: "system" },
-                    { mode: AppSettings.Light, label: qsTr("Light"), icon: "sun" },
-                    { mode: AppSettings.Dark, label: qsTr("Dark"), icon: "moon" }
-                ]
-                delegate: Chip {
-                    required property var modelData
-                    Layout.fillWidth: true
-                    text: modelData.label
-                    iconName: modelData.icon
-                    fontSize: Theme.fontMeta
-                    implicitHeight: 40
-                    clickable: true
-                    selected: AppSettings.themeMode === modelData.mode
-                    onClicked: AppSettings.themeMode = modelData.mode
-                }
-            }
-        }
-        SettingSwitch {
-            text: qsTr("Compact cards")
-            detail: qsTr("Small thumbnails instead of big pictures.")
-            checked: AppSettings.compactCards
-            onToggled: (on) => AppSettings.compactCards = on
-        }
-        SettingSwitch {
-            text: qsTr("Dim posts you've read")
-            checked: AppSettings.dimVisited
-            onToggled: (on) => AppSettings.dimVisited = on
-        }
-
-        SectionLabel { text: qsTr("Content"); Layout.topMargin: 14 }
-        SettingSwitch {
-            text: qsTr("Show NSFW posts")
-            detail: qsTr("Hidden unless you turn this on. Media stays covered until tapped.")
-            checked: AppSettings.showNsfw
-            onToggled: (on) => AppSettings.showNsfw = on
-        }
-        SettingSwitch {
-            text: qsTr("Start videos muted")
-            checked: AppSettings.videoMuted
-            onToggled: (on) => AppSettings.videoMuted = on
-        }
-        Text {
-            text: qsTr("Default feed sort")
-            color: Theme.text
-            font.pixelSize: Theme.fontBody
-            font.weight: Font.DemiBold
-            Layout.topMargin: 6
-        }
-        Flow {
-            Layout.fillWidth: true
-            spacing: 6
-            Repeater {
-                model: [
-                    { key: "hot", label: qsTr("Hot") }, { key: "new", label: qsTr("New") },
-                    { key: "top", label: qsTr("Top") }, { key: "active", label: qsTr("Active") }
-                ]
-                delegate: Chip {
-                    required property var modelData
-                    text: modelData.label
-                    clickable: true
-                    selected: AppSettings.defaultSort === modelData.key
-                    onClicked: AppSettings.defaultSort = modelData.key
-                }
-            }
-        }
-        RowLayout {
-            Layout.fillWidth: true
-            Layout.topMargin: 8
-            spacing: 8
-            Chip {
-                id: clearCache
-                property bool done: false
-                text: done ? qsTr("Cache cleared") : qsTr("Clear image cache")
-                iconName: done ? "check" : "trash"
-                clickable: !done
-                onClicked: { Library.clearImageCache(); done = true }
-            }
-            Chip {
-                text: qsTr("Clear history")
-                iconName: "history"
-                clickable: Library.historyCount > 0
-                opacity: Library.historyCount > 0 ? 1 : 0.5
-                onClicked: Library.clearHistory()
-            }
-        }
-
-        // ---- About ----
-        SectionLabel { text: qsTr("About"); Layout.topMargin: 14 }
-        Text {
-            Layout.fillWidth: true
-            text: qsTr("Quokka is an open-source, read-only client for Lemmy, the community-run "
-                       + "forum network. No account needed. Your communities, saved posts and history "
-                       + "stay on this device.")
-            color: Theme.textMuted
-            font.pixelSize: Theme.fontMeta
-            wrapMode: Text.Wrap
-            lineHeight: 1.2
-        }
-        Flow {
-            Layout.fillWidth: true
-            spacing: 8
-            Chip {
-                text: qsTr("About & licenses")
-                iconName: "text"
-                clickable: true
-                fontSize: Theme.fontMeta
-                hpad: 14
-                onClicked: root.navigate(() => Nav.openAbout())
-            }
-            Chip {
-                text: qsTr("Shortcuts")
-                iconName: "layout"
-                clickable: true
-                fontSize: Theme.fontMeta
-                hpad: 14
-                visible: Qt.platform.os !== "android"
-                onClicked: root.navigate(() => Nav.shortcutsRequested())
-            }
-            Chip {
-                text: qsTr("Source on GitHub")
-                iconName: "github"
-                clickable: true
-                fontSize: Theme.fontMeta
-                hpad: 14
-                onClicked: Qt.openUrlExternally("https://github.com/sadikBr/Reddit-Client")
-            }
+        NavRow {
+            iconName: "info"
+            text: qsTr("About")
+            onClicked: root.navigate(() => Nav.openAbout())
         }
     }
 
-    component SectionLabel: Text {
-        color: Theme.accent
-        font.pixelSize: Theme.fontSmall
-        font.weight: Font.Black
-        font.letterSpacing: 1.2
-        font.capitalization: Font.AllUppercase
-        Layout.topMargin: 4
-        Layout.bottomMargin: 2
+    component Divider: Rectangle {
+        Layout.fillWidth: true
+        Layout.topMargin: 6
+        Layout.bottomMargin: 6
+        Layout.leftMargin: 10
+        Layout.rightMargin: 10
+        Layout.preferredHeight: 1
+        color: Theme.divider
     }
 
     component NavRow: Rectangle {
         id: nav
         property string iconName
         property string avatarName
+        property string avatarUrl
         property string text
         property string detail
-        property color accent: Theme.accent
         property bool current: false
         property bool compact: false
         signal clicked()
 
         Layout.fillWidth: true
-        implicitHeight: compact ? 40 : 46
-        radius: height / 2
-        color: current ? Theme.alpha(accent, 0.16) : navHover.hovered ? Theme.surfaceAlt : "transparent"
+        implicitHeight: compact ? 36 : 42
+        radius: 10
+        color: current ? Theme.accentSoft : navHover.hovered ? Theme.hover : "transparent"
 
         RowLayout {
             anchors.fill: parent
             anchors.leftMargin: 10
-            anchors.rightMargin: 14
+            anchors.rightMargin: 10
             spacing: 12
-            Rectangle {
+            Icon {
                 visible: nav.iconName !== ""
-                width: 30
-                height: 30
-                radius: 15
-                color: Theme.alpha(nav.accent, 0.18)
-                Icon { anchors.centerIn: parent; name: nav.iconName; size: 17; color: nav.accent }
+                name: nav.iconName
+                size: 19
+                color: nav.current ? Theme.accent : Theme.textMuted
             }
             Avatar {
                 visible: nav.avatarName !== ""
                 name: nav.avatarName
-                size: 26
+                imageUrl: nav.avatarUrl
+                size: nav.compact ? 20 : 24
                 backgroundColor: nav.color
             }
             Text {
                 Layout.fillWidth: true
                 text: nav.text
-                color: Theme.text
-                font.pixelSize: nav.compact ? Theme.fontMeta + 1 : Theme.fontBody
-                font.weight: nav.current ? Font.Black : Font.DemiBold
+                color: nav.current ? Theme.accent : Theme.text
+                font.pixelSize: nav.compact ? Theme.fontMeta + 1 : Theme.fontBody - 1
+                font.weight: nav.current ? Font.DemiBold : Font.Medium
                 elide: Text.ElideRight
             }
             Text {
                 visible: nav.detail !== ""
                 text: nav.detail
-                color: Theme.textMuted
+                color: Theme.textFaint
                 font.pixelSize: Theme.fontSmall
-                font.weight: Font.Bold
             }
         }
         HoverHandler { id: navHover; cursorShape: Qt.PointingHandCursor }
         TapHandler { onTapped: nav.clicked() }
-    }
-
-    component SettingSwitch: Rectangle {
-        id: sw
-        property string text
-        property string detail
-        property bool checked
-        signal toggled(bool on)
-
-        Layout.fillWidth: true
-        implicitHeight: swRow.implicitHeight + 20
-        radius: Theme.radiusMedia
-        color: Theme.surface
-        border.width: 1
-        border.color: Theme.border
-        RowLayout {
-            id: swRow
-            anchors.fill: parent
-            anchors.margins: 10
-            anchors.leftMargin: 14
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: 2
-                Text {
-                    Layout.fillWidth: true
-                    text: sw.text
-                    color: Theme.text
-                    font.pixelSize: Theme.fontBody
-                    font.weight: Font.DemiBold
-                    wrapMode: Text.Wrap
-                }
-                Text {
-                    Layout.fillWidth: true
-                    visible: sw.detail !== ""
-                    text: sw.detail
-                    color: Theme.textMuted
-                    font.pixelSize: Theme.fontSmall
-                    wrapMode: Text.Wrap
-                }
-            }
-            Switch {
-                checked: sw.checked
-                onToggled: sw.toggled(checked)
-            }
-        }
     }
 }

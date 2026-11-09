@@ -29,8 +29,8 @@ Popup {
     }
 
     background: Rectangle {
-        radius: Theme.radiusCard + 4
-        color: Theme.surface
+        radius: Theme.radiusCard + 2
+        color: Theme.popup
         border.width: 1
         border.color: Theme.border
     }
@@ -51,7 +51,7 @@ Popup {
             text: qsTr("Where to?")
             color: Theme.text
             font.pixelSize: Theme.fontHuge
-            font.weight: Font.Black
+            font.weight: Font.Bold
         }
 
         Rectangle {
@@ -71,7 +71,7 @@ Popup {
                     text: Api.communityPrefix
                     color: Theme.accent
                     font.pixelSize: Theme.fontTitle
-                    font.weight: Font.Black
+                    font.weight: Font.Bold
                 }
                 TextField {
                     id: field

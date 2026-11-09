@@ -28,7 +28,7 @@ Item {
             }
             color: "#FFFFFF"
             font.pixelSize: Math.round(root.size * 0.48)
-            font.weight: Font.Black
+            font.weight: Font.Bold
         }
     }
 

@@ -24,7 +24,6 @@ Page {
             visible: page.isHistory && localPosts.count > 0
             iconName: "trash"
             tooltip: qsTr("Clear history")
-            fill: Theme.surfaceAlt
             onClicked: Library.clearHistory()
         }
     }
@@ -33,8 +32,8 @@ Page {
         id: list
         anchors.fill: parent
         model: localPosts
-        spacing: 14
-        topMargin: 14
+        spacing: 0
+        topMargin: 4
         bottomMargin: 24
         cacheBuffer: 1200
         readonly property int contentWidth2: Math.min(width - 24, Theme.contentMaxWidth)

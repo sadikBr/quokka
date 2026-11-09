@@ -297,6 +297,8 @@ private slots:
         QVERIFY(!html.contains("<body"));
         QVERIFY(!html.contains("#0000ff"));
         QVERIFY(markdown::toHtml("   ").isEmpty());
+        QCOMPARE(markdown::toPlainExcerpt("What do you use and **why**?\n\n::: spoiler my answer\nArch\n:::\n\n- [a link](x)"),
+                 QStringLiteral("What do you use and why? [spoiler] a link"));
         QCOMPARE(markdown::toPlainSummary("## Title\n\nFirst **para** [x](y).\n\nSecond"),
                  QStringLiteral("First para x."));
     }

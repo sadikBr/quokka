@@ -6,10 +6,10 @@
 It reads the public API of any Lemmy server (lemmy.world by default), so no account is needed.</p>
 
 <p align="center">
-  <img src="docs/screenshots/feed-light.png" width="200" alt="Feed, light theme">
+  <img src="docs/screenshots/feed-light.png" width="200" alt="Feed">
   <img src="docs/screenshots/post-light.png" width="200" alt="Post with comments">
-  <img src="docs/screenshots/viewer.png" width="200" alt="Media viewer">
-  <img src="docs/screenshots/drawer-dark.png" width="200" alt="Drawer, dark theme">
+  <img src="docs/screenshots/drawer-dark.png" width="200" alt="Navigation, dark theme">
+  <img src="docs/screenshots/settings-dark.png" width="200" alt="Settings, dark theme">
 </p>
 <p align="center"><img src="docs/screenshots/desktop.png" width="820" alt="Desktop layout with sidebar"></p>
 

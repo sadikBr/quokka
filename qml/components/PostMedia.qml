@@ -12,26 +12,32 @@ Item {
     property int galleryCount
     property bool spoiler
     property bool nsfw
-    property int maxHeight: 560
+    property int maxHeight: 520
     property real maxRatio: 1.25
     property color backgroundColor: Theme.surface
     signal activated()
 
     property bool revealed: false
     readonly property bool covered: (spoiler || nsfw) && !revealed
-    readonly property real ratio: previewWidth > 0 && previewHeight > 0 ? previewHeight / previewWidth
-                                : image.naturalRatio > 0 ? image.naturalRatio : 0.66
+    // The loaded picture's own shape wins; the server's size hint (or 2:3) is used until then.
+    readonly property real ratio: image.naturalRatio > 0 ? image.naturalRatio
+                                : previewWidth > 0 && previewHeight > 0 ? previewHeight / previewWidth : 0.66
 
     implicitHeight: Math.min(maxHeight, Math.round(width * Math.max(0.45, Math.min(maxRatio, ratio))))
 
     RoundedImage {
         id: image
-        anchors.fill: parent
+        // When the height limit kicks in, narrow the box to the picture instead of showing bars.
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        anchors.left: parent.left
+        width: Math.max(parent.width * 0.5, Math.min(parent.width, Math.round(parent.height / root.ratio)))
+        decodeWidth: root.width
         source: root.previewUrl
         fallbackSource: root.previewFallbackUrl
         backgroundColor: root.backgroundColor
-        fillMode: root.ratio > root.maxRatio ? Image.PreserveAspectCrop : Image.PreserveAspectFit
-        placeholderColor: Theme.dark ? "#0E0C13" : "#F4E3D2"
+        fillMode: Image.PreserveAspectCrop
+        placeholderColor: Theme.surfaceAlt
     }
 
     HoverHandler { cursorShape: Qt.PointingHandCursor }
@@ -42,18 +48,18 @@ Item {
 
     // Spoiler / NSFW cover
     Rectangle {
-        anchors.fill: parent
+        anchors.fill: image
         visible: root.covered
         radius: Theme.radiusMedia
-        color: root.nsfw ? Theme.nsfw : Theme.spoiler
+        color: Theme.dark ? "#26262C" : "#E9E9EE"
         Column {
             anchors.centerIn: parent
             spacing: 6
-            Icon { anchors.horizontalCenter: parent.horizontalCenter; name: "eye-off"; size: 30; color: "white" }
+            Icon { anchors.horizontalCenter: parent.horizontalCenter; name: "eye-off"; size: 26; color: Theme.textMuted }
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: root.nsfw ? qsTr("NSFW, tap to show") : qsTr("Spoiler, tap to reveal")
-                color: "white"
+                text: root.nsfw ? qsTr("NSFW · tap to show") : qsTr("Spoiler · tap to reveal")
+                color: Theme.textMuted
                 font.pixelSize: Theme.fontMeta
                 font.weight: Font.Bold
             }
@@ -62,8 +68,8 @@ Item {
 
     Chip {
         visible: root.kind === PostListModel.GalleryPost && !root.covered
-        anchors.top: parent.top
-        anchors.right: parent.right
+        anchors.top: image.top
+        anchors.right: image.right
         anchors.margins: 10
         iconName: "gallery"
         text: "1 / " + root.galleryCount
@@ -74,19 +80,12 @@ Item {
 
     Rectangle {
         visible: root.kind === PostListModel.VideoPost && !root.covered
-        anchors.centerIn: parent
-        width: 64
-        height: 64
-        radius: 32
-        color: Theme.alpha(Theme.accent, 0.92)
-        border.width: 3
-        border.color: "white"
-        Icon { anchors.centerIn: parent; anchors.horizontalCenterOffset: 3; name: "play"; size: 28; color: "white" }
-        SequentialAnimation on scale {
-            loops: Animation.Infinite
-            running: root.visible && root.kind === PostListModel.VideoPost
-            NumberAnimation { to: 1.08; duration: 700; easing.type: Easing.InOutSine }
-            NumberAnimation { to: 1.0; duration: 700; easing.type: Easing.InOutSine }
-        }
+        anchors.centerIn: image
+        width: 56
+        height: 56
+        radius: 28
+        color: "#E6FFFFFF"
+        Icon { anchors.centerIn: parent; anchors.horizontalCenterOffset: 2; name: "play"; size: 24; color: "#141418" }
     }
+
 }

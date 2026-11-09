@@ -28,8 +28,8 @@ Popup {
     }
 
     background: Rectangle {
-        radius: Theme.radiusCard + 4
-        color: Theme.surface
+        radius: Theme.radiusCard + 2
+        color: Theme.popup
         border.width: 1
         border.color: Theme.border
     }
@@ -52,7 +52,7 @@ Popup {
                     text: qsTr("Sign in")
                     color: Theme.text
                     font.pixelSize: Theme.fontHuge
-                    font.weight: Font.Black
+                    font.weight: Font.Bold
                 }
                 Text {
                     text: qsTr("to your %1 account").arg(Api.instance)

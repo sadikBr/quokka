@@ -23,6 +23,7 @@ QtObject {
     signal aboutRequested()
     signal shortcutsRequested()
     signal signInRequested()
+    signal settingsRequested()
 
     function openPost(post) { postRequested(post) }
     function openThread(postId, commentId) { threadRequested(postId, commentId || "") }
@@ -31,6 +32,7 @@ QtObject {
     function openMedia(post, index) { mediaRequested(post, index || 0) }
     function openAbout() { aboutRequested() }
     function openSignIn() { signInRequested() }
+    function openSettings() { settingsRequested() }
     function openSaved() { savedRequested() }
     function openHistory() { historyRequested() }
     function goToFeed(feed) { rootFeedRequested(feed) }

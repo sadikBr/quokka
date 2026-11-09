@@ -1,6 +1,6 @@
 import QtQuick
 
-// A pill-shaped label, optionally clickable and selectable.
+// A small pill: a label, a filter or a button.
 Rectangle {
     id: root
     property string text
@@ -17,11 +17,11 @@ Rectangle {
     implicitHeight: fontSize + 14
     implicitWidth: row.implicitWidth + hpad * 2
     radius: height / 2
-    color: selected ? selectedColor : fillColor
-    border.width: selected ? 0 : 1
+    color: selected ? selectedColor
+         : clickable && hover.hovered ? Qt.darker(fillColor, Theme.dark ? 0.8 : 1.04) : fillColor
+    border.width: 0
     border.color: Theme.border
-    scale: tap.pressed ? 0.93 : 1.0
-    Behavior on scale { NumberAnimation { duration: Theme.quick; easing.type: Easing.OutBack } }
+    opacity: tap.pressed ? 0.75 : 1
     Behavior on color { ColorAnimation { duration: Theme.quick } }
 
     Accessible.role: clickable ? Accessible.Button : Accessible.StaticText
@@ -42,11 +42,11 @@ Rectangle {
             text: root.text
             color: root.textColor
             font.pixelSize: root.fontSize
-            font.weight: Font.DemiBold
+            font.weight: Font.Medium
             anchors.verticalCenter: parent.verticalCenter
         }
     }
 
-    HoverHandler { enabled: root.clickable; cursorShape: Qt.PointingHandCursor }
+    HoverHandler { id: hover; enabled: root.clickable; cursorShape: Qt.PointingHandCursor }
     TapHandler { id: tap; gesturePolicy: TapHandler.ReleaseWithinBounds; enabled: root.clickable; onTapped: root.clicked() }
 }

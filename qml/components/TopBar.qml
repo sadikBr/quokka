@@ -12,14 +12,14 @@ Rectangle {
     signal back()
     signal titleClicked()
 
-    implicitHeight: 64
+    implicitHeight: 56
     color: Theme.bg
 
     Rectangle {
         anchors.bottom: parent.bottom
         width: parent.width
         height: 1
-        color: Theme.border
+        color: Theme.divider
     }
 
     RowLayout {
@@ -30,17 +30,15 @@ Rectangle {
 
         RoundButton2 {
             visible: root.showBack
-            iconName: "chevron-down"
-            rotation: 90
-            fill: Theme.alpha(Theme.accent, 0.14)
-            tint: Theme.accent
+            iconName: "chevron-left"
+            tint: Theme.text
             tooltip: qsTr("Back")
             onClicked: root.back()
         }
         Avatar {
             visible: root.avatarName !== ""
             name: root.avatarName
-            size: 34
+            size: 28
         }
         ColumnLayout {
             Layout.fillWidth: true
@@ -50,7 +48,7 @@ Rectangle {
                 text: root.title
                 color: Theme.text
                 font.pixelSize: Theme.fontTitle + 1
-                font.weight: Font.Black
+                font.weight: Font.Bold
                 elide: Text.ElideRight
             }
             Text {

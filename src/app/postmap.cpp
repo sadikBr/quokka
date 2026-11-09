@@ -40,6 +40,7 @@ QVariantMap postToVariantMap(const quokka::Post &p)
         {QStringLiteral("url"), p.url},
         {QStringLiteral("domain"), p.domain},
         {QStringLiteral("selftext"), p.selftext},
+        {QStringLiteral("excerpt"), p.excerpt},
         {QStringLiteral("selftextHtml"), p.selftextHtml},
         {QStringLiteral("flair"), p.flair},
         {QStringLiteral("flairColor"), p.flairColor},
@@ -76,6 +77,7 @@ quokka::Post postFromVariantMap(const QVariantMap &m)
     p.url = m.value(QStringLiteral("url")).toString();
     p.domain = m.value(QStringLiteral("domain")).toString();
     p.selftext = m.value(QStringLiteral("selftext")).toString();
+    p.excerpt = m.value(QStringLiteral("excerpt")).toString();
     p.selftextHtml = m.value(QStringLiteral("selftextHtml")).toString();
     p.flair = m.value(QStringLiteral("flair")).toString();
     p.flairColor = m.value(QStringLiteral("flairColor")).toString();

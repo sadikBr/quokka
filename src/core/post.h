@@ -31,6 +31,7 @@ struct Post
     QString url;         // target URL for link posts
     QString domain;
     QString selftext;    // Markdown body for self posts
+    QString excerpt;     // plain-text preview of selftext for cards
     QString selftextHtml; // Reddit-rendered HTML, cleaned for Qt rich text
     QString flair;
     QString flairColor;  // "#rrggbb" or empty

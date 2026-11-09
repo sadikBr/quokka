@@ -53,7 +53,7 @@ Page {
                 text: "Quokka " + Qt.application.version
                 color: Theme.text
                 font.pixelSize: Theme.fontHuge
-                font.weight: Font.Black
+                font.weight: Font.Bold
             }
             Text {
                 Layout.fillWidth: true
@@ -81,7 +81,7 @@ Page {
                 text: qsTr("Open-source components")
                 color: Theme.accent
                 font.pixelSize: Theme.fontSmall
-                font.weight: Font.Black
+                font.weight: Font.Bold
                 font.capitalization: Font.AllUppercase
                 font.letterSpacing: 1.2
                 Layout.topMargin: 8
@@ -163,7 +163,7 @@ Page {
                 text: parent.parent.title
                 color: Theme.text
                 font.pixelSize: Theme.fontBody
-                font.weight: Font.Black
+                font.weight: Font.Bold
             }
             Text {
                 Layout.fillWidth: true

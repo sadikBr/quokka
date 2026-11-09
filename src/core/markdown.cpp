@@ -92,6 +92,34 @@ QString toHtml(const QString &markdown, const QString &instanceHost)
     return postprocess(doc.toHtml());
 }
 
+QString toPlainExcerpt(const QString &markdown, int maxLength)
+{
+    QString s = markdown;
+    s.replace(QStringLiteral("\r\n"), QStringLiteral("\n"));
+    static const QRegularExpression spoiler(QStringLiteral("^:::\\s*spoiler[^\\n]*\\n[\\s\\S]*?\\n:::\\s*$"),
+                                            QRegularExpression::MultilineOption);
+    s.replace(spoiler, QStringLiteral("[spoiler]"));
+    static const QRegularExpression redditSpoiler(QStringLiteral(">!.*?!<"));
+    s.replace(redditSpoiler, QStringLiteral("[spoiler]"));
+    static const QRegularExpression codeFence(QStringLiteral("```[\\s\\S]*?```"));
+    s.replace(codeFence, QStringLiteral(" "));
+    static const QRegularExpression image(QStringLiteral("!\\[([^\\]]*)\\]\\([^)]*\\)"));
+    s.replace(image, QStringLiteral("\\1"));
+    static const QRegularExpression link(QStringLiteral("\\[([^\\]]*)\\]\\([^)]*\\)"));
+    s.replace(link, QStringLiteral("\\1"));
+    static const QRegularExpression lineMarks(QStringLiteral("^\\s*(#{1,6}\\s+|>\\s?|[-*+]\\s+|\\d+[.)]\\s+)"),
+                                              QRegularExpression::MultilineOption);
+    s.replace(lineMarks, QString());
+    static const QRegularExpression emphasis(QStringLiteral("(\\*\\*|__|~~|\\*|`|\\^)"));
+    s.replace(emphasis, QString());
+    static const QRegularExpression rule(QStringLiteral("^\\s*([-*_]\\s*){3,}$"), QRegularExpression::MultilineOption);
+    s.replace(rule, QString());
+    s = s.simplified();
+    if (s.size() > maxLength)
+        s = s.left(maxLength - 1).trimmed() + QChar(0x2026);
+    return s;
+}
+
 QString toPlainSummary(const QString &markdown, int maxLength)
 {
     QString s = markdown;

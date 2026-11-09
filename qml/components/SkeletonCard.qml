@@ -5,10 +5,8 @@ Rectangle {
     id: root
     property bool withMedia: true
     implicitHeight: withMedia ? 330 : 170
-    radius: Theme.radiusCard
-    color: Theme.surface
-    border.width: 1
-    border.color: Theme.border
+    color: Theme.bg
+    Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: Theme.divider }
 
     SequentialAnimation on opacity {
         loops: Animation.Infinite
@@ -18,11 +16,11 @@ Rectangle {
 
     Column {
         anchors.fill: parent
-        anchors.margins: Theme.pad
+        anchors.topMargin: 14
         spacing: 12
         Row {
             spacing: 10
-            Rectangle { width: 34; height: 34; radius: 17; color: Theme.surfaceAlt }
+            Rectangle { width: 20; height: 20; radius: 10; color: Theme.surfaceAlt }
             Column {
                 spacing: 6
                 anchors.verticalCenter: parent.verticalCenter

@@ -79,21 +79,20 @@ Page {
         RoundButton2 {
             iconName: page.saved ? "bookmark-filled" : "bookmark"
             tooltip: page.saved ? qsTr("Unsave") : qsTr("Save")
-            tint: page.saved ? Theme.caramel : Theme.text
-            fill: page.saved ? Theme.alpha(Theme.caramel, 0.16) : Theme.surfaceAlt
+            tint: page.saved ? Theme.accent : Theme.text
             enabled: !!page.post.title
             onClicked: Library.toggleSaved(page.post)
         }
         RoundButton2 {
             iconName: "refresh"
+            tint: Theme.text
             tooltip: qsTr("Refresh")
-            fill: Theme.surfaceAlt
             onClicked: comments.refresh()
         }
         RoundButton2 {
+            tint: Theme.text
             iconName: "external"
             tooltip: qsTr("Open in browser")
-            fill: Theme.surfaceAlt
             onClicked: Qt.openUrlExternally(Api.webUrl(page.post.permalink || ("/post/" + page.postId)))
         }
     }
@@ -173,7 +172,8 @@ Page {
             spacing: 10
             Avatar {
                 name: page.post.subreddit || "?"
-                size: 38
+                size: 34
+                backgroundColor: Theme.bg
                 TapHandler { onTapped: Nav.openSubreddit(page.post.subreddit) }
             }
             ColumnLayout {
@@ -182,8 +182,8 @@ Page {
                 Text {
                     text: Api.community(page.post.subreddit || "")
                     color: Theme.text
-                    font.pixelSize: Theme.fontMeta
-                    font.weight: Font.Bold
+                    font.pixelSize: Theme.fontMeta + 1
+                    font.weight: Font.DemiBold
                     TapHandler { onTapped: Nav.openSubreddit(page.post.subreddit) }
                     HoverHandler { cursorShape: Qt.PointingHandCursor }
                 }
@@ -202,8 +202,8 @@ Page {
             Layout.fillWidth: true
             text: page.post.title || ""
             color: Theme.text
-            font.pixelSize: 22
-            font.weight: Font.Black
+            font.pixelSize: 21
+            font.weight: Font.Bold
             wrapMode: Text.Wrap
             lineHeight: 1.05
             textFormat: Text.PlainText
@@ -221,8 +221,8 @@ Page {
                 textColor: colored ? Theme.readableOn(page.post.flairColor) : Theme.text
                 border.width: 0
             }
-            Chip { visible: !!page.post.nsfw; text: "NSFW"; fillColor: Theme.nsfw; textColor: "white"; border.width: 0 }
-            Chip { visible: !!page.post.spoiler; text: "Spoiler"; fillColor: Theme.spoiler; textColor: "white"; border.width: 0 }
+            Chip { visible: !!page.post.nsfw; text: "NSFW"; fillColor: Theme.alpha(Theme.nsfw, 0.14); textColor: Theme.nsfw; fontSize: 11; hpad: 8 }
+            Chip { visible: !!page.post.spoiler; text: qsTr("Spoiler"); fillColor: Theme.alpha(Theme.spoiler, 0.14); textColor: Theme.spoiler; fontSize: 11; hpad: 8 }
         }
 
         PostMedia {
@@ -252,7 +252,9 @@ Page {
             Layout.fillWidth: true
             Layout.preferredHeight: visible ? 76 : 0
             radius: Theme.radiusMedia
-            color: Theme.surfaceAlt
+            color: linkHover.hovered ? Theme.hover : Theme.bg
+            border.width: 1
+            border.color: Theme.border
             RowLayout {
                 anchors.fill: parent
                 anchors.margins: 10
@@ -286,7 +288,7 @@ Page {
                 Icon { name: "external"; size: 18; color: Theme.textMuted }
             }
             TapHandler { onTapped: Nav.openLink(page.post.url) }
-            HoverHandler { cursorShape: Qt.PointingHandCursor }
+            HoverHandler { id: linkHover; cursorShape: Qt.PointingHandCursor }
         }
 
         RedditText {
@@ -296,41 +298,38 @@ Page {
             font.pixelSize: Theme.fontBody + 1
         }
 
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 8
-            Chip {
-                iconName: "upvote"
-                text: Format.compact(page.post.score || 0)
-                fontSize: Theme.fontMeta
-                fillColor: Theme.alpha(Theme.upvote, 0.14)
-                textColor: Theme.upvote
-                border.width: 0
+        // Score, upvote ratio, comments
+        Row {
+            spacing: 18
+            Repeater {
+                model: [
+                    { icon: "upvote", text: Format.compact(page.post.score || 0), tint: Theme.upvote, show: true },
+                    { icon: "rising", text: qsTr("%1% upvoted").arg(Math.round((page.post.upvoteRatio || 0) * 100)),
+                      tint: Theme.textMuted, show: (page.post.upvoteRatio || 0) > 0 },
+                    { icon: "comment", text: qsTr("%1 comments").arg(Format.compact(page.post.numComments || 0)),
+                      tint: Theme.textMuted, show: true }
+                ]
+                delegate: Row {
+                    required property var modelData
+                    visible: modelData.show
+                    spacing: 6
+                    Icon { name: parent.modelData.icon; size: 16; color: parent.modelData.tint; anchors.verticalCenter: parent.verticalCenter }
+                    Text {
+                        text: parent.modelData.text
+                        color: Theme.textMuted
+                        font.pixelSize: Theme.fontMeta
+                        font.weight: Font.Medium
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                }
             }
-            Chip {
-                visible: (page.post.upvoteRatio || 0) > 0
-                text: Math.round((page.post.upvoteRatio || 0) * 100) + "% upvoted"
-                fontSize: Theme.fontMeta
-                fillColor: Theme.alpha(Theme.mint, 0.14)
-                textColor: Theme.mint
-                border.width: 0
-            }
-            Chip {
-                iconName: "comment"
-                text: Format.compact(page.post.numComments || 0)
-                fontSize: Theme.fontMeta
-                fillColor: Theme.alpha(Theme.sky, 0.14)
-                textColor: Theme.sky
-                border.width: 0
-            }
-            Item { Layout.fillWidth: true }
         }
 
         Rectangle {
             Layout.fillWidth: true
             Layout.topMargin: 4
             height: 1
-            color: Theme.border
+            color: Theme.divider
         }
 
         // Single-thread banner
@@ -339,7 +338,7 @@ Page {
             Layout.fillWidth: true
             implicitHeight: focusRow.implicitHeight + 20
             radius: Theme.radiusMedia
-            color: Theme.alpha(Theme.sky, 0.12)
+            color: Theme.surfaceAlt
             RowLayout {
                 id: focusRow
                 anchors.fill: parent
@@ -355,7 +354,6 @@ Page {
                     text: qsTr("View all comments")
                     clickable: true
                     selected: true
-                    selectedColor: Theme.sky
                     onClicked: page.focusCommentId = ""
                 }
             }
@@ -364,25 +362,27 @@ Page {
         // Comment sort
         ListView {
             Layout.fillWidth: true
-            Layout.preferredHeight: 34
+            Layout.preferredHeight: 32
+            Layout.leftMargin: -8
             orientation: ListView.Horizontal
             spacing: 6
             clip: true
             boundsBehavior: Flickable.StopAtBounds
             model: [
                 { key: "confidence", label: qsTr("Best") }, { key: "top", label: qsTr("Top") },
-                { key: "new", label: qsTr("New") }, { key: "controversial", label: qsTr("Spicy") },
+                { key: "new", label: qsTr("New") }, { key: "controversial", label: qsTr("Controversial") },
                 { key: "old", label: qsTr("Old") }, { key: "qa", label: qsTr("Q&A") }
             ]
             delegate: Chip {
                 required property var modelData
                 anchors.verticalCenter: parent ? parent.verticalCenter : undefined
+                readonly property bool current: comments.sort === modelData.key
                 text: modelData.label
                 fontSize: Theme.fontMeta
                 hpad: 12
                 clickable: true
-                selected: comments.sort === modelData.key
-                selectedColor: Theme.sky
+                fillColor: current ? Theme.surfaceAlt : "transparent"
+                textColor: current ? Theme.text : Theme.textMuted
                 onClicked: comments.sort = modelData.key
             }
         }

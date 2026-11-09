@@ -93,187 +93,130 @@ Page {
         onActivated: { page.kbIndex = -1; list.positionViewAtBeginning() }
     }
 
-    // ---- Header -------------------------------------------------------------------------
-    header: Rectangle {
-        id: headerBar
-        implicitHeight: headerCol.implicitHeight + 28
-        color: "transparent"
+    // ---- Header: slim app bar + sort tabs ------------------------------------------------
+    readonly property string subtitle: {
+        const k = feedKey.toLowerCase()
+        if (k === "local") return qsTr("Posts from %1").arg(Api.serviceName)
+        if (k === "all" || k === "popular") return qsTr("Everything on %1").arg(Api.serviceName)
+        if (isHome)
+            return Account.signedIn ? qsTr("Your subscriptions")
+                 : Library.subscriptions.length === 0 ? qsTr("Join communities to fill Home")
+                 : qsTr("%1 communities").arg(Library.subscriptions.length)
+        if (realSubreddit)
+            return qsTr("%1 members").arg(Format.compact(about.subscribers))
+        return ""
+    }
 
-        // Gradient blob with rounded bottom corners
-        Rectangle {
-            anchors.fill: parent
-            anchors.topMargin: -40          // hide the top rounded corners
-            radius: 28
-            gradient: Gradient {
-                orientation: Gradient.Horizontal
-                GradientStop { position: 0.0; color: about.color !== "" ? about.color : Theme.berry }
-                GradientStop { position: 1.0; color: Theme.caramel }
-            }
-            // Playful confetti dots
-            Repeater {
-                model: [
-                    { x: 0.70, y: 0.52, s: 46, o: 0.16 }, { x: 0.88, y: 0.68, s: 22, o: 0.24 },
-                    { x: 0.56, y: 0.80, s: 14, o: 0.30 }, { x: 0.62, y: 0.18, s: 10, o: 0.35 }
-                ]
-                delegate: Rectangle {
-                    required property var modelData
-                    x: parent.width * modelData.x
-                    y: parent.height * modelData.y
-                    width: modelData.s
-                    height: modelData.s
-                    radius: width / 2
-                    color: "white"
-                    opacity: modelData.o
-                }
-            }
-        }
+    header: Rectangle {
+        implicitHeight: headerCol.implicitHeight
+        color: Theme.bg
 
         ColumnLayout {
             id: headerCol
-            width: Math.min(parent.width - 32, Theme.contentMaxWidth)
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.top: parent.top
-            anchors.topMargin: 12
-            spacing: 10
+            width: parent.width
+            spacing: 0
 
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 8
-                RoundButton2 {
-                    visible: !page.isRoot || !Nav.sidebarDocked
-                    iconName: page.isRoot ? "menu" : "chevron-down"
-                    rotation: page.isRoot ? 0 : 90
-                    fill: Theme.alpha("white", 0.22)
-                    tint: "white"
-                    tooltip: page.isRoot ? qsTr("Menu") : qsTr("Back")
-                    onClicked: page.isRoot ? page.menuRequested() : page.backRequested()
-                }
-                Item { Layout.fillWidth: true }
-                RoundButton2 {
-                    iconName: "search"
-                    fill: Theme.alpha("white", 0.22)
-                    tint: "white"
-                    tooltip: page.realSubreddit ? qsTr("Search %1").arg(Api.community(posts.feed)) : qsTr("Search")
-                    onClicked: Nav.openSearch("", page.realSubreddit ? posts.feed : "")
-                }
-                RoundButton2 {
-                    id: refreshBtn
-                    iconName: "refresh"
-                    fill: Theme.alpha("white", 0.22)
-                    tint: "white"
-                    tooltip: qsTr("Refresh")
-                    onClicked: posts.refresh()
-                    RotationAnimator on rotation {
-                        running: posts.loading
-                        loops: Animation.Infinite
-                        from: 0
-                        to: 360
-                        duration: 900
-                        onRunningChanged: if (!running) refreshBtn.rotation = 0
-                    }
-                }
-            }
-
-            // Big feed title: tap to switch community
             Item {
                 Layout.fillWidth: true
-                implicitHeight: titleRow.implicitHeight
-                Row {
-                    id: titleRow
-                    width: parent.width
-                    spacing: 12
-                    Rectangle {
-                        id: titleAvatar
-                        width: 52
-                        height: 52
-                        radius: 26
-                        color: "white"
-                        Avatar {
-                            anchors.centerIn: parent
-                            name: page.isHome ? "Home" : posts.feed
-                            imageUrl: page.isHome ? Theme.logo : about.iconUrl
-                            backgroundColor: "white"
-                            size: 44
-                        }
-                    }
-                    Column {
-                        width: titleRow.width - titleAvatar.width - titleRow.spacing
-                        anchors.verticalCenter: parent.verticalCenter
-                        Row {
-                            spacing: 4
-                            Text {
-                                width: Math.min(implicitWidth, titleRow.width - titleAvatar.width - 50
-                                                - (joinChip.visible ? joinChip.width + 12 : 0))
-                                text: page.feedTitle
-                                color: "white"
-                                font.pixelSize: 28
-                                font.weight: Font.Black
-                                elide: Text.ElideRight
-                            }
-                            Icon {
-                                anchors.verticalCenter: parent.verticalCenter
-                                name: "chevron-down"
-                                size: 22
-                                color: "white"
-                            }
-                        }
-                        Text {
-                            text: page.feedKey.toLowerCase() === "local" ? qsTr("Posts from %1").arg(Api.serviceName)
-                                : page.feedKey.toLowerCase() === "all" ? qsTr("Everything %1 knows about").arg(Api.serviceName)
-                                : page.isHome && Account.signedIn
-                                ? qsTr("Your subscriptions on %1").arg(Api.instance)
-                                : page.isHome
-                                ? (Library.subscriptions.length === 0 ? qsTr("Join communities to fill your home feed")
-                                   : Library.subscriptions.length === 1 ? qsTr("1 community") : qsTr("%1 communities").arg(Library.subscriptions.length))
-                                : page.realSubreddit
-                                ? qsTr("%1 members").arg(Format.compact(about.subscribers))
-                                  + (about.activeUsers >= 0 ? qsTr("  ·  %1 online").arg(Format.compact(about.activeUsers)) : "")
-                                : posts.count === 1 ? qsTr("1 post loaded")
-                                : posts.count > 1 ? qsTr("%1 posts loaded").arg(posts.count)
-                                : (posts.loading ? qsTr("Fetching the good stuff…") : " ")
-                            color: Theme.alpha("white", 0.85)
-                            font.pixelSize: Theme.fontMeta
-                            font.weight: Font.DemiBold
-                        }
-                    }
-                }
-                TapHandler { onTapped: page.pickerRequested() }
-                HoverHandler { cursorShape: Qt.PointingHandCursor }
+                Layout.preferredHeight: 60
+                RowLayout {
+                    // Lines up with the reading column on wide windows.
+                    width: Math.min(parent.width - 16, Theme.contentMaxWidth + 16)
+                    height: parent.height
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    spacing: 4
 
-                Chip {
-                    id: joinChip
-                    visible: page.realSubreddit
-                    anchors.right: parent.right
-                    anchors.verticalCenter: parent.verticalCenter
-                    // Join with the full name ("linux@lemmy.ml") so it works from any server.
-                    readonly property string fullName: about.displayName !== "" ? about.displayName : posts.feed
-                    readonly property bool joined: Account.signedIn
-                        ? Account.follows.length >= 0 && Account.isFollowing(fullName)
-                        : Library.subscriptions.length >= 0 && Library.isSubscribed(fullName)
-                    text: joined ? qsTr("Joined") : qsTr("Join")
-                    iconName: joined ? "check" : "plus"
-                    clickable: true
-                    fontSize: Theme.fontMeta
-                    hpad: 14
-                    implicitHeight: 34
-                    fillColor: joined ? Theme.alpha("white", 0.25) : "white"
-                    textColor: joined ? "white" : Theme.berry
-                    border.width: joined ? 1 : 0
-                    border.color: "white"
-                    onClicked: Account.signedIn ? Account.toggleFollow(fullName, about.communityId)
-                                                : Library.toggleSubscription(fullName)
+                    RoundButton2 {
+                        visible: !page.isRoot || !Nav.sidebarDocked
+                        iconName: page.isRoot ? "menu" : "chevron-left"
+                        tint: Theme.text
+                        tooltip: page.isRoot ? qsTr("Menu") : qsTr("Back")
+                        onClicked: page.isRoot ? page.menuRequested() : page.backRequested()
+                    }
+
+                    // Feed title: tap to switch community
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 48
+                        radius: 12
+                        color: titleHover.hovered ? Theme.hover : "transparent"
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 6
+                            anchors.rightMargin: 6
+                            spacing: 10
+                            Avatar {
+                                name: page.isHome ? "Home" : posts.feed
+                                imageUrl: page.isHome ? Theme.logo : about.iconUrl
+                                size: 32
+                                backgroundColor: titleHover.hovered ? Theme.hover : Theme.bg
+                            }
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 0
+                                RowLayout {
+                                    spacing: 4
+                                    Text {
+                                        Layout.maximumWidth: Math.max(80, page.width - 240)
+                                        text: page.feedTitle
+                                        color: Theme.text
+                                        font.pixelSize: 18
+                                        font.weight: Font.Bold
+                                        elide: Text.ElideRight
+                                    }
+                                    Icon { name: "chevron-down"; size: 16; color: Theme.textMuted }
+                                }
+                                Text {
+                                    Layout.fillWidth: true
+                                    visible: text !== ""
+                                    text: page.subtitle
+                                    color: Theme.textMuted
+                                    font.pixelSize: Theme.fontSmall
+                                    elide: Text.ElideRight
+                                }
+                            }
+                        }
+                        HoverHandler { id: titleHover; cursorShape: Qt.PointingHandCursor }
+                        TapHandler { onTapped: page.pickerRequested() }
+                    }
+
+                    RoundButton2 {
+                        iconName: "search"
+                        tint: Theme.text
+                        tooltip: page.realSubreddit ? qsTr("Search %1").arg(Api.community(posts.feed)) : qsTr("Search")
+                        onClicked: Nav.openSearch("", page.realSubreddit ? posts.feed : "")
+                    }
+                    RoundButton2 {
+                        id: refreshBtn
+                        iconName: "refresh"
+                        tint: Theme.text
+                        tooltip: qsTr("Refresh")
+                        onClicked: posts.refresh()
+                        RotationAnimator on rotation {
+                            running: posts.loading
+                            loops: Animation.Infinite
+                            from: 0
+                            to: 360
+                            duration: 900
+                            onRunningChanged: if (!running) refreshBtn.rotation = 0
+                        }
+                    }
                 }
             }
 
-            Text {
+            SortBar {
+                Layout.preferredWidth: Math.min(parent.width - 24, Theme.contentMaxWidth)
+                Layout.alignment: Qt.AlignHCenter
+                sort: posts.sort
+                timeRange: posts.timeRange
+                onSortPicked: (s) => { posts.sort = s; list.positionViewAtBeginning() }
+                onTimeRangePicked: (r) => { posts.timeRange = r; list.positionViewAtBeginning() }
+            }
+
+            Rectangle {
                 Layout.fillWidth: true
-                visible: page.realSubreddit && about.description !== ""
-                text: about.description
-                color: Theme.alpha("white", 0.92)
-                font.pixelSize: Theme.fontMeta
-                wrapMode: Text.Wrap
-                maximumLineCount: 2
-                elide: Text.ElideRight
+                Layout.preferredHeight: 1
+                color: Theme.divider
             }
         }
     }
@@ -283,8 +226,8 @@ Page {
         id: list
         anchors.fill: parent
         model: posts
-        spacing: 14
-        topMargin: 14
+        spacing: 0
+        topMargin: 4
         bottomMargin: 24
         reuseItems: false
         cacheBuffer: 1200
@@ -304,17 +247,91 @@ Page {
         }
         onDragEnded: if (pull > 90) posts.refresh()
 
+        // The community block above the posts grows once loaded; stay at the top until the
+        // user scrolls. Reset when switching feeds.
+        property bool touched: false
+        onMovementStarted: touched = true
+        onOriginYChanged: if (!touched) positionViewAtBeginning()
+        Connections {
+            target: posts
+            function onFeedChanged() { list.touched = false }
+        }
+
+        // Community details at the top of a community's feed.
         header: Item {
             width: list.width
-            height: sortBar.implicitHeight + 6
-            SortBar {
-                id: sortBar
-                width: list.contentWidth2
+            height: page.realSubreddit ? aboutBlock.implicitHeight + 8 : 0
+            visible: page.realSubreddit
+            ColumnLayout {
+                id: aboutBlock
+                width: Math.min(parent.width - 24, Theme.contentMaxWidth)
                 anchors.horizontalCenter: parent.horizontalCenter
-                sort: posts.sort
-                timeRange: posts.timeRange
-                onSortPicked: (s) => { posts.sort = s; list.positionViewAtBeginning() }
-                onTimeRangePicked: (r) => { posts.timeRange = r; list.positionViewAtBeginning() }
+                y: 12
+                spacing: 12
+
+                RoundedImage {
+                    visible: about.bannerUrl !== ""
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: visible ? Math.round(width / 4) : 0
+                    source: about.bannerUrl
+                    radius: Theme.radiusCard
+                    backgroundColor: Theme.bg
+                    showBroken: false
+                }
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 14
+                    Avatar {
+                        name: posts.feed
+                        imageUrl: about.iconUrl
+                        size: 56
+                        backgroundColor: Theme.bg
+                    }
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 2
+                        Text {
+                            Layout.fillWidth: true
+                            text: about.title !== "" ? about.title : Api.community(posts.feed)
+                            color: Theme.text
+                            font.pixelSize: 20
+                            font.weight: Font.Bold
+                            elide: Text.ElideRight
+                        }
+                        Text {
+                            Layout.fillWidth: true
+                            text: Api.community(about.displayName !== "" ? about.displayName : posts.feed)
+                                  + "  ·  " + qsTr("%1 members").arg(Format.compact(about.subscribers))
+                                  + (about.activeUsers >= 0 ? "  ·  " + qsTr("%1 active today").arg(Format.compact(about.activeUsers)) : "")
+                            color: Theme.textMuted
+                            font.pixelSize: Theme.fontSmall + 1
+                            elide: Text.ElideRight
+                        }
+                    }
+                    JoinButton {
+                        name: about.displayName !== "" ? about.displayName : posts.feed
+                        communityId: about.communityId
+                        fontSize: Theme.fontMeta
+                        hpad: 16
+                        implicitHeight: 34
+                    }
+                }
+                Text {
+                    Layout.fillWidth: true
+                    visible: about.description !== ""
+                    text: about.description
+                    color: Theme.textMuted
+                    font.pixelSize: Theme.fontMeta + 1
+                    wrapMode: Text.Wrap
+                    maximumLineCount: 3
+                    elide: Text.ElideRight
+                    lineHeight: 1.2
+                }
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 1
+                    color: Theme.divider
+                }
             }
         }
 
@@ -377,7 +394,7 @@ Page {
     Component {
         id: skeletons
         Column {
-            spacing: 14
+            spacing: 0
             Repeater {
                 model: 4
                 SkeletonCard {

@@ -70,7 +70,7 @@ QVariant PostListModel::postRoleData(const Post &p, int role)
     case PermalinkRole: return p.permalink;
     case UrlRole: return p.url;
     case DomainRole: return p.domain;
-    case SelftextRole: return p.selftext.left(600);
+    case SelftextRole: return p.excerpt.isEmpty() ? p.selftext.left(600) : p.excerpt;
     case FlairRole: return p.flair;
     case FlairColorRole: return p.flairColor;
     case CreatedUtcRole: return p.createdUtc;

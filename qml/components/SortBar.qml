@@ -1,75 +1,131 @@
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 
-// Sort chips (hot/new/top/...) plus a time-range row for top/controversial.
-ColumnLayout {
+// Sort tabs (Hot / New / Top / Active / Controversial) with an underline, plus a time-range
+// menu for Top and Controversial.
+Item {
     id: root
     property string sort: "hot"
     property string timeRange: "day"
     signal sortPicked(string sort)
     signal timeRangePicked(string range)
 
-    spacing: 8
+    implicitHeight: 44
 
     readonly property var sorts: [
-        { key: "hot", label: qsTr("Hot"), icon: "hot", color: Theme.berry },
-        { key: "new", label: qsTr("New"), icon: "new", color: Theme.caramel },
-        { key: "top", label: qsTr("Top"), icon: "top", color: Theme.mint },
-        { key: "active", label: qsTr("Active"), icon: "rising", color: Theme.sky },
-        { key: "controversial", label: qsTr("Spicy"), icon: "controversial", color: Theme.grape }
+        { key: "hot", label: qsTr("Hot") },
+        { key: "new", label: qsTr("New") },
+        { key: "top", label: qsTr("Top") },
+        { key: "active", label: qsTr("Active") },
+        { key: "controversial", label: qsTr("Controversial") }
     ]
     readonly property var ranges: [
-        { key: "hour", label: qsTr("Hour") }, { key: "day", label: qsTr("Today") },
-        { key: "week", label: qsTr("Week") }, { key: "month", label: qsTr("Month") },
-        { key: "year", label: qsTr("Year") }, { key: "all", label: qsTr("All time") }
+        { key: "hour", label: qsTr("Past hour") }, { key: "day", label: qsTr("Today") },
+        { key: "week", label: qsTr("This week") }, { key: "month", label: qsTr("This month") },
+        { key: "year", label: qsTr("This year") }, { key: "all", label: qsTr("All time") }
     ]
-
-    ListView {
-        Layout.fillWidth: true
-        Layout.preferredHeight: 36
-        orientation: ListView.Horizontal
-        spacing: 8
-        clip: true
-        boundsBehavior: Flickable.StopAtBounds
-        model: root.sorts
-        delegate: Chip {
-            required property var modelData
-            anchors.verticalCenter: parent ? parent.verticalCenter : undefined
-            text: modelData.label
-            iconName: modelData.icon
-            fontSize: Theme.fontMeta
-            hpad: 14
-            clickable: true
-            selected: root.sort === modelData.key
-            selectedColor: modelData.color
-            onClicked: root.sortPicked(modelData.key)
-        }
+    readonly property bool timed: sort === "top" || sort === "controversial"
+    function rangeLabel(key) {
+        for (const r of ranges)
+            if (r.key === key)
+                return r.label
+        return key
     }
 
-    ListView {
-        id: rangeRow
-        readonly property bool shown: root.sort === "top" || root.sort === "controversial"
-        Layout.fillWidth: true
-        Layout.preferredHeight: shown ? 30 : 0
-        opacity: shown ? 1 : 0
-        visible: Layout.preferredHeight > 0
-        Behavior on Layout.preferredHeight { NumberAnimation { duration: Theme.smooth; easing.type: Easing.OutCubic } }
-        Behavior on opacity { NumberAnimation { duration: Theme.smooth } }
-        orientation: ListView.Horizontal
-        spacing: 6
-        clip: true
-        boundsBehavior: Flickable.StopAtBounds
-        model: root.ranges
-        delegate: Chip {
-            required property var modelData
-            anchors.verticalCenter: parent ? parent.verticalCenter : undefined
-            text: modelData.label
-            iconName: root.timeRange === modelData.key ? "clock" : ""
-            clickable: true
-            selected: root.timeRange === modelData.key
-            selectedColor: Theme.text
-            textColor: selected ? Theme.bg : Theme.textMuted
-            onClicked: root.timeRangePicked(modelData.key)
+    RowLayout {
+        anchors.fill: parent
+        spacing: 0
+
+        Flickable {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            contentWidth: tabs.width
+            clip: true
+            boundsBehavior: Flickable.StopAtBounds
+            flickableDirection: Flickable.HorizontalFlick
+
+            Row {
+                id: tabs
+                height: parent.height
+                spacing: 2
+                Repeater {
+                    model: root.sorts
+                    delegate: Item {
+                        id: tab
+                        required property var modelData
+                        readonly property bool current: root.sort === modelData.key
+                        width: label.implicitWidth + 24
+                        height: tabs.height
+                        Rectangle {
+                            anchors.fill: parent
+                            anchors.topMargin: 6
+                            anchors.bottomMargin: 6
+                            radius: 8
+                            color: tabHover.hovered && !tab.current ? Theme.hover : "transparent"
+                        }
+                        Text {
+                            id: label
+                            anchors.centerIn: parent
+                            text: tab.modelData.label
+                            color: tab.current ? Theme.text : Theme.textMuted
+                            font.pixelSize: Theme.fontMeta + 1
+                            font.weight: tab.current ? Font.DemiBold : Font.Medium
+                        }
+                        Rectangle {
+                            anchors.bottom: parent.bottom
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            width: tab.current ? label.implicitWidth + 4 : 0
+                            height: 3
+                            radius: 1.5
+                            color: Theme.accent
+                            Behavior on width { NumberAnimation { duration: Theme.smooth; easing.type: Easing.OutCubic } }
+                        }
+                        HoverHandler { id: tabHover; cursorShape: Qt.PointingHandCursor }
+                        TapHandler { onTapped: root.sortPicked(tab.modelData.key) }
+                    }
+                }
+            }
+        }
+
+        // Time range for Top / Controversial
+        Rectangle {
+            visible: root.timed
+            Layout.preferredHeight: 30
+            Layout.preferredWidth: rangeRow.implicitWidth + 20
+            Layout.leftMargin: 8
+            radius: 15
+            color: rangeHover.hovered ? Qt.darker(Theme.surfaceAlt, Theme.dark ? 0.8 : 1.04) : Theme.surfaceAlt
+            Row {
+                id: rangeRow
+                anchors.centerIn: parent
+                spacing: 4
+                Icon { name: "clock"; size: 14; color: Theme.textMuted; anchors.verticalCenter: parent.verticalCenter }
+                Text {
+                    text: root.rangeLabel(root.timeRange)
+                    color: Theme.text
+                    font.pixelSize: Theme.fontSmall + 1
+                    font.weight: Font.Medium
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                Icon { name: "chevron-down"; size: 14; color: Theme.textMuted; anchors.verticalCenter: parent.verticalCenter }
+            }
+            HoverHandler { id: rangeHover; cursorShape: Qt.PointingHandCursor }
+            TapHandler { onTapped: rangeMenu.popup() }
+
+            Menu {
+                id: rangeMenu
+                Repeater {
+                    model: root.ranges
+                    delegate: MenuItem {
+                        required property var modelData
+                        text: modelData.label
+                        checkable: true
+                        checked: root.timeRange === modelData.key
+                        onTriggered: root.timeRangePicked(modelData.key)
+                    }
+                }
+            }
         }
     }
 }
