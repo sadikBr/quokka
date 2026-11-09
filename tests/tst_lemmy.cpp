@@ -454,6 +454,26 @@ private slots:
         MediaProbe::instance()->markAlive(dead); // don't leave it in the settings
     }
 
+    void communityRanking()
+    {
+        auto c = [](const char *name, qint64 subs, qint64 active, qint64 posts) {
+            Subreddit s;
+            s.name = QString::fromLatin1(name);
+            s.subscribers = subs;
+            s.activeMonth = active;
+            s.posts = posts;
+            return s;
+        };
+        QList<Subreddit> list{c("tiny@x", 5, 1, 3), c("old@x", 50000, 10, 9000), c("busy@x", 20000, 4000, 30000),
+                              c("busy@x", 20000, 4000, 30000), c("mid@x", 3000, 300, 2000)};
+        lemmy::rankCommunities(list);
+        QStringList names;
+        for (const Subreddit &s : list)
+            names << s.name;
+        // Lively and big first; duplicates and near-empty communities gone.
+        QCOMPARE(names, (QStringList{"busy@x", "old@x", "mid@x"}));
+    }
+
     void markdownRendering()
     {
         const QString html = markdown::toHtml(

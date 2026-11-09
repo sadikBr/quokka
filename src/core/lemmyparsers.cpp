@@ -1,5 +1,7 @@
 #include "lemmyparsers.h"
 
+#include <cmath>
+
 #include <algorithm>
 
 #include "markdown.h"
@@ -251,11 +253,39 @@ Subreddit communityFromView(const QJsonObject &cv)
     s.descriptionHtml = markdown::toHtml(description);
     s.subscribers = num(counts, "subscribers");
     s.activeUsers = counts.contains(QLatin1String("users_active_day")) ? num(counts, "users_active_day") : -1;
+    s.activeMonth = counts.contains(QLatin1String("users_active_month")) ? num(counts, "users_active_month") : -1;
+    s.posts = counts.contains(QLatin1String("posts")) ? num(counts, "posts") : -1;
+    s.comments = counts.contains(QLatin1String("comments")) ? num(counts, "comments") : -1;
     s.iconUrl = sizedImage(str(c, "icon"), 128);
     s.bannerUrl = str(c, "banner");
     s.nsfw = c.value(QLatin1String("nsfw")).toBool();
     s.createdUtc = parseTime(str(c, "published"));
     return s;
+}
+
+double communityScore(const Subreddit &s)
+{
+    auto lg = [](qint64 n) { return n > 0 ? std::log10(double(n) + 1.0) : 0.0; };
+    // Most members and most content first; activity this month keeps dead giants from leading.
+    return 2.5 * lg(s.subscribers) + 2.0 * lg(s.posts) + 2.0 * lg(s.activeMonth) + 0.5 * lg(s.comments);
+}
+
+void rankCommunities(QList<Subreddit> &list, qint64 minPosts)
+{
+    QList<Subreddit> out;
+    QSet<QString> seen;
+    for (const Subreddit &s : std::as_const(list)) {
+        if (seen.contains(s.name.toLower()))
+            continue;
+        seen.insert(s.name.toLower());
+        if (s.posts >= 0 && s.posts < minPosts)
+            continue; // barely any content
+        out.append(s);
+    }
+    std::stable_sort(out.begin(), out.end(), [](const Subreddit &a, const Subreddit &b) {
+        return communityScore(a) > communityScore(b);
+    });
+    list = out;
 }
 
 UserAccount userFromView(const QJsonObject &pv)

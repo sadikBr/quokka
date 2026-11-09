@@ -239,8 +239,8 @@ Page {
             bottomPadding: 10
             visible: page.query === ""
             height: visible ? implicitHeight : 0
-            text: AppSettings.showNsfw && AppSettings.nsfwOnly ? qsTr("Trending NSFW communities")
-                                                               : qsTr("Trending communities")
+            text: AppSettings.showNsfw && AppSettings.nsfwOnly ? qsTr("Biggest NSFW communities")
+                                                               : qsTr("Biggest communities")
             color: Theme.textMuted
             font.pixelSize: Theme.fontSmall + 1
             font.weight: Font.DemiBold

@@ -3,6 +3,8 @@
 #include "backend.h"
 #include "services.h"
 
+#include <QSet>
+
 
 SubredditListModel::SubredditListModel(QObject *parent)
     : QAbstractListModel(parent)
@@ -31,6 +33,8 @@ QVariant SubredditListModel::data(const QModelIndex &index, int role) const
     case TitleRole: return s.title;
     case DescriptionRole: return s.publicDescription;
     case SubscribersRole: return s.subscribers;
+    case ActiveMonthRole: return s.activeMonth;
+    case PostsRole: return s.posts;
     case IconUrlRole: return s.iconUrl;
     case ColorRole: return s.color;
     case NsfwRole: return s.nsfw;
@@ -43,7 +47,8 @@ QHash<int, QByteArray> SubredditListModel::roleNames() const
 {
     return {{NameRole, "name"},          {TitleRole, "title"},     {DescriptionRole, "description"},
             {SubscribersRole, "subscribers"}, {IconUrlRole, "iconUrl"}, {ColorRole, "color"},
-            {NsfwRole, "nsfw"},          {CommunityIdRole, "communityId"}};
+            {NsfwRole, "nsfw"},          {CommunityIdRole, "communityId"},
+            {ActiveMonthRole, "activeMonth"}, {PostsRole, "posts"}};
 }
 
 void SubredditListModel::setQuery(const QString &q)
@@ -133,6 +138,13 @@ void SubredditListModel::request(bool reset)
             items.removeIf([](const quokka::Subreddit &s) { return s.nsfw; });
         if (m_nsfwOnly)
             items.removeIf([](const quokka::Subreddit &x) { return !x.nsfw; });
+        // Later pages of a merged list can repeat communities already shown.
+        if (!reset) {
+            QSet<QString> shown;
+            for (const auto &s : std::as_const(m_items))
+                shown.insert(s.name.toLower());
+            items.removeIf([&shown](const quokka::Subreddit &s) { return shown.contains(s.name.toLower()); });
+        }
         if (reset) {
             beginResetModel();
             m_items = items;

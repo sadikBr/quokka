@@ -334,10 +334,25 @@ ApiReply *LemmyBackend::communities(const QString &query, bool nsfw, const QStri
     q.addQueryItem(QStringLiteral("page"), QString::number(pageOf(after)));
     q.addQueryItem(QStringLiteral("limit"), QString::number(kPageSize));
     if (query.isEmpty()) {
-        q.addQueryItem(QStringLiteral("type_"), QStringLiteral("All"));
-        q.addQueryItem(QStringLiteral("sort"), QStringLiteral("Hot"));   // trending
-        q.addQueryItem(QStringLiteral("show_nsfw"), nsfw ? QStringLiteral("true") : QStringLiteral("false"));
-        return m_client->get(QStringLiteral("/api/v3/community/list"), q);
+        // The biggest, liveliest communities: the most active this month and the most
+        // subscribed of all time, merged and ranked in parseCommunities().
+        auto list = [&](const char *sort) {
+            QUrlQuery l;
+            l.addQueryItem(QStringLiteral("page"), QString::number(pageOf(after)));
+            l.addQueryItem(QStringLiteral("limit"), QStringLiteral("50"));
+            l.addQueryItem(QStringLiteral("type_"), QStringLiteral("All"));
+            l.addQueryItem(QStringLiteral("sort"), QLatin1String(sort));
+            l.addQueryItem(QStringLiteral("show_nsfw"), nsfw ? QStringLiteral("true") : QStringLiteral("false"));
+            return m_client->get(QStringLiteral("/api/v3/community/list"), l);
+        };
+        return new CompositeReply({list("TopMonth"), list("TopAll")}, [](const QList<QByteArray> &bodies) {
+            QJsonArray all;
+            for (const QByteArray &body : bodies)
+                for (const QJsonValue &v : QJsonDocument::fromJson(body).object().value(QLatin1String("communities")).toArray())
+                    all.append(v);
+            return QJsonDocument(QJsonObject{{QStringLiteral("communities"), all},
+                                             {QStringLiteral("ranked"), true}}).toJson(QJsonDocument::Compact);
+        }, false);
     }
     q.addQueryItem(QStringLiteral("q"), query);
     q.addQueryItem(QStringLiteral("type_"), QStringLiteral("Communities"));
@@ -350,11 +365,16 @@ QList<Subreddit> LemmyBackend::parseCommunities(const QByteArray &body, const QS
                                                 QString *next, QString *error) const
 {
     QList<Subreddit> out;
-    const QJsonArray list = object(body, error).value(QLatin1String("communities")).toArray();
+    const QJsonObject root = object(body, error);
+    const QJsonArray list = root.value(QLatin1String("communities")).toArray();
     for (const auto &v : list)
         out.append(lemmy::communityFromView(v.toObject()));
+    const bool ranked = root.value(QLatin1String("ranked")).toBool();
     if (next)
-        *next = nextPage(pageOf(after), list.size());
+        *next = ranked ? (list.isEmpty() ? QString() : QString::number(pageOf(after) + 1))
+                       : nextPage(pageOf(after), list.size());
+    if (ranked)
+        lemmy::rankCommunities(out);
     return out;
 }
 

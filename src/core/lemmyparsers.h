@@ -18,6 +18,10 @@ QString qualifiedName(const QJsonObject &actor); // name@host from name + actor_
 
 Post postFromView(const QJsonObject &postView, const QString &webBase);
 Subreddit communityFromView(const QJsonObject &communityView);
+// How big and alive a community is (monthly active users, members, posts, comments).
+double communityScore(const Subreddit &community);
+// Biggest and most active first, without duplicates or communities under `minPosts` posts.
+void rankCommunities(QList<Subreddit> &communities, qint64 minPosts = 25);
 UserAccount userFromView(const QJsonObject &personView);
 Comment commentFromView(const QJsonObject &commentView, const QString &webBase);
 

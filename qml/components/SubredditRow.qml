@@ -11,6 +11,8 @@ Item {
     required property string iconUrl
     required property bool nsfw
     required property var communityId
+    required property var activeMonth   // -1 when unknown
+    required property var posts         // -1 when unknown
 
     signal clicked()
     property alias action: actionSlot.data
@@ -60,7 +62,14 @@ Item {
                     Chip { visible: row.nsfw; text: "NSFW"; fontSize: 10; hpad: 6; fillColor: Theme.alpha(Theme.nsfw, 0.14); textColor: Theme.nsfw }
                 }
                 Text {
-                    text: qsTr("%1 members").arg(Format.compact(row.subscribers))
+                    text: {
+                        const parts = [qsTr("%1 members").arg(Format.compact(row.subscribers))]
+                        if (row.activeMonth > 0)
+                            parts.push(qsTr("%1 active a month").arg(Format.compact(row.activeMonth)))
+                        if (row.posts > 0)
+                            parts.push(qsTr("%1 posts").arg(Format.compact(row.posts)))
+                        return parts.join("  ·  ")
+                    }
                     color: Theme.textMuted
                     font.pixelSize: Theme.fontSmall
                 }

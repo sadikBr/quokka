@@ -32,6 +32,8 @@ public:
         ColorRole,
         NsfwRole,
         CommunityIdRole,
+        ActiveMonthRole,
+        PostsRole,
     };
 
     explicit SubredditListModel(QObject *parent = nullptr);

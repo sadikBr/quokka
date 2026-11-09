@@ -16,6 +16,9 @@ struct Subreddit
     QString descriptionHtml;   // sidebar, cleaned for Qt rich text
     qint64 subscribers = 0;
     qint64 activeUsers = -1;   // -1 when unknown
+    qint64 activeMonth = -1;   // users active this month (Lemmy), -1 when unknown
+    qint64 posts = -1;         // -1 when unknown
+    qint64 comments = -1;
     QString iconUrl;
     QString bannerUrl;
     QString color;             // "#rrggbb" or empty
