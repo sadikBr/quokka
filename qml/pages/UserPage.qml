@@ -232,6 +232,10 @@ Page {
             }
         }
     }
+    WheelScroller {
+        flickable: list
+        enabled: list.visible
+    }
 
     component StatTile: Rectangle {
         property string label

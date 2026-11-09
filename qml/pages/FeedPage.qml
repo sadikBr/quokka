@@ -370,6 +370,10 @@ Page {
             }
         }
     }
+    WheelScroller {
+        flickable: list
+        enabled: list.visible
+    }
 
     // Pull-to-refresh bubble
     Rectangle {

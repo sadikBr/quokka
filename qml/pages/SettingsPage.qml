@@ -15,6 +15,7 @@ Page {
     }
 
     Flickable {
+        id: scroller
         anchors.fill: parent
         contentHeight: col.implicitHeight + 48
         boundsBehavior: Flickable.StopAtBounds
@@ -276,6 +277,9 @@ Page {
                 }
             }
         }
+    }
+    WheelScroller {
+        flickable: scroller
     }
 
     component SectionTitle: Text {

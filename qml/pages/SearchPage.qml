@@ -198,6 +198,10 @@ Page {
             }
         }
     }
+    WheelScroller {
+        flickable: postList
+        enabled: postList.visible
+    }
 
     EmptyState {
         visible: page.tab === 0 && page.query === ""
@@ -252,5 +256,9 @@ Page {
                 font.pixelSize: Theme.fontBody
             }
         }
+    }
+    WheelScroller {
+        flickable: subList
+        enabled: subList.visible
     }
 }

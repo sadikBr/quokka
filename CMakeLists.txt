@@ -67,6 +67,7 @@ set(QUOKKA_QML_FILES
     qml/components/TopBar.qml
     qml/components/UserCommentCard.qml
     qml/components/VideoPlayer.qml
+    qml/components/WheelScroller.qml
     qml/components/ZoomableImage.qml
 )
 # QML files live in sub-folders for tidiness, but are served flat at the module root so they can

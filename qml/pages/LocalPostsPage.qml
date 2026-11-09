@@ -50,6 +50,10 @@ Page {
             onOpenLink: (link) => Nav.openLink(link)
         }
     }
+    WheelScroller {
+        flickable: list
+        enabled: list.visible
+    }
 
     EmptyState {
         visible: localPosts.count === 0

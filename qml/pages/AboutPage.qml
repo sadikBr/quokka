@@ -26,6 +26,7 @@ Page {
     ]
 
     Flickable {
+        id: scroller
         anchors.fill: parent
         contentHeight: col.implicitHeight + 48
         boundsBehavior: Flickable.StopAtBounds
@@ -143,6 +144,9 @@ Page {
                 onClicked: Qt.openUrlExternally("https://github.com/sadikBr/Reddit-Client")
             }
         }
+    }
+    WheelScroller {
+        flickable: scroller
     }
 
     component Card: Rectangle {

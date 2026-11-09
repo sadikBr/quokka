@@ -161,6 +161,10 @@ Page {
             }
         }
     }
+    WheelScroller {
+        flickable: list
+        enabled: list.visible
+    }
 
     component PostHeader: ColumnLayout {
         spacing: 12
