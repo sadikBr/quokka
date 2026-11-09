@@ -33,6 +33,7 @@ QVariantList mediaToVariantList(const QList<quokka::MediaItem> &items)
             {QStringLiteral("fallbackUrl"), m.fallbackUrl},
             {QStringLiteral("video"), m.video},
             {QStringLiteral("resolve"), m.resolve},
+            {QStringLiteral("poster"), m.poster},
         });
     }
     return out;
@@ -137,6 +138,7 @@ quokka::Post postFromVariantMap(const QVariantMap &m)
                                mm.value(QStringLiteral("fallbackUrl")).toString()};
         item.video = mm.value(QStringLiteral("video")).toBool();
         item.resolve = mm.value(QStringLiteral("resolve")).toString();
+        item.poster = mm.value(QStringLiteral("poster")).toString();
         p.media.append(item);
     }
     return p;

@@ -66,6 +66,15 @@ Item {
         placeholderColor: Theme.surfaceAlt
     }
 
+    // A video post without a picture of its own: a looked-up poster (redgifs) or a dark tile.
+    VideoThumb {
+        anchors.fill: image
+        visible: !root.grid && root.kind === PostListModel.VideoPost && root.previewUrl === ""
+        item: visible && root.firstVideo ? root.firstVideo : ({})
+        showPlay: false
+        backgroundColor: root.backgroundColor
+    }
+
     // ---- Playing in place ----
     Loader {
         id: inline
@@ -144,20 +153,14 @@ Item {
                     decodeWidth: 640
                     backgroundColor: root.backgroundColor
                 }
-                Rectangle {
+                VideoThumb {
                     anchors.fill: parent
                     visible: tile.isVideo
-                    radius: Theme.radiusMedia
-                    color: Theme.dark ? "#202027" : "#26262C"
-                }
-                Rectangle {
-                    visible: tile.isVideo && !root.covered
-                    anchors.centerIn: parent
-                    width: 44
-                    height: 44
-                    radius: 22
-                    color: "#E6FFFFFF"
-                    Icon { anchors.centerIn: parent; anchors.horizontalCenterOffset: 2; name: "play"; size: 20; color: "#141418" }
+                    item: tile.isVideo ? tile.item : ({})
+                    // The post's own thumbnail belongs to its first item.
+                    fallbackPoster: tile.index === 0 ? root.previewUrl : ""
+                    showPlay: !root.covered
+                    backgroundColor: root.backgroundColor
                 }
                 Rectangle {
                     anchors.fill: parent

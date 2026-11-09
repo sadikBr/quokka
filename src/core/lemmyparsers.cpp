@@ -147,6 +147,8 @@ Post postFromView(const QJsonObject &pv, const QString &webBase)
                 post.kind = first.video ? Post::Kind::Video : Post::Kind::Image;
             if (post.kind == Post::Kind::Video)
                 post.videoUrl = first.url;
+            if (first.video && !post.previewUrl.isEmpty())
+                post.media.first().poster = post.previewUrl; // the post's thumbnail shows its first video
             for (const MediaItem &m : bodyMedia) {
                 if (!m.video && post.previewUrl.isEmpty()) {
                     post.previewUrl = m.animated ? m.url : sizedImage(m.url, 640);
@@ -160,6 +162,7 @@ Post postFromView(const QJsonObject &pv, const QString &webBase)
         post.previewUrl = sizedImage(thumb, 640);
         MediaItem m{post.videoUrl, post.previewWidth, post.previewHeight, {}, true};
         m.video = true;
+        m.poster = post.previewUrl;
         if (linked && linked->video)
             m.resolve = linked->resolve;
         post.media.append(m);
@@ -203,11 +206,14 @@ Post postFromView(const QJsonObject &pv, const QString &webBase)
                 if (!m.video) { post.previewUrl = m.animated ? m.url : sizedImage(m.url, 320); break; }
     }
     if (!post.url.isEmpty() && (post.kind == Post::Kind::Image || post.kind == Post::Kind::Video)) {
-        // Pictures and videos linked in the text join the post's own: one gallery, nothing missed.
+        // Pictures (and, for picture posts, videos) linked in the text join the post's own: one
+        // gallery, nothing missed. Videos linked from a video post are nearly always the same clip
+        // from another host ("source", "HD version"); those stay on the post page.
+        const bool videoPost = post.kind == Post::Kind::Video;
         for (const MediaItem &m : media::extractFromText(post.selftext)) {
             const bool known = std::any_of(post.media.begin(), post.media.end(),
                                            [&m](const MediaItem &o) { return o.url == m.url; });
-            if (!known && m.url != post.url)
+            if (!known && m.url != post.url && !(videoPost && m.video))
                 post.media.append(m);
         }
         if (post.media.size() > 1) {

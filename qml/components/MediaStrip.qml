@@ -37,33 +37,14 @@ Flow {
                 radius: Theme.radiusMedia
                 backgroundColor: root.backgroundColor
             }
-            // Videos: a dark tile with a play button and where it comes from.
-            Rectangle {
+            // Videos: their poster when there is one, else a dark tile saying where they come from.
+            VideoThumb {
                 anchors.fill: parent
                 visible: tile.isVideo
-                radius: Theme.radiusMedia
-                color: Theme.dark ? "#202027" : "#26262C"
-                Column {
-                    anchors.centerIn: parent
-                    spacing: 8
-                    Rectangle {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        width: 44
-                        height: 44
-                        radius: 22
-                        color: "#E6FFFFFF"
-                        Icon { anchors.centerIn: parent; anchors.horizontalCenterOffset: 2; name: "play"; size: 20; color: "#141418" }
-                    }
-                    Text {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        text: {
-                            const m = String(tile.modelData.url).match(/^https?:\/\/(?:www\.)?([^\/]+)/i)
-                            return m ? m[1] : ""
-                        }
-                        color: "#CCFFFFFF"
-                        font.pixelSize: Theme.fontSmall
-                    }
-                }
+                item: tile.isVideo ? tile.modelData : ({})
+                showHost: true
+                decodeWidth: 480
+                backgroundColor: root.backgroundColor
             }
             Rectangle {
                 anchors.fill: parent

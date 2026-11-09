@@ -364,6 +364,15 @@ private slots:
         QCOMPARE(v.kind, Post::Kind::Video);
         QCOMPARE(v.media.first().resolve, QStringLiteral("redgifs"));
 
+        // A video post linking the same clip elsewhere stays a video, with its thumbnail as poster.
+        lp.insert("body", "HD version: https://files.catbox.moe/kf2ljs.mp4");
+        lp.insert("thumbnail_url", "https://lemmy.world/pictrs/image/t.jpeg");
+        link.insert("post", lp);
+        const Post v2 = lemmy::postFromView(link, "https://lemmy.world");
+        QCOMPARE(v2.kind, Post::Kind::Video);
+        QCOMPARE(v2.media.size(), 1);
+        QVERIFY(v2.media.first().poster.startsWith("https://lemmy.world/pictrs/image/t.jpeg?thumbnail="));
+
         // An image post whose text links more pictures shows them all, as one gallery.
         QJsonObject img = view;
         QJsonObject ip = post;

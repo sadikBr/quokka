@@ -17,6 +17,7 @@ struct MediaItem
     QString fallbackUrl; // another copy to try if `url` fails (e.g. the reading server's thumbnail)
     bool video = false;  // play it (MP4/WebM/HLS) rather than show it
     QString resolve;     // a page to look up first, e.g. "redgifs" or "streamable" (see medialinks.h)
+    QString poster;      // a still picture for a video (e.g. the post's thumbnail)
 };
 
 // A Reddit "t3" thing (a link / post), reduced to what the UI needs.
