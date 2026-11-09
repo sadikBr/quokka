@@ -63,13 +63,12 @@ Page {
         readonly property int contentWidth2: Math.min(width - 24, Theme.contentMaxWidth)
         readonly property var current: page.tab === 0 ? posts : userComments
 
-        // The profile header grows once it has loaded; stay at the top until the user scrolls.
-        property bool touched: false
-        onMovementStarted: touched = true
-        onOriginYChanged: if (!touched) positionViewAtBeginning()
+        // The profile header grows once loaded; if we were at the top then, stay at the top.
+        property bool atTop: true
         ScrollBar.vertical: ScrollBar {}
 
         onContentYChanged: {
+            atTop = contentY - originY < 4
             if (current.count > 0 && !current.loading && current.hasMore
                     && contentY + height > originY + contentHeight - height * 1.5)
                 current.loadMore()
@@ -78,6 +77,7 @@ Page {
         header: Item {
             width: list.width
             height: profile.implicitHeight + 28
+            onHeightChanged: if (list.atTop) Qt.callLater(list.positionViewAtBeginning)
             ColumnLayout {
                 id: profile
                 width: list.contentWidth2

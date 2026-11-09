@@ -241,26 +241,23 @@ Page {
         ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
 
         onContentYChanged: {
+            atTop = contentY - originY < 4
             if (posts.count > 0 && !posts.loading && posts.hasMore
                     && contentY + height > originY + contentHeight - height * 1.5)
                 posts.loadMore()
         }
         onDragEnded: if (pull > 90) posts.refresh()
 
-        // The community block above the posts grows once loaded; stay at the top until the
-        // user scrolls. Reset when switching feeds.
-        property bool touched: false
-        onMovementStarted: touched = true
-        onOriginYChanged: if (!touched) positionViewAtBeginning()
-        Connections {
-            target: posts
-            function onFeedChanged() { list.touched = false }
-        }
+        // The community block above the posts grows once loaded. If we were at the top when it
+        // grew, stay at the top (otherwise the list would keep its offset and hide part of it).
+        // Only header growth triggers this; scrolling never does.
+        property bool atTop: true
 
         // Community details at the top of a community's feed.
         header: Item {
             width: list.width
             height: page.realSubreddit ? aboutBlock.implicitHeight + 8 : 0
+            onHeightChanged: if (list.atTop) Qt.callLater(list.positionViewAtBeginning)
             visible: page.realSubreddit
             ColumnLayout {
                 id: aboutBlock

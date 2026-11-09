@@ -59,10 +59,6 @@ Item {
     Accessible.name: title + ", " + Api.community(subreddit) + ", " + score + " points, " + numComments + " comments"
     Accessible.onPressAction: openPost()
 
-    opacity: 0
-    Component.onCompleted: opacity = 1
-    Behavior on opacity { NumberAnimation { duration: Theme.smooth } }
-
     Item {
         id: face
         anchors.top: parent.top
