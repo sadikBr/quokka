@@ -7,8 +7,8 @@
 
 namespace quokka {
 
-// What a post list shows. `feed` is "all", "local", "popular", a community name, or several
-// joined with "+". `after` is the backend's pagination token (empty for the first page).
+// What a post list shows. `feed` is "all", "local", "popular", "subscribed" (signed in), a
+// community name, or several joined with "+". `after` is the backend's pagination token (empty for the first page).
 struct FeedRequest
 {
     QString feed = QStringLiteral("all");
@@ -62,6 +62,27 @@ public:
     virtual ApiReply *userComments(const QString &name, const QString &sort, const QString &after) = 0;
     virtual QList<Comment> parseUserComments(const QByteArray &body, const QString &after,
                                              QString *next, QString *error) const = 0;
+
+    // ---- Optional accounts. Requests need ApiClient::setAuthToken() after login. ----
+    virtual bool supportsAccounts() const { return false; }
+    virtual ApiReply *login(const QString &user, const QString &password, const QString &totp)
+    {
+        Q_UNUSED(user) Q_UNUSED(password) Q_UNUSED(totp) return nullptr;
+    }
+    // Returns the session token, or sets *error.
+    virtual QString parseLogin(const QByteArray &body, QString *error) const
+    {
+        Q_UNUSED(body) if (error) *error = QStringLiteral("Signing in is not supported here.");
+        return {};
+    }
+    virtual ApiReply *logout() { return nullptr; }
+    virtual ApiReply *account() { return nullptr; }
+    virtual AccountInfo parseAccount(const QByteArray &body) const { Q_UNUSED(body) return {}; }
+    virtual ApiReply *follow(qint64 communityId, bool follow)
+    {
+        Q_UNUSED(communityId) Q_UNUSED(follow) return nullptr;
+    }
+    virtual ApiReply *setAccountNsfw(bool show) { Q_UNUSED(show) return nullptr; }
 };
 
 // Reddit's public JSON. Kept for when API access is available again; Reddit now answers
@@ -141,6 +162,15 @@ public:
     ApiReply *userComments(const QString &name, const QString &sort, const QString &after) override;
     QList<Comment> parseUserComments(const QByteArray &body, const QString &after, QString *next,
                                      QString *error) const override;
+
+    bool supportsAccounts() const override { return true; }
+    ApiReply *login(const QString &user, const QString &password, const QString &totp) override;
+    QString parseLogin(const QByteArray &body, QString *error) const override;
+    ApiReply *logout() override;
+    ApiReply *account() override;
+    AccountInfo parseAccount(const QByteArray &body) const override;
+    ApiReply *follow(qint64 communityId, bool follow) override;
+    ApiReply *setAccountNsfw(bool show) override;
 
     // Merges several GetPostsResponse bodies into one, ordered for `sort` (exposed for tests).
     static QByteArray mergePostLists(const QList<QByteArray> &bodies, const QString &sort);

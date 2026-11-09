@@ -13,6 +13,7 @@ class FakeTransport : public Transport
 public:
     QList<TransportResponse> script;
     QList<QUrl> requested;
+    QList<TransportRequest> requests;
     int cancelled = 0;
 
     QUrl buildUrl(const QString &path, const QString &query) const override
@@ -23,9 +24,10 @@ public:
         return u;
     }
 
-    QObject *fetch(const QUrl &url, Callback done) override
+    QObject *fetch(const TransportRequest &request, Callback done) override
     {
-        requested.append(url);
+        requested.append(request.url);
+        requests.append(request);
         const TransportResponse r = script.isEmpty() ? TransportResponse{200, "{}"} : script.takeFirst();
         auto *t = new QTimer;
         t->setSingleShot(true);
@@ -142,6 +144,75 @@ private slots:
         QVERIFY(secondOk.wait(1000));
         QCOMPARE(firstOk.count(), 0);
         QCOMPARE(fake->cancelled, 1);
+    }
+
+    void sendsTokenAndJsonBodies()
+    {
+        auto *fake = new FakeTransport;
+        ApiClient client{std::unique_ptr<Transport>(fake)};
+
+        ApiReply *anon = client.get("/api/v3/site");
+        QSignalSpy anonDone(anon, &ApiReply::finished);
+        QVERIFY(anonDone.wait(1000));
+        QVERIFY(fake->requests.last().bearerToken.isEmpty());
+
+        client.setAuthToken("secret-token");
+        ApiReply *post = client.post("/api/v3/community/follow", R"({"community_id":5,"follow":true})");
+        QSignalSpy postDone(post, &ApiReply::finished);
+        QVERIFY(postDone.wait(1000));
+        QCOMPARE(fake->requests.last().method, QByteArray("POST"));
+        QCOMPARE(fake->requests.last().bearerToken, QByteArray("secret-token"));
+        QCOMPARE(fake->requests.last().body, QByteArray(R"({"community_id":5,"follow":true})"));
+
+        ApiReply *put = client.put("/api/v3/user/save_user_settings", R"({"show_nsfw":true})");
+        QSignalSpy putDone(put, &ApiReply::finished);
+        QVERIFY(putDone.wait(1000));
+        QCOMPARE(fake->requests.last().method, QByteArray("PUT"));
+    }
+
+    void doesNotRetryPosts()
+    {
+        auto *fake = new FakeTransport;
+        fake->script = {TransportResponse{503, {}}, TransportResponse{200, "{}"}};
+        ApiClient client{std::unique_ptr<Transport>(fake)};
+        client.setRetryDelayMs(5);
+        ApiReply *reply = client.post("/api/v3/user/login", "{}");
+        QSignalSpy failed(reply, &ApiReply::failed);
+        QVERIFY(failed.wait(1000));
+        QCOMPARE(fake->requested.size(), 1);
+    }
+
+    void readsServerErrorCodes()
+    {
+        auto *fake = new FakeTransport;
+        fake->script = {TransportResponse{400, R"({"error":"incorrect_login"})"}};
+        ApiClient client{std::unique_ptr<Transport>(fake)};
+        ApiReply *reply = client.post("/api/v3/user/login", "{}");
+        QSignalSpy failed(reply, &ApiReply::failed);
+        QVERIFY(failed.wait(1000));
+        QCOMPARE(failed.first().at(0).toString(), QStringLiteral("Wrong username or password."));
+        QCOMPARE(failed.first().at(2).toString(), QStringLiteral("incorrect_login"));
+    }
+
+    void reportsExpiredSessions()
+    {
+        auto *fake = new FakeTransport;
+        fake->script = {TransportResponse{400, R"({"error":"not_logged_in"})"},
+                        TransportResponse{401, {}}};
+        ApiClient client{std::unique_ptr<Transport>(fake)};
+        QSignalSpy expired(&client, &ApiClient::authenticationExpired);
+
+        // Anonymous requests never count as an expired session.
+        ApiReply *anon = client.get("/api/v3/post/list");
+        QSignalSpy anonFailed(anon, &ApiReply::failed);
+        QVERIFY(anonFailed.wait(1000));
+        QCOMPARE(expired.count(), 0);
+
+        client.setAuthToken("old");
+        ApiReply *reply = client.get("/api/v3/site");
+        QSignalSpy failed(reply, &ApiReply::failed);
+        QVERIFY(failed.wait(1000));
+        QCOMPARE(expired.count(), 1);
     }
 
     void pausesWhenRateLimitIsExhausted()

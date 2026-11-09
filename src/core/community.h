@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QList>
 #include <QString>
 #include <QtGlobal>
 
@@ -8,6 +9,7 @@ namespace quokka {
 // A subreddit ("t5").
 struct Subreddit
 {
+    qint64 id = 0;             // server-side id (Lemmy), used to follow
     QString name;              // display_name, e.g. "pics"
     QString title;
     QString publicDescription; // one-liner
@@ -36,6 +38,22 @@ struct UserAccount
     bool hasKarma = true;   // Reddit has karma; Lemmy has post/comment counts instead
     qint64 postCount = -1;
     qint64 commentCount = -1;
+};
+
+// The signed-in account, as far as Quokka cares.
+struct AccountInfo
+{
+    bool ok = false;
+    QString error;
+    QString name;      // qualified, e.g. "alice@lemmy.world"
+    QString avatarUrl;
+    bool showNsfw = false;
+    struct Follow
+    {
+        QString name;  // qualified community name
+        qint64 id = 0;
+    };
+    QList<Follow> follows;
 };
 
 } // namespace quokka

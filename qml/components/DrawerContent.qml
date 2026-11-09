@@ -14,6 +14,8 @@ Flickable {
     ScrollBar.vertical: ScrollBar {}
 
     readonly property string currentFeed: AppSettings.lastFeed.toLowerCase()
+    // Signed in: the account's subscriptions; otherwise the communities joined in Quokka.
+    readonly property var communities: Account.signedIn ? Account.follows : Library.subscriptions
 
     ColumnLayout {
         id: col
@@ -48,11 +50,120 @@ Flickable {
             }
         }
 
+        // ---- Account ----
+        Rectangle {
+            visible: Account.supported
+            Layout.fillWidth: true
+            Layout.bottomMargin: 8
+            implicitHeight: accountCol.implicitHeight + 24
+            radius: Theme.radiusMedia
+            color: Theme.surface
+            border.width: 1
+            border.color: Theme.border
+
+            ColumnLayout {
+                id: accountCol
+                anchors.fill: parent
+                anchors.margins: 12
+                spacing: 8
+
+                // Signed out
+                RowLayout {
+                    visible: !Account.signedIn
+                    Layout.fillWidth: true
+                    spacing: 10
+                    Text {
+                        Layout.fillWidth: true
+                        text: qsTr("Sign in to %1 to use your subscriptions and settings.").arg(Api.instance)
+                        color: Theme.textMuted
+                        font.pixelSize: Theme.fontSmall
+                        wrapMode: Text.Wrap
+                    }
+                    Chip {
+                        text: qsTr("Sign in")
+                        selected: true
+                        clickable: true
+                        hpad: 14
+                        onClicked: root.navigate(() => Nav.openSignIn())
+                    }
+                }
+
+                // Signed in
+                RowLayout {
+                    visible: Account.signedIn
+                    Layout.fillWidth: true
+                    spacing: 10
+                    Avatar {
+                        name: Account.name || "?"
+                        imageUrl: Account.avatarUrl
+                        size: 34
+                        backgroundColor: Theme.surface
+                    }
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 0
+                        Text {
+                            Layout.fillWidth: true
+                            text: Account.name !== "" ? Api.user(Account.name) : qsTr("Signed in")
+                            color: Theme.text
+                            font.pixelSize: Theme.fontBody
+                            font.weight: Font.Bold
+                            elide: Text.ElideRight
+                        }
+                        Text {
+                            text: qsTr("on %1").arg(Api.instance)
+                            color: Theme.textMuted
+                            font.pixelSize: Theme.fontSmall
+                        }
+                    }
+                    Chip {
+                        text: qsTr("Sign out")
+                        clickable: true
+                        onClicked: Account.signOut()
+                    }
+                }
+                RowLayout {
+                    visible: Account.signedIn
+                    Layout.fillWidth: true
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 0
+                        Text {
+                            text: qsTr("Show NSFW on my account")
+                            color: Theme.text
+                            font.pixelSize: Theme.fontMeta
+                            font.weight: Font.DemiBold
+                        }
+                        Text {
+                            Layout.fillWidth: true
+                            text: qsTr("Saved on %1. Needed for NSFW in search.").arg(Api.instance)
+                            color: Theme.textMuted
+                            font.pixelSize: Theme.fontSmall
+                            wrapMode: Text.Wrap
+                        }
+                    }
+                    Switch {
+                        checked: Account.showNsfw
+                        enabled: !Account.busy
+                        onToggled: Account.setShowNsfw(checked)
+                    }
+                }
+                Text {
+                    visible: Account.error !== "" && !Account.busy
+                    Layout.fillWidth: true
+                    text: Account.error
+                    color: Theme.nsfw
+                    font.pixelSize: Theme.fontSmall
+                    wrapMode: Text.Wrap
+                }
+            }
+        }
+
         // ---- Navigation ----
         NavRow {
             iconName: "home"
             text: qsTr("Home")
-            detail: Library.subscriptions.length > 0 ? String(Library.subscriptions.length) : ""
+            detail: root.communities.length > 0 ? String(root.communities.length) : ""
             accent: Theme.berry
             current: root.currentFeed === "home"
             onClicked: root.navigate(() => Nav.goToFeed("home"))
@@ -97,6 +208,7 @@ Flickable {
             Layout.topMargin: 14
             SectionLabel { text: qsTr("My communities"); Layout.fillWidth: true }
             Chip {
+                visible: !Account.signedIn
                 text: qsTr("Import")
                 iconName: "upload"
                 clickable: true
@@ -104,16 +216,18 @@ Flickable {
             }
         }
         Text {
-            visible: Library.subscriptions.length === 0
+            visible: root.communities.length === 0
             Layout.fillWidth: true
-            text: qsTr("Tap Join on any community to add it to your Home feed, or import a list. "
+            text: Account.signedIn
+                ? qsTr("Tap Join on any community to subscribe with your account.")
+                : qsTr("Tap Join on any community to add it to your Home feed, or import a list. "
                        + "Home shows up to 25 of them.")
             color: Theme.textMuted
             font.pixelSize: Theme.fontMeta
             wrapMode: Text.Wrap
         }
         Repeater {
-            model: Library.subscriptions
+            model: root.communities
             delegate: NavRow {
                 required property string modelData
                 avatarName: modelData

@@ -44,7 +44,9 @@ Page {
 
     PostListModel {
         id: posts
-        feed: page.isHome ? (Library.homeFeed !== "" ? Library.homeFeed : "popular") : page.feedKey
+        // Home: the account's subscriptions when signed in, otherwise the local list.
+        feed: page.isHome ? (Account.signedIn ? "subscribed" : Library.homeFeed !== "" ? Library.homeFeed : "all")
+                          : page.feedKey
         sort: AppSettings.defaultSort
         showNsfw: AppSettings.showNsfw
     }
@@ -218,6 +220,8 @@ Page {
                         Text {
                             text: page.feedKey.toLowerCase() === "local" ? qsTr("Posts from %1").arg(Api.serviceName)
                                 : page.feedKey.toLowerCase() === "all" ? qsTr("Everything %1 knows about").arg(Api.serviceName)
+                                : page.isHome && Account.signedIn
+                                ? qsTr("Your subscriptions on %1").arg(Api.instance)
                                 : page.isHome
                                 ? (Library.subscriptions.length === 0 ? qsTr("Join communities to fill your home feed")
                                    : Library.subscriptions.length === 1 ? qsTr("1 community") : qsTr("%1 communities").arg(Library.subscriptions.length))
@@ -243,7 +247,9 @@ Page {
                     anchors.verticalCenter: parent.verticalCenter
                     // Join with the full name ("linux@lemmy.ml") so it works from any server.
                     readonly property string fullName: about.displayName !== "" ? about.displayName : posts.feed
-                    readonly property bool joined: Library.subscriptions.length >= 0 && Library.isSubscribed(fullName)
+                    readonly property bool joined: Account.signedIn
+                        ? Account.follows.length >= 0 && Account.isFollowing(fullName)
+                        : Library.subscriptions.length >= 0 && Library.isSubscribed(fullName)
                     text: joined ? qsTr("Joined") : qsTr("Join")
                     iconName: joined ? "check" : "plus"
                     clickable: true
@@ -254,7 +260,8 @@ Page {
                     textColor: joined ? "white" : Theme.berry
                     border.width: joined ? 1 : 0
                     border.color: "white"
-                    onClicked: Library.toggleSubscription(fullName)
+                    onClicked: Account.signedIn ? Account.toggleFollow(fullName, about.communityId)
+                                                : Library.toggleSubscription(fullName)
                 }
             }
 

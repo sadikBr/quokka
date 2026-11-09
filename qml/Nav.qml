@@ -22,6 +22,7 @@ QtObject {
     signal rootFeedRequested(string feed)   // switch the main feed (drawer)
     signal aboutRequested()
     signal shortcutsRequested()
+    signal signInRequested()
 
     function openPost(post) { postRequested(post) }
     function openThread(postId, commentId) { threadRequested(postId, commentId || "") }
@@ -29,6 +30,7 @@ QtObject {
     function openUser(name) { if (name && name !== "[deleted]") userRequested(name) }
     function openMedia(post, index) { mediaRequested(post, index || 0) }
     function openAbout() { aboutRequested() }
+    function openSignIn() { signInRequested() }
     function openSaved() { savedRequested() }
     function openHistory() { historyRequested() }
     function goToFeed(feed) { rootFeedRequested(feed) }

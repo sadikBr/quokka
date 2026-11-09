@@ -27,6 +27,11 @@ It reads the public API of any Lemmy server (lemmy.world by default), so no acco
   including ones on other servers (`linux@lemmy.ml`); hot / new / top / active / controversial with time
   ranges; infinite scroll and pull-to-refresh
 - **Any Lemmy server**: lemmy.world by default; switch in the drawer (lemmy.ml, programming.dev, ...)
+- **Optional sign-in** to your Lemmy account: Home shows your subscriptions, Join follows on the server,
+  and with "Show NSFW on my account" turned on, search includes NSFW too (Lemmy only does that for
+  signed-in accounts). Two-factor codes are supported. Quokka keeps a session token per server in its
+  settings file (`~/.config/Quokka/Quokka.conf` on Linux); your password is never stored. Signing out also
+  ends the session on the server.
 - **Posts and comments**: full post with media and Markdown text, threaded comments with coloured rails,
   collapse, "load more replies", OP / MOD badges, tap-to-reveal spoilers
 - **Media viewer**: images with pinch / wheel / double-tap zoom, galleries with captions, videos with sound

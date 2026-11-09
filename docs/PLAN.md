@@ -308,5 +308,7 @@ Each milestone ends with something runnable on **both** desktop and Android.
 - [x] **M6**: desktop sidebar on wide windows, keyboard shortcuts, tooltips, remembered window size,
       About & licenses page; releases are published only for tags v1.0.0 and later
 - [x] **Lemmy**: backend interface, Lemmy v3 support, server picker, Markdown, `c/` names (Nov 2026)
+- [x] **Lemmy sign-in** (optional): session token per server, subscriptions as Home, follow / unfollow,
+      account NSFW setting (needed for NSFW in search)
 - [ ] **Road to 1.0.0**: real-world testing against live Lemmy servers on Linux and Android, fix what comes up,
       choose a license, set up a stable APK signing key, write release notes

@@ -23,19 +23,27 @@ struct TransportResponse
     int rateLimitResetSecs = -1;    // from X-Ratelimit-Reset, -1 when absent
 };
 
-// How requests reach Reddit. The public ".json" transport is the default; an OAuth transport
-// (oauth.reddit.com with a bearer token) can be added later behind the same interface.
+struct TransportRequest
+{
+    QUrl url;
+    QByteArray method = "GET";          // GET, POST or PUT
+    QByteArray body;                    // JSON for POST / PUT
+    QByteArray bearerToken;             // sent as "Authorization: Bearer <token>" when set
+};
+
+// How requests reach the server: over HTTP, or from recorded files in tests.
 class Transport
 {
 public:
     using Callback = std::function<void(const TransportResponse &)>;
     virtual ~Transport() = default;
 
-    // Turns an API path such as "/r/pics/hot" plus a query into a full URL.
+    // Turns an API path such as "/api/v3/post/list" plus a query into a full URL.
     virtual QUrl buildUrl(const QString &path, const QString &query) const = 0;
 
     // Starts the request. Returns a handle that can be passed to cancel(), or nullptr.
-    virtual QObject *fetch(const QUrl &url, Callback done) = 0;
+    // The callback is never invoked after cancel().
+    virtual QObject *fetch(const TransportRequest &request, Callback done) = 0;
     virtual void cancel(QObject *handle) = 0;
 };
 
@@ -48,7 +56,7 @@ public:
                   QString pathSuffix = {});
 
     QUrl buildUrl(const QString &path, const QString &query) const override;
-    QObject *fetch(const QUrl &url, Callback done) override;
+    QObject *fetch(const TransportRequest &request, Callback done) override;
     void cancel(QObject *handle) override;
 
 private:
@@ -67,7 +75,7 @@ public:
     explicit FixtureTransport(QString directory);
 
     QUrl buildUrl(const QString &path, const QString &query) const override;
-    QObject *fetch(const QUrl &url, Callback done) override;
+    QObject *fetch(const TransportRequest &request, Callback done) override;
     void cancel(QObject *handle) override;
 
     static QString fileNameForPath(const QString &path);

@@ -1,6 +1,7 @@
 #include "library.h"
 #include "networkfactory.h"
 #include "apiclient.h"
+#include "account.h"
 #include "apiinfo.h"
 
 #include <QGuiApplication>
@@ -40,6 +41,8 @@ int main(int argc, char *argv[])
     else
         api.useLemmy(ApiInfo::normalizeHost(QSettings().value(QStringLiteral("lemmy/instance"),
                                                              QStringLiteral("lemmy.world")).toString()));
+
+    Account account(&api); // optional sign-in to the Lemmy server
 
     Library library;
     Library::setInstance(&library);

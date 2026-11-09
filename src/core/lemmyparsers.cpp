@@ -151,6 +151,7 @@ Subreddit communityFromView(const QJsonObject &cv)
     const QJsonObject c = cv.value(QLatin1String("community")).toObject();
     const QJsonObject counts = cv.value(QLatin1String("counts")).toObject();
     Subreddit s;
+    s.id = num(c, "id");
     s.name = qualifiedName(c);
     s.title = str(c, "title");
     const QString description = str(c, "description");

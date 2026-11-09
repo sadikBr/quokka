@@ -1,0 +1,59 @@
+{
+ "site_view": {
+  "site": {
+   "name": "Lemmy World"
+  }
+ },
+ "admins": [],
+ "version": "0.19.13",
+ "all_languages": [],
+ "discussion_languages": [],
+ "taglines": [],
+ "custom_emojis": [],
+ "blocked_urls": [],
+ "my_user": {
+  "local_user_view": {
+   "local_user": {
+    "id": 1,
+    "person_id": 7,
+    "show_nsfw": false,
+    "theme": "browser"
+   },
+   "person": {
+    "id": 7,
+    "name": "quokka_fan",
+    "avatar": "https://lemmy.world/pictrs/image/me.png",
+    "actor_id": "https://lemmy.world/u/quokka_fan",
+    "local": true
+   },
+   "counts": {
+    "person_id": 7,
+    "post_count": 1,
+    "comment_count": 2
+   }
+  },
+  "follows": [
+   {
+    "community": {
+     "id": 42,
+     "name": "linux",
+     "actor_id": "https://lemmy.ml/c/linux"
+    },
+    "follower": {}
+   },
+   {
+    "community": {
+     "id": 3,
+     "name": "technology",
+     "actor_id": "https://lemmy.world/c/technology"
+    },
+    "follower": {}
+   }
+  ],
+  "moderates": [],
+  "community_blocks": [],
+  "instance_blocks": [],
+  "person_blocks": [],
+  "discussion_languages": []
+ }
+}

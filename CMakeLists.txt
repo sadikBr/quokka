@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 project(Quokka
-    VERSION 0.7.0
+    VERSION 0.8.0
     DESCRIPTION "A playful, read-only Lemmy (and Reddit) client for desktop and Android"
     HOMEPAGE_URL "https://github.com/sadikBr/Reddit-Client"
     LANGUAGES CXX)
@@ -55,6 +55,7 @@ set(QUOKKA_QML_FILES
     qml/components/SegmentedTabs.qml
     qml/components/ShortcutsHelp.qml
     qml/components/SettingsDrawer.qml
+    qml/components/SignInDialog.qml
     qml/components/SkeletonCard.qml
     qml/components/SortBar.qml
     qml/components/SubredditPicker.qml
@@ -79,6 +80,7 @@ qt_add_qml_module(quokka
     VERSION 1.0
     QML_FILES ${QUOKKA_QML_FILES}
     SOURCES
+        src/app/account.h src/app/account.cpp
         src/app/apiinfo.h src/app/apiinfo.cpp
         src/app/appsettings.h src/app/appsettings.cpp
         src/app/format.h src/app/format.cpp

@@ -61,7 +61,8 @@ bool LemmyBackend::isPseudoFeed(const QString &name) const
 {
     const QString n = name.toLower();
     return n.isEmpty() || n == QLatin1String("all") || n == QLatin1String("popular")
-        || n == QLatin1String("local") || n == QLatin1String("home") || n.contains(QLatin1Char('+'));
+        || n == QLatin1String("local") || n == QLatin1String("home") || n == QLatin1String("subscribed")
+        || n.contains(QLatin1Char('+'));
 }
 
 QString LemmyBackend::sortType(const QString &sort, const QString &timeRange)
@@ -152,6 +153,8 @@ ApiReply *LemmyBackend::posts(const FeedRequest &r)
     const QString f = r.feed.toLower();
     if (f == QLatin1String("local"))
         q.addQueryItem(QStringLiteral("type_"), QStringLiteral("Local"));
+    else if (f == QLatin1String("subscribed"))
+        q.addQueryItem(QStringLiteral("type_"), QStringLiteral("Subscribed"));
     else if (isPseudoFeed(r.feed))
         q.addQueryItem(QStringLiteral("type_"), QStringLiteral("All"));
     else
@@ -398,6 +401,80 @@ QList<Comment> LemmyBackend::parseUserComments(const QByteArray &body, const QSt
     if (next)
         *next = nextPage(pageOf(after), list.size());
     return out;
+}
+
+// ---- Accounts ------------------------------------------------------------------------------
+
+ApiReply *LemmyBackend::login(const QString &user, const QString &password, const QString &totp)
+{
+    QJsonObject body{{QStringLiteral("username_or_email"), user.trimmed()},
+                     {QStringLiteral("password"), password}};
+    if (!totp.trimmed().isEmpty())
+        body.insert(QStringLiteral("totp_2fa_token"), totp.trimmed());
+    return m_client->post(QStringLiteral("/api/v3/user/login"), QJsonDocument(body).toJson(QJsonDocument::Compact));
+}
+
+QString LemmyBackend::parseLogin(const QByteArray &body, QString *error) const
+{
+    const QJsonObject root = object(body, error);
+    const QString jwt = root.value(QLatin1String("jwt")).toString();
+    if (jwt.isEmpty() && error && error->isEmpty()) {
+        if (root.value(QLatin1String("verify_email_sent")).toBool())
+            *error = QStringLiteral("Check your email to confirm your account, then sign in.");
+        else if (root.value(QLatin1String("registration_created")).toBool())
+            *error = QStringLiteral("Your sign-up is waiting for approval by the server's admins.");
+        else
+            *error = QStringLiteral("The server did not sign you in.");
+    }
+    return jwt;
+}
+
+ApiReply *LemmyBackend::logout()
+{
+    return m_client->post(QStringLiteral("/api/v3/user/logout"), QByteArrayLiteral("{}"));
+}
+
+ApiReply *LemmyBackend::account()
+{
+    return m_client->get(QStringLiteral("/api/v3/site"));
+}
+
+AccountInfo LemmyBackend::parseAccount(const QByteArray &body) const
+{
+    AccountInfo info;
+    const QJsonObject my = object(body, &info.error).value(QLatin1String("my_user")).toObject();
+    if (my.isEmpty()) {
+        if (info.error.isEmpty())
+            info.error = QStringLiteral("You are not signed in.");
+        return info;
+    }
+    const QJsonObject view = my.value(QLatin1String("local_user_view")).toObject();
+    const QJsonObject person = view.value(QLatin1String("person")).toObject();
+    info.name = lemmy::qualifiedName(person);
+    info.avatarUrl = person.value(QLatin1String("avatar")).toString();
+    info.showNsfw = view.value(QLatin1String("local_user")).toObject().value(QLatin1String("show_nsfw")).toBool();
+    for (const auto &v : my.value(QLatin1String("follows")).toArray()) {
+        const QJsonObject community = v.toObject().value(QLatin1String("community")).toObject();
+        info.follows.append({lemmy::qualifiedName(community),
+                             qint64(community.value(QLatin1String("id")).toDouble())});
+    }
+    std::sort(info.follows.begin(), info.follows.end(), [](const auto &a, const auto &b) {
+        return a.name.compare(b.name, Qt::CaseInsensitive) < 0;
+    });
+    info.ok = true;
+    return info;
+}
+
+ApiReply *LemmyBackend::follow(qint64 communityId, bool follow)
+{
+    const QJsonObject body{{QStringLiteral("community_id"), communityId}, {QStringLiteral("follow"), follow}};
+    return m_client->post(QStringLiteral("/api/v3/community/follow"), QJsonDocument(body).toJson(QJsonDocument::Compact));
+}
+
+ApiReply *LemmyBackend::setAccountNsfw(bool show)
+{
+    const QJsonObject body{{QStringLiteral("show_nsfw"), show}};
+    return m_client->put(QStringLiteral("/api/v3/user/save_user_settings"), QJsonDocument(body).toJson(QJsonDocument::Compact));
 }
 
 } // namespace quokka

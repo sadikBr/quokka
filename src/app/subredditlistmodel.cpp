@@ -34,6 +34,7 @@ QVariant SubredditListModel::data(const QModelIndex &index, int role) const
     case IconUrlRole: return s.iconUrl;
     case ColorRole: return s.color;
     case NsfwRole: return s.nsfw;
+    case CommunityIdRole: return s.id;
     default: return {};
     }
 }
@@ -42,7 +43,7 @@ QHash<int, QByteArray> SubredditListModel::roleNames() const
 {
     return {{NameRole, "name"},          {TitleRole, "title"},     {DescriptionRole, "description"},
             {SubscribersRole, "subscribers"}, {IconUrlRole, "iconUrl"}, {ColorRole, "color"},
-            {NsfwRole, "nsfw"}};
+            {NsfwRole, "nsfw"},          {CommunityIdRole, "communityId"}};
 }
 
 void SubredditListModel::setQuery(const QString &q)

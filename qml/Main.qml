@@ -164,6 +164,7 @@ ApplicationWindow {
         function onUserRequested(name) { stack.push(userPage, { userName: name }) }
         function onAboutRequested() { stack.push(aboutPage) }
         function onShortcutsRequested() { shortcutsHelp.open() }
+        function onSignInRequested() { signInDialog.open() }
         function onSavedRequested() { stack.push(localPostsPage, { source: "saved" }) }
         function onHistoryRequested() { stack.push(localPostsPage, { source: "history" }) }
         function onRootFeedRequested(feed) {
@@ -200,7 +201,12 @@ ApplicationWindow {
         id: shortcutsHelp
     }
 
+    SignInDialog {
+        id: signInDialog
+    }
+
     readonly property bool popupOpen: picker.opened || drawer.opened || importDialog.opened || shortcutsHelp.opened
+                                      || signInDialog.opened
 
     // Back navigation: Esc / Backspace / Alt+Left on desktop, the system back button on Android.
     Shortcut {
@@ -267,6 +273,9 @@ ApplicationWindow {
             close.accepted = false
         } else if (importDialog.opened) {
             importDialog.close()
+            close.accepted = false
+        } else if (signInDialog.opened) {
+            signInDialog.close()
             close.accepted = false
         } else if (picker.opened) {
             picker.close()

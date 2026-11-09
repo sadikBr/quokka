@@ -10,6 +10,7 @@ Item {
     required property var subscribers
     required property string iconUrl
     required property bool nsfw
+    required property var communityId
 
     signal clicked()
     property alias action: actionSlot.data

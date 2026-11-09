@@ -29,6 +29,7 @@ public:
         IconUrlRole,
         ColorRole,
         NsfwRole,
+        CommunityIdRole,
     };
 
     explicit SubredditListModel(QObject *parent = nullptr);

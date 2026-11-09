@@ -1,14 +1,17 @@
 #include "apiclient.h"
 
 #include <QCoreApplication>
+#include <QHash>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QSysInfo>
 
 namespace quokka {
 
-ApiReply::ApiReply(ApiClient *client, QUrl url)
+ApiReply::ApiReply(ApiClient *client, TransportRequest request)
     : QObject(client)
     , m_client(client)
-    , m_url(std::move(url))
+    , m_request(std::move(request))
 {
 }
 
@@ -70,9 +73,57 @@ QString ApiClient::errorMessageFor(int httpStatus, const QString &networkError, 
 
 ApiReply *ApiClient::get(const QString &path, const QUrlQuery &query)
 {
-    auto *reply = new ApiReply(this, m_transport->buildUrl(path, query.toString(QUrl::FullyEncoded)));
+    TransportRequest r;
+    r.url = m_transport->buildUrl(path, query.toString(QUrl::FullyEncoded));
+    r.bearerToken = m_token;
+    auto *reply = new ApiReply(this, r);
     enqueue(reply);
     return reply;
+}
+
+ApiReply *ApiClient::post(const QString &path, const QByteArray &json)
+{
+    TransportRequest r;
+    r.url = m_transport->buildUrl(path, {});
+    r.method = "POST";
+    r.body = json;
+    r.bearerToken = m_token;
+    auto *reply = new ApiReply(this, r);
+    enqueue(reply);
+    return reply;
+}
+
+ApiReply *ApiClient::put(const QString &path, const QByteArray &json)
+{
+    TransportRequest r;
+    r.url = m_transport->buildUrl(path, {});
+    r.method = "PUT";
+    r.body = json;
+    r.bearerToken = m_token;
+    auto *reply = new ApiReply(this, r);
+    enqueue(reply);
+    return reply;
+}
+
+QString ApiClient::serverErrorMessage(const QString &code)
+{
+    static const QHash<QString, QString> messages = {
+        {QStringLiteral("incorrect_login"), QStringLiteral("Wrong username or password.")},
+        {QStringLiteral("missing_totp_token"), QStringLiteral("Enter the code from your authenticator app.")},
+        {QStringLiteral("incorrect_totp_token"), QStringLiteral("That two-factor code is not right.")},
+        {QStringLiteral("email_not_verified"), QStringLiteral("Please confirm your email address first.")},
+        {QStringLiteral("registration_application_is_pending"),
+         QStringLiteral("Your sign-up is still waiting for approval by the server's admins.")},
+        {QStringLiteral("registration_denied"), QStringLiteral("Your sign-up was not approved.")},
+        {QStringLiteral("site_ban"), QStringLiteral("This account is banned on this server.")},
+        {QStringLiteral("deleted"), QStringLiteral("This account was deleted.")},
+        {QStringLiteral("not_logged_in"), QStringLiteral("You were signed out. Please sign in again.")},
+        {QStringLiteral("rate_limit_error"), QStringLiteral("Too many attempts. Wait a minute and try again.")},
+        {QStringLiteral("couldnt_find_community"), QStringLiteral("That community doesn't exist on this server.")},
+        {QStringLiteral("couldnt_find_person"), QStringLiteral("That user doesn't exist.")},
+        {QStringLiteral("couldnt_find_post"), QStringLiteral("That post doesn't exist or was removed.")},
+    };
+    return messages.value(code);
 }
 
 void ApiClient::enqueue(ApiReply *reply)
@@ -102,7 +153,7 @@ void ApiClient::dispatch(ApiReply *reply)
     QPointer<ApiReply> guard(reply);
     // Transports never invoke the callback after cancel(), so the in-flight count is
     // decremented either here or in cancel(), never both.
-    QObject *handle = m_transport->fetch(reply->m_url, [this, guard](const TransportResponse &r) {
+    QObject *handle = m_transport->fetch(reply->m_request, [this, guard](const TransportResponse &r) {
         --m_inFlight;
         if (guard) {
             guard->m_inFlight = false;
@@ -122,7 +173,8 @@ void ApiClient::handleResponse(ApiReply *reply, const TransportResponse &r)
     if (r.rateLimitRemaining >= 0 && r.rateLimitRemaining < 1.0 && r.rateLimitResetSecs > 0)
         pauseFor(r.rateLimitResetSecs * 1000);
 
-    const bool retryable = r.networkError || r.httpStatus == 429 || r.httpStatus >= 500;
+    const bool retryable = reply->m_request.method == "GET"
+        && (r.networkError || r.httpStatus == 429 || r.httpStatus >= 500);
     if (retryable && reply->m_attempts < m_maxAttempts) {
         const int delay = r.httpStatus == 429 && r.rateLimitResetSecs > 0
             ? r.rateLimitResetSecs * 1000
@@ -132,11 +184,21 @@ void ApiClient::handleResponse(ApiReply *reply, const TransportResponse &r)
         return;
     }
 
-    if (!r.networkError && r.httpStatus >= 200 && r.httpStatus < 300)
+    if (!r.networkError && r.httpStatus >= 200 && r.httpStatus < 300) {
         emit reply->finished(r.body);
-    else
-        emit reply->failed(errorMessageFor(r.networkError ? 0 : r.httpStatus, r.errorString, m_serviceName),
-                           r.httpStatus);
+    } else {
+        // Lemmy explains failures as {"error": "<code>"}.
+        const QString code = QJsonDocument::fromJson(r.body).object()
+                                 .value(QLatin1String("error")).toString();
+        QString message = serverErrorMessage(code);
+        if (message.isEmpty())
+            message = errorMessageFor(r.networkError ? 0 : r.httpStatus, r.errorString, m_serviceName);
+        const bool expired = !reply->m_request.bearerToken.isEmpty()
+            && (r.httpStatus == 401 || code == QLatin1String("not_logged_in"));
+        emit reply->failed(message, r.httpStatus, code);
+        if (expired)
+            emit authenticationExpired();
+    }
     reply->deleteLater();
 }
 

@@ -109,13 +109,15 @@ Page {
                 onClicked: page.subreddit = ""
             }
 
-            // Lemmy's search uses the signed-in account's NSFW preference, and Quokka reads
-            // anonymously, so servers never return NSFW results to a search.
+            // Lemmy's search ignores the request's NSFW option and uses the signed-in account's own
+            // preference, so NSFW results need an account with NSFW turned on.
             Text {
-                visible: AppSettings.showNsfw && Api.isLemmy
+                visible: AppSettings.showNsfw && Api.isLemmy && !(Account.signedIn && Account.showNsfw)
                 Layout.fillWidth: true
-                text: qsTr("Lemmy servers leave NSFW posts and communities out of searches for readers "
-                           + "who aren't signed in. Browse NSFW communities directly to see their posts.")
+                text: Account.signedIn
+                    ? qsTr("To include NSFW in searches, turn on “Show NSFW on my account” in the menu.")
+                    : qsTr("Lemmy only includes NSFW in searches for signed-in accounts that allow it. "
+                           + "Sign in from the menu, or browse NSFW communities directly.")
                 color: Theme.textMuted
                 font.pixelSize: Theme.fontSmall
                 wrapMode: Text.Wrap
@@ -238,7 +240,7 @@ Page {
             id: subRow
             width: subList.width
             onClicked: Nav.openSubreddit(name)
-            action: JoinButton { name: subRow.name }
+            action: JoinButton { name: subRow.name; communityId: subRow.communityId }
         }
         footer: Item {
             width: subList.width

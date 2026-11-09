@@ -33,7 +33,7 @@ QUrl HttpTransport::buildUrl(const QString &path, const QString &query) const
     return url;
 }
 
-QObject *HttpTransport::fetch(const QUrl &url, Callback done)
+QObject *HttpTransport::fetch(const TransportRequest &request, Callback done)
 {
     if (!m_nam) {
         TransportResponse r;
@@ -43,16 +43,27 @@ QObject *HttpTransport::fetch(const QUrl &url, Callback done)
         return nullptr;
     }
 
-    QNetworkRequest req(url);
+    QNetworkRequest req(request.url);
     req.setHeader(QNetworkRequest::UserAgentHeader, m_userAgent);
     req.setRawHeader("Accept", "application/json");
     req.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
                      QNetworkRequest::NoLessSafeRedirectPolicy);
-    req.setAttribute(QNetworkRequest::CacheLoadControlAttribute,
-                     QNetworkRequest::PreferNetwork);
     req.setTransferTimeout(20000);
+    const bool personal = !request.bearerToken.isEmpty() || request.method != "GET";
+    if (!request.bearerToken.isEmpty())
+        req.setRawHeader("Authorization", "Bearer " + request.bearerToken);
+    // Never cache signed-in or state-changing responses on disk.
+    req.setAttribute(QNetworkRequest::CacheLoadControlAttribute,
+                     personal ? QNetworkRequest::AlwaysNetwork : QNetworkRequest::PreferNetwork);
+    req.setAttribute(QNetworkRequest::CacheSaveControlAttribute, !personal);
 
-    QNetworkReply *reply = m_nam->get(req);
+    QNetworkReply *reply = nullptr;
+    if (request.method == "GET") {
+        reply = m_nam->get(req);
+    } else {
+        req.setHeader(QNetworkRequest::ContentTypeHeader, QByteArrayLiteral("application/json"));
+        reply = m_nam->sendCustomRequest(req, request.method, request.body);
+    }
     QObject::connect(reply, &QNetworkReply::finished, reply, [reply, done = std::move(done)] {
         TransportResponse r;
         r.httpStatus = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
@@ -108,8 +119,9 @@ QString FixtureTransport::fileNameForPath(const QString &path)
     return name.toLower() + QLatin1String(".json");
 }
 
-QObject *FixtureTransport::fetch(const QUrl &url, Callback done)
+QObject *FixtureTransport::fetch(const TransportRequest &request, Callback done)
 {
+    const QUrl &url = request.url;
     QString path = url.path();
     QString file = m_dir.filePath(fileNameForPath(path));
     while (!QFile::exists(file) && path.count(QLatin1Char('/')) > 1) {

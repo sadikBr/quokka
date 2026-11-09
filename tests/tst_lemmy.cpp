@@ -245,6 +245,42 @@ private slots:
         QCOMPARE(comments[0].permalink, QStringLiteral("https://lemmy.world/post/103/1"));
     }
 
+    void accounts()
+    {
+        QVERIFY(backend->supportsAccounts());
+        QString err;
+        QCOMPARE(backend->parseLogin(R"({"jwt":"abc.def","registration_created":false,"verify_email_sent":false})", &err),
+                 QStringLiteral("abc.def"));
+        QVERIFY(err.isEmpty());
+        QVERIFY(backend->parseLogin(R"({"registration_created":false,"verify_email_sent":true})", &err).isEmpty());
+        QVERIFY(err.contains("email"));
+
+        const AccountInfo me = backend->parseAccount(fixture("api_v3_site.json"));
+        QVERIFY(me.ok);
+        QCOMPARE(me.name, QStringLiteral("quokka_fan@lemmy.world"));
+        QVERIFY(!me.showNsfw);
+        QCOMPARE(me.follows.size(), 2);
+        QCOMPARE(me.follows[0].name, QStringLiteral("linux@lemmy.ml")); // sorted
+        QCOMPARE(me.follows[0].id, 42);
+
+        const AccountInfo anonymous = backend->parseAccount(R"({"site_view":{}})");
+        QVERIFY(!anonymous.ok);
+
+        QString err2;
+        const Subreddit s = backend->parseCommunity(fixture("api_v3_community.json"), &err2);
+        QVERIFY(s.id > 0); // needed to follow
+    }
+
+    void subscribedFeedIsPseudo()
+    {
+        QVERIFY(backend->isPseudoFeed("subscribed"));
+        FeedRequest r;
+        r.feed = QStringLiteral("subscribed");
+        ApiReply *reply = backend->posts(r);
+        QVERIFY(reply->url().query().contains("type_=Subscribed"));
+        reply->abort();
+    }
+
     void markdownRendering()
     {
         const QString html = markdown::toHtml(

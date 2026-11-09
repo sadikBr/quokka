@@ -24,11 +24,12 @@ class ApiReply : public QObject
 public:
     virtual void abort();
     bool isAborted() const { return m_aborted; }
-    QUrl url() const { return m_url; }
+    QUrl url() const { return m_request.url; }
 
 signals:
     void finished(const QByteArray &body);
-    void failed(const QString &message, int httpStatus);
+    // `code` is the server's machine-readable error (e.g. "incorrect_login"), when it sent one.
+    void failed(const QString &message, int httpStatus, const QString &code = {});
 
 protected:
     explicit ApiReply(QObject *parent); // for replies not tied to a single request
@@ -36,10 +37,10 @@ protected:
 
 private:
     friend class ApiClient;
-    ApiReply(ApiClient *client, QUrl url);
+    ApiReply(ApiClient *client, TransportRequest request);
 
     QPointer<ApiClient> m_client;
-    QUrl m_url;
+    TransportRequest m_request;
     QPointer<QObject> m_handle; // transport handle while in flight
     int m_attempts = 0;
     bool m_inFlight = false;
@@ -82,6 +83,16 @@ public:
 
     // path: "/api/v3/post/list" or "/r/pics/hot"; the transport adds the base URL.
     ApiReply *get(const QString &path, const QUrlQuery &query = {});
+    // JSON body requests. These are not retried (they may change something on the server).
+    ApiReply *post(const QString &path, const QByteArray &json);
+    ApiReply *put(const QString &path, const QByteArray &json);
+
+    // Signed-in requests carry this token ("Authorization: Bearer ..."). Empty = anonymous.
+    void setAuthToken(const QString &token) { m_token = token.toUtf8(); }
+    bool hasAuthToken() const { return !m_token.isEmpty(); }
+
+    // Readable text for a server error code such as Lemmy's {"error":"incorrect_login"}.
+    static QString serverErrorMessage(const QString &code);
 
     // Name used in error messages ("lemmy.world", "Reddit").
     void setServiceName(const QString &name) { m_serviceName = name; }
@@ -94,6 +105,10 @@ public:
     static QString defaultUserAgent();
     static QString errorMessageFor(int httpStatus, const QString &networkError,
                                    const QString &service = QStringLiteral("the server"));
+
+signals:
+    // A signed-in request was refused because the token is no longer valid.
+    void authenticationExpired();
 
 private:
     friend class ApiReply;
@@ -111,6 +126,7 @@ private:
     int m_maxAttempts = 3;
     int m_retryDelayMs = 4000;
     QString m_serviceName = QStringLiteral("the server");
+    QByteArray m_token;
     QTimer m_pauseTimer;
 };
 
