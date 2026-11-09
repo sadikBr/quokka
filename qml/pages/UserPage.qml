@@ -63,6 +63,11 @@ Page {
         cacheBuffer: 1200
         readonly property int contentWidth2: Math.min(width - 24, Theme.contentMaxWidth)
         readonly property var current: page.tab === 0 ? posts : userComments
+
+        // The profile header grows once it has loaded; stay at the top until the user scrolls.
+        property bool touched: false
+        onMovementStarted: touched = true
+        onOriginYChanged: if (!touched) positionViewAtBeginning()
         ScrollBar.vertical: ScrollBar {}
 
         onContentYChanged: {
@@ -178,8 +183,7 @@ Page {
             id: rowLoader
             required property var model
             required property int index
-            width: list.contentWidth2
-            x: (list.width - width) / 2
+            width: list.width
             sourceComponent: page.tab === 0 ? postDelegate : commentDelegate
 
             Component {

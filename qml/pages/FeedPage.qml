@@ -312,8 +312,7 @@ Page {
         }
 
         delegate: PostCard {
-            width: list.contentWidth2
-            x: (list.width - width) / 2
+            width: list.width
             highlighted: index === page.kbIndex
             saved: Library.savedRevision >= 0 && Library.isSaved(postId)
             visited: Library.historyRevision >= 0 && Library.isVisited(postId)

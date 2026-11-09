@@ -120,8 +120,7 @@ Page {
         }
 
         delegate: CommentRow {
-            width: list.contentWidth2
-            x: (list.width - width) / 2
+            width: list.width
             onToggle: comments.toggleCollapsed(index)
             onLoadMore: comments.loadMore(index)
             onContinueThread: Nav.openThread(page.postId, parentId.replace(/^t1_/, ""))

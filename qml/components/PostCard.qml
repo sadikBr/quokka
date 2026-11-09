@@ -50,6 +50,7 @@ Item {
     Accessible.name: title + ", " + Api.community(subreddit) + ", " + score + " points, " + numComments + " comments"
     Accessible.onPressAction: openPost()
     readonly property int shadowOffset: 4
+    readonly property int columnWidth: Math.min(width - 24, Theme.contentMaxWidth)
 
     // Pop-in when the card first appears.
     opacity: 0
@@ -63,8 +64,12 @@ Item {
 
     Item {
         id: face
-        anchors.fill: parent
+        // The card is as wide as the list; the face is the centred, readable column.
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
         anchors.bottomMargin: card.shadowOffset
+        anchors.horizontalCenter: parent.horizontalCenter
+        width: card.columnWidth
         scale: cardTap.pressed ? 0.975 : 1.0
         Behavior on scale { NumberAnimation { duration: Theme.quick; easing.type: Easing.OutQuad } }
 

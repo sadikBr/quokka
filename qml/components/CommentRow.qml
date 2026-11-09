@@ -30,6 +30,8 @@ Item {
     signal loadMore()
     signal continueThread()
 
+    // The row spans the list; its content sits in a centred column `inset` from each side.
+    readonly property int inset: Math.max(12, (width - Theme.contentMaxWidth) / 2)
     readonly property int step: 14
     readonly property int maxIndentLevels: 8
     readonly property int indent: Math.min(depth, maxIndentLevels) * step
@@ -43,7 +45,7 @@ Item {
         model: Math.min(row.depth, row.maxIndentLevels)
         delegate: Rectangle {
             required property int index
-            x: index * row.step + 5
+            x: row.inset + index * row.step + 5
             y: 0
             width: 2
             height: row.height
@@ -57,9 +59,9 @@ Item {
     ColumnLayout {
         id: commentCol
         visible: row.kind === CommentTreeModel.CommentRow
-        x: row.indent + (row.depth > 0 ? 8 : 0)
+        x: row.inset + row.indent + (row.depth > 0 ? 8 : 0)
         y: row.depth === 0 ? 14 : 4
-        width: row.width - x
+        width: row.width - x - row.inset
         spacing: 4
         opacity: row.collapsed ? 0.75 : 1
 
@@ -164,7 +166,7 @@ Item {
     // ---- Load more / continue thread ----
     Chip {
         visible: row.kind !== CommentTreeModel.CommentRow
-        x: row.indent + (row.depth > 0 ? 8 : 0)
+        x: row.inset + row.indent + (row.depth > 0 ? 8 : 0)
         anchors.verticalCenter: parent.verticalCenter
         anchors.verticalCenterOffset: row.depth === 0 ? 5 : 0
         clickable: !row.loadingMore

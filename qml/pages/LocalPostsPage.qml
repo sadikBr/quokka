@@ -41,8 +41,7 @@ Page {
         ScrollBar.vertical: ScrollBar {}
 
         delegate: PostCard {
-            width: list.contentWidth2
-            x: (list.width - width) / 2
+            width: list.width
             saved: Library.savedRevision >= 0 && Library.isSaved(postId)
             visited: false
             onToggleSave: Library.toggleSaved(localPosts.get(index))

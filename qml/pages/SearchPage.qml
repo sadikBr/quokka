@@ -159,8 +159,7 @@ Page {
                 results.loadMore()
         }
         delegate: PostCard {
-            width: postList.contentWidth2
-            x: (postList.width - width) / 2
+            width: postList.width
             saved: Library.savedRevision >= 0 && Library.isSaved(postId)
             visited: Library.historyRevision >= 0 && Library.isVisited(postId)
             onToggleSave: Library.toggleSaved(results.get(index))
@@ -225,8 +224,7 @@ Page {
         }
         delegate: SubredditRow {
             id: subRow
-            width: subList.contentWidth2
-            x: (subList.width - width) / 2
+            width: subList.width
             onClicked: Nav.openSubreddit(name)
             action: JoinButton { name: subRow.name }
         }
