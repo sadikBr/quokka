@@ -8,6 +8,7 @@
 #include <QFontDatabase>
 #include <QGuiApplication>
 #include <QIcon>
+#include <QImageReader>
 #include <QQmlApplicationEngine>
 #include <QQuickStyle>
 #include <QQuickWindow>
@@ -38,6 +39,12 @@ int main(int argc, char *argv[])
                 break;
         }
     }
+    // Many Lemmy images are WebP; Qt reads those only with the qtimageformats plugin.
+    if (!QImageReader::supportedImageFormats().contains("webp"))
+        qWarning("Quokka: this Qt cannot decode WebP images, so some pictures won't show. Install Qt's "
+                 "image formats plugin (Debian/Ubuntu: qt6-image-formats-plugins, Fedora: "
+                 "qt6-qtimageformats, Arch: qt6-imageformats, aqt: -m qtimageformats).");
+
     QFont uiFont(QStringLiteral("Inter"));
     uiFont.setPixelSize(15);
     QGuiApplication::setFont(uiFont);

@@ -39,13 +39,14 @@ bool hasExtension(const QString &url, std::initializer_list<const char *> exts)
     return false;
 }
 
-// pict-rs (Lemmy's image server) resizes on request; ask for a card-sized thumbnail.
+// pict-rs (Lemmy's image server) resizes on request; ask for a card-sized thumbnail. JPEG, not
+// WebP: Qt only decodes WebP when the optional qtimageformats plugin is installed.
 QString sizedImage(const QString &url, int width)
 {
     if (!url.contains(QLatin1String("/pictrs/image/")) || url.contains(QLatin1String("thumbnail=")))
         return url;
     return url + (url.contains(QLatin1Char('?')) ? QLatin1Char('&') : QLatin1Char('?'))
-        + QStringLiteral("thumbnail=%1&format=webp").arg(width);
+        + QStringLiteral("thumbnail=%1&format=jpg").arg(width);
 }
 
 } // namespace

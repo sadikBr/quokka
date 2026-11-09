@@ -59,14 +59,14 @@ sudo apt install build-essential cmake ninja-build git \
   qt6-base-dev qt6-declarative-dev qt6-multimedia-dev qt6-svg-dev \
   qml6-module-qtquick-controls qml6-module-qtquick-layouts qml6-module-qtquick-templates \
   qml6-module-qtquick-window qml6-module-qtqml-workerscript qml6-module-qtmultimedia \
-  libqt6sql6-sqlite qt6-qpa-plugins
+  libqt6sql6-sqlite qt6-qpa-plugins qt6-image-formats-plugins
 
 # Fedora
 sudo dnf install gcc-c++ cmake ninja-build git qt6-qtbase-devel qt6-qtdeclarative-devel \
-  qt6-qtmultimedia-devel qt6-qtsvg-devel
+  qt6-qtmultimedia-devel qt6-qtsvg-devel qt6-qtimageformats
 
 # Arch
-sudo pacman -S base-devel cmake ninja git qt6-base qt6-declarative qt6-multimedia qt6-svg
+sudo pacman -S base-devel cmake ninja git qt6-base qt6-declarative qt6-multimedia qt6-svg qt6-imageformats
 ```
 
 **Option B: the official Qt 6.8 LTS build** (works on any distribution, including older ones):
@@ -74,12 +74,15 @@ sudo pacman -S base-devel cmake ninja git qt6-base qt6-declarative qt6-multimedi
 ```bash
 sudo apt install build-essential cmake ninja-build git libgl1-mesa-dev libxkbcommon-dev libxcb-cursor0   # Ubuntu/Debian
 python3 -m pip install --user aqtinstall
-python3 -m aqt install-qt linux desktop 6.8.3 linux_gcc_64 -m qtmultimedia -O ~/Qt
+python3 -m aqt install-qt linux desktop 6.8.3 linux_gcc_64 -m qtmultimedia qtimageformats -O ~/Qt
 export CMAKE_PREFIX_PATH=~/Qt/6.8.3/gcc_64
 ```
 
 (Or use the [Qt Online Installer](https://www.qt.io/download-qt-installer-oss) and tick
-*Qt 6.8 → Desktop gcc 64-bit* and *Qt Multimedia*.)
+*Qt 6.8 → Desktop gcc 64-bit*, *Qt Multimedia* and *Qt Image Formats*.)
+
+Qt Image Formats adds WebP/AVIF support, which many Lemmy pictures use. Without it Quokka still
+runs, but those pictures show as "image unavailable" (Quokka prints a hint at start).
 
 ### 2. Build, test and run
 
@@ -112,7 +115,7 @@ Prefer an IDE? Open `CMakeLists.txt` in Qt Creator and pick the Qt 6.8 kit.
 ## Build for Android
 
 Install the Android SDK, NDK r26b (26.1.10909125) and JDK 17 (Qt Creator → Preferences → Devices → Android
-can do this for you), plus Qt 6.8 for Android (`aqt install-qt all_os android 6.8.3 android_arm64_v8a -m qtmultimedia -O ~/Qt`).
+can do this for you), plus Qt 6.8 for Android (`aqt install-qt all_os android 6.8.3 android_arm64_v8a -m qtmultimedia qtimageformats -O ~/Qt`).
 OpenSSL for Android is downloaded automatically at configure time.
 
 ```bash

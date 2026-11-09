@@ -32,7 +32,7 @@ jobs:
           host: linux
           target: desktop
           arch: linux_gcc_64
-          modules: qtmultimedia
+          modules: qtmultimedia qtimageformats
           cache: true
 
       - name: Configure
@@ -120,7 +120,7 @@ jobs:
           host: all_os          # Qt >= 6.7 publishes Android packages under "all_os"
           target: android
           arch: android_arm64_v8a
-          modules: qtmultimedia
+          modules: qtmultimedia qtimageformats
           cache: true
           dir: ${{ runner.temp }}/qt-android
 

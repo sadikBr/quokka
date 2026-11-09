@@ -104,6 +104,7 @@ private slots:
         // The reading server's thumbnail first, the origin server's image as the fallback.
         QVERIFY(image.previewUrl.startsWith("https://lemmy.world/pictrs/image/desk_thumb.webp"));
         QVERIFY(image.previewUrl.contains("thumbnail=640"));
+        QVERIFY(image.previewUrl.contains("format=jpg")); // decodable without extra Qt plugins
         QVERIFY(image.previewFallbackUrl.startsWith("https://lemmynsfw.example/pictrs/image/desk.jpeg"));
         QCOMPARE(image.media.size(), 1);
         QCOMPARE(image.media.first().url, QStringLiteral("https://lemmynsfw.example/pictrs/image/desk.jpeg"));
