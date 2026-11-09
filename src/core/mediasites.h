@@ -47,9 +47,10 @@ protected:
 };
 
 // redgifs.com: short NSFW videos. Public API with an anonymous temporary token.
-//   feed "" / "tag:<tags>"  -> search (trending / latest / top), or `search`
-//   feed "niche:<name>"     -> a niche's clips
-//   user "<name>"           -> a creator's clips
+//   search "<Tag>+<Tag>"   -> clips with all these tags (exact tag names, see suggest())
+//   feed "niche:<id>"      -> a niche's clips
+//   user "<name>"          -> a creator's clips
+//   otherwise              -> everything (trending / latest / top)
 class RedgifsBackend : public MediaSiteBackend
 {
 public:
@@ -65,6 +66,18 @@ public:
     // Path and query for a feed request (exposed for tests).
     static QString requestPath(const FeedRequest &request, QUrlQuery *query);
     static parsers::PostListing parse(const QByteArray &body, int page);
+
+    // Search suggestions as you type: tags (with clip counts), creators and niches.
+    struct Suggestion {
+        QString text;
+        QString type;   // "tag", "user" / "creator", "niche"
+        int count = 0;  // clips
+    };
+    ApiReply *suggest(const QString &query);
+    static QList<Suggestion> parseSuggestions(const QByteArray &body);
+    // The tags trending now.
+    ApiReply *trendingTags();
+    static QList<Suggestion> parseTags(const QByteArray &body);
 
 private:
     ApiReply *withToken(std::function<ApiReply *()> request);

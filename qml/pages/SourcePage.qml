@@ -11,14 +11,27 @@ Page {
     readonly property string source: params.source || "redgifs"
     readonly property string sourceName: source === "eporner" ? "Eporner" : "Redgifs"
     readonly property string user: params.user || ""
-    // A tag is a search for that word; the search box shows it.
-    property string query: params.tag || params.search || ""
+    readonly property bool isRedgifs: source === "redgifs"
+    // Redgifs: exact tag names, all required (tags are how Redgifs searches). Eporner: free text.
+    property var tags: params.tag ? [params.tag] : []
+    property string query: isRedgifs ? "" : (params.tag || params.search || "")
+    function addTag(t) {
+        t = String(t).trim()
+        if (t === "" || tags.some(x => x.toLowerCase() === t.toLowerCase()))
+            return
+        tags = tags.concat([t])
+        list.positionViewAtBeginning()
+    }
+    function removeTag(t) { tags = tags.filter(x => x !== t) }
+    readonly property string searchText: isRedgifs ? tags.join("+") : query
     property int sortIndex: 0
     readonly property var sorts: ["hot", "new", "top"]
     readonly property var sortNames: source === "eporner" ? [qsTr("Popular"), qsTr("New"), qsTr("Top")]
                                                           : [qsTr("Trending"), qsTr("New"), qsTr("Top")]
     readonly property bool active: StackView.status === StackView.Active
-    readonly property string heading: user !== "" ? "@" + user : query !== "" ? query : sourceName
+    readonly property string heading: user !== "" ? "@" + user
+                                    : tags.length > 0 ? tags.join(" + ")
+                                    : query !== "" ? query : sourceName
 
     function back() { page.StackView.view.pop() }
 
@@ -29,7 +42,7 @@ Page {
         source: page.source
         feed: "all"
         userName: page.user
-        searchQuery: page.query
+        searchQuery: page.searchText
         sort: page.sorts[page.sortIndex]
         timeRange: "week"
         showNsfw: true
@@ -44,12 +57,15 @@ Page {
             for (const t of (posts.get(i).tags || []))
                 counts[t] = (counts[t] || 0) + 1
         tagChips = Object.keys(counts).sort((a, b) => counts[b] - counts[a])
-                         .filter(t => t.toLowerCase() !== page.query.toLowerCase()).slice(0, 14)
+                         .filter(t => !page.tags.some(x => x.toLowerCase() === t.toLowerCase())
+                                      && t.toLowerCase() !== page.query.toLowerCase()).slice(0, 14)
     }
     Connections {
         target: posts
         function onCountChanged() { Qt.callLater(page.collectTags) }
     }
+
+    RedgifsSearch { id: rg }
 
     Shortcut {
         sequences: [StandardKey.Refresh, "Ctrl+R"]
@@ -89,7 +105,7 @@ Page {
                         elide: Text.ElideRight
                     }
                     Text {
-                        visible: page.user !== "" || page.query !== ""
+                        visible: page.user !== "" || page.query !== "" || page.tags.length > 0
                         text: page.sourceName
                         color: Theme.textMuted
                         font.pixelSize: Theme.fontSmall
@@ -100,7 +116,7 @@ Page {
                     tint: Theme.text
                     tooltip: qsTr("Swipe through them")
                     onClicked: Nav.openMediaFeed({ source: page.source, feed: "all", userName: page.user,
-                                                   searchQuery: page.query, sort: posts.sort, timeRange: posts.timeRange,
+                                                   searchQuery: page.searchText, sort: posts.sort, timeRange: posts.timeRange,
                                                    title: page.heading })
                 }
                 RoundButton2 {
@@ -130,12 +146,24 @@ Page {
                         id: field
                         Layout.fillWidth: true
                         text: page.query
-                        placeholderText: qsTr("Search %1").arg(page.sourceName)
+                        placeholderText: page.isRedgifs ? (page.tags.length > 0 ? qsTr("Add a tag…") : qsTr("Search tags or creators"))
+                                                        : qsTr("Search %1").arg(page.sourceName)
                         placeholderTextColor: Theme.textMuted
                         color: Theme.text
                         font.pixelSize: Theme.fontBody
                         inputMethodHints: Qt.ImhNoPredictiveText
-                        onAccepted: page.query = text.trim()
+                        onTextEdited: if (page.isRedgifs) rg.query = text
+                        onAccepted: {
+                            if (page.isRedgifs) {
+                                // Free text: the best matching Redgifs tag.
+                                if (text.trim() !== "")
+                                    page.addTag(rg.bestTag(text))
+                                text = ""
+                                rg.query = ""
+                            } else {
+                                page.query = text.trim()
+                            }
+                        }
                     }
                     RoundButton2 {
                         visible: field.text !== ""
@@ -144,7 +172,92 @@ Page {
                         fill: "transparent"
                         tint: Theme.textMuted
                         tooltip: qsTr("Clear")
-                        onClicked: { field.text = ""; page.query = "" }
+                        onClicked: { field.text = ""; page.query = ""; rg.query = "" }
+                    }
+                }
+            }
+
+            // Redgifs: suggestions while typing (tags with clip counts, creators).
+            Rectangle {
+                visible: page.isRedgifs && field.text.trim().length >= 2 && rg.suggestions.length > 0
+                Layout.fillWidth: true
+                Layout.preferredHeight: visible ? suggestCol.implicitHeight + 8 : 0
+                radius: 12
+                color: Theme.surface
+                border.width: 1
+                border.color: Theme.border
+                Column {
+                    id: suggestCol
+                    x: 4
+                    y: 4
+                    width: parent.width - 8
+                    Repeater {
+                        model: rg.suggestions.slice(0, 8)
+                        delegate: Rectangle {
+                            required property var modelData
+                            readonly property bool isUser: modelData.type === "user" || modelData.type === "creator"
+                            width: suggestCol.width
+                            height: 40
+                            radius: 8
+                            color: sugHover.hovered ? Theme.hover : "transparent"
+                            Row {
+                                anchors.left: parent.left
+                                anchors.leftMargin: 10
+                                anchors.verticalCenter: parent.verticalCenter
+                                spacing: 10
+                                Icon {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    name: parent.parent.isUser ? "user" : "search"
+                                    size: 16
+                                    color: Theme.textMuted
+                                }
+                                Text {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: (parent.parent.isUser ? "@" : "") + parent.parent.modelData.text
+                                    color: Theme.text
+                                    font.pixelSize: Theme.fontBody
+                                }
+                            }
+                            Text {
+                                anchors.right: parent.right
+                                anchors.rightMargin: 12
+                                anchors.verticalCenter: parent.verticalCenter
+                                visible: parent.modelData.count > 0
+                                text: qsTr("%1 clips").arg(Format.compact(parent.modelData.count))
+                                color: Theme.textMuted
+                                font.pixelSize: Theme.fontSmall
+                            }
+                            HoverHandler { id: sugHover; cursorShape: Qt.PointingHandCursor }
+                            TapHandler {
+                                onTapped: {
+                                    if (parent.isUser)
+                                        Nav.openSource({ source: "redgifs", user: parent.modelData.text })
+                                    else
+                                        page.addTag(parent.modelData.text)
+                                    field.text = ""
+                                    rg.query = ""
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Redgifs: the tags being searched (all required); tap × to drop one.
+            Flow {
+                visible: page.isRedgifs && page.tags.length > 0
+                Layout.fillWidth: true
+                spacing: 6
+                Repeater {
+                    model: page.tags
+                    Chip {
+                        required property string modelData
+                        text: modelData
+                        iconName: "close"
+                        selected: true
+                        fontSize: 12
+                        clickable: true
+                        onClicked: page.removeTag(modelData)
                     }
                 }
             }
@@ -156,18 +269,36 @@ Page {
                 onPicked: (i) => page.sortIndex = i
             }
 
+            // Tags to try: Redgifs' trending tags when nothing is picked, else tags from the
+            // results (tap to narrow down). Eporner: keywords of what's showing.
+            Text {
+                visible: chipRepeater.count > 0 && page.user === ""
+                text: page.isRedgifs && page.tags.length === 0 ? qsTr("Trending tags") : qsTr("Related")
+                color: Theme.textMuted
+                font.pixelSize: Theme.fontSmall
+                font.weight: Font.DemiBold
+            }
             Flow {
                 Layout.fillWidth: true
                 spacing: 6
-                visible: page.tagChips.length > 0 && page.user === ""
+                visible: chipRepeater.count > 0 && page.user === ""
                 Repeater {
-                    model: page.tagChips
+                    id: chipRepeater
+                    model: page.isRedgifs && page.tags.length === 0 && rg.trending.length > 0
+                           ? rg.trending.slice(0, 18).map(t => t.text) : page.tagChips
                     Chip {
                         required property string modelData
                         text: "#" + modelData
                         fontSize: 12
                         clickable: true
-                        onClicked: { page.query = modelData; list.positionViewAtBeginning() }
+                        onClicked: {
+                            if (page.isRedgifs)
+                                page.addTag(modelData)
+                            else {
+                                page.query = modelData
+                                list.positionViewAtBeginning()
+                            }
+                        }
                     }
                 }
             }

@@ -27,13 +27,16 @@ private slots:
         QUrlQuery q;
         QCOMPARE(RedgifsBackend::requestPath(r, &q), QStringLiteral("/v2/gifs/search"));
         QCOMPARE(q.queryItemValue("order"), QStringLiteral("trending"));
-        QVERIFY(!q.hasQueryItem("search_text"));
+        QCOMPARE(q.queryItemValue("type"), QStringLiteral("g"));
+        QVERIFY(!q.hasQueryItem("tags"));
 
-        r.feed = "tag:Blonde";
+        // Exact tag names, several joined with '+', sent encoded.
+        r.search = "Big Tits+Blonde";
         r.sort = "new";
         r.after = "3";
         RedgifsBackend::requestPath(r, &q);
-        QCOMPARE(q.queryItemValue("search_text"), QStringLiteral("Blonde"));
+        QCOMPARE(q.queryItemValue("tags", QUrl::FullyDecoded), QStringLiteral("Big Tits+Blonde"));
+        QVERIFY(q.query(QUrl::FullyEncoded).contains("tags=Big%20Tits%2BBlonde"));
         QCOMPARE(q.queryItemValue("order"), QStringLiteral("latest"));
         QCOMPARE(q.queryItemValue("page"), QStringLiteral("3"));
 
@@ -48,6 +51,20 @@ private slots:
         n.timeRange = "week";
         QCOMPARE(RedgifsBackend::requestPath(n, &q), QStringLiteral("/v2/niches/outdoor/gifs"));
         QCOMPARE(q.queryItemValue("order"), QStringLiteral("top7"));
+    }
+
+    void redgifsSuggestions()
+    {
+        const auto s = RedgifsBackend::parseSuggestions(
+            "[{\"gifs\":12034,\"text\":\"Blonde\",\"type\":\"tag\"},{\"gifs\":40,\"text\":\"blondebabe\",\"type\":\"user\"}]");
+        QCOMPARE(s.size(), 2);
+        QCOMPARE(s[0].text, QStringLiteral("Blonde"));
+        QCOMPARE(s[0].count, 12034);
+        QCOMPARE(s[1].type, QStringLiteral("user"));
+        const auto t = RedgifsBackend::parseTags("{\"tags\":[{\"name\":\"Amateur\",\"count\":900000},{\"name\":\"Asian\",\"count\":5}]}");
+        QCOMPARE(t.size(), 2);
+        QCOMPARE(t[0].text, QStringLiteral("Amateur"));
+        QCOMPARE(t[0].count, 900000);
     }
 
     void redgifsParse()

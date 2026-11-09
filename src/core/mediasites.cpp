@@ -61,7 +61,6 @@ ApiReply *MediaSiteBackend::userComments(const QString &, const QString &, const
 
 QString RedgifsBackend::requestPath(const FeedRequest &r, QUrlQuery *query)
 {
-    QUrlQuery q;
     const int page = pageOf(r.after);
     QString order;
     if (!r.user.isEmpty()) {
@@ -75,24 +74,88 @@ QString RedgifsBackend::requestPath(const FeedRequest &r, QUrlQuery *query)
     } else {
         order = QStringLiteral("trending");
     }
-    q.addQueryItem(QStringLiteral("order"), order);
-    q.addQueryItem(QStringLiteral("count"), QStringLiteral("40"));
-    q.addQueryItem(QStringLiteral("page"), QString::number(page));
+    // Built as text: several tags are joined with a literal '+', which must reach the server
+    // encoded (%2B), not as a space.
+    QString q = QStringLiteral("order=%1&count=40&page=%2").arg(order).arg(page);
 
     QString path;
     if (!r.user.isEmpty()) {
         path = QStringLiteral("/v2/users/%1/search").arg(QString::fromUtf8(QUrl::toPercentEncoding(r.user.toLower())));
+        q += QStringLiteral("&type=g");
     } else if (r.feed.startsWith(QLatin1String("niche:"))) {
         path = QStringLiteral("/v2/niches/%1/gifs").arg(QString::fromUtf8(QUrl::toPercentEncoding(r.feed.mid(6))));
     } else {
         path = QStringLiteral("/v2/gifs/search");
-        const QString text = !r.search.isEmpty() ? r.search : tagFrom(r.feed);
-        if (!text.isEmpty())
-            q.addQueryItem(QStringLiteral("search_text"), text);
+        q += QStringLiteral("&type=g");
+        const QString tags = !r.search.isEmpty() ? r.search : tagFrom(r.feed);
+        if (!tags.isEmpty())
+            q += QStringLiteral("&tags=") + QString::fromUtf8(QUrl::toPercentEncoding(tags));
     }
     if (query)
-        *query = q;
+        *query = QUrlQuery(q);
     return path;
+}
+
+ApiReply *RedgifsBackend::suggest(const QString &text)
+{
+    return withToken([this, text] {
+        return m_client->get(QStringLiteral("/v2/search/suggest"),
+                             QUrlQuery(QStringLiteral("query=") + QString::fromUtf8(QUrl::toPercentEncoding(text))));
+    });
+}
+
+ApiReply *RedgifsBackend::trendingTags()
+{
+    return withToken([this] { return m_client->get(QStringLiteral("/v2/search/trending")); });
+}
+
+namespace {
+// The suggestion / tag lists come as a bare array or wrapped in an object; accept both.
+QJsonArray listIn(const QByteArray &body)
+{
+    const QJsonDocument doc = QJsonDocument::fromJson(body);
+    if (doc.isArray())
+        return doc.array();
+    const QJsonObject o = doc.object();
+    for (const char *key : {"tags", "items", "suggestions", "results", "niches"})
+        if (o.value(QLatin1String(key)).isArray())
+            return o.value(QLatin1String(key)).toArray();
+    return {};
+}
+} // namespace
+
+QList<RedgifsBackend::Suggestion> RedgifsBackend::parseSuggestions(const QByteArray &body)
+{
+    QList<Suggestion> out;
+    for (const QJsonValue &v : listIn(body)) {
+        const QJsonObject o = v.toObject();
+        Suggestion s;
+        s.text = o.value(QLatin1String("text")).toString(o.value(QLatin1String("name")).toString());
+        s.type = o.value(QLatin1String("type")).toString(QStringLiteral("tag")).toLower();
+        s.count = o.value(QLatin1String("gifs")).toInt(o.value(QLatin1String("count")).toInt());
+        if (!s.text.isEmpty())
+            out.append(s);
+    }
+    return out;
+}
+
+QList<RedgifsBackend::Suggestion> RedgifsBackend::parseTags(const QByteArray &body)
+{
+    QList<Suggestion> out;
+    for (const QJsonValue &v : listIn(body)) {
+        Suggestion s;
+        if (v.isString()) {
+            s.text = v.toString();
+        } else {
+            const QJsonObject o = v.toObject();
+            s.text = o.value(QLatin1String("name")).toString(o.value(QLatin1String("text")).toString());
+            s.count = o.value(QLatin1String("count")).toInt(o.value(QLatin1String("gifs")).toInt());
+        }
+        s.type = QStringLiteral("tag");
+        if (!s.text.isEmpty())
+            out.append(s);
+    }
+    return out;
 }
 
 ApiReply *RedgifsBackend::withToken(std::function<ApiReply *()> request)
