@@ -363,6 +363,18 @@ private slots:
         const Post v = lemmy::postFromView(link, "https://lemmy.world");
         QCOMPARE(v.kind, Post::Kind::Video);
         QCOMPARE(v.media.first().resolve, QStringLiteral("redgifs"));
+
+        // An image post whose text links more pictures shows them all, as one gallery.
+        QJsonObject img = view;
+        QJsonObject ip = post;
+        ip.insert("url", "https://i.redd.it/main.jpg");
+        ip.insert("body", "More: https://i.redd.it/two.png and again https://i.redd.it/main.jpg");
+        img.insert("post", ip);
+        const Post g = lemmy::postFromView(img, "https://lemmy.world");
+        QCOMPARE(g.kind, Post::Kind::Gallery);
+        QCOMPARE(g.galleryCount, 2);
+        QCOMPARE(g.media[0].url, QStringLiteral("https://i.redd.it/main.jpg"));
+        QCOMPARE(g.media[1].url, QStringLiteral("https://i.redd.it/two.png"));
     }
 
     void markdownRendering()

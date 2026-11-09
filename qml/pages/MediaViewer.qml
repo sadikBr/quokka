@@ -21,6 +21,15 @@ Page {
     readonly property var current: items.length > 0 ? items[Math.max(0, pager.currentIndex)] : null
 
     function close() { page.StackView.view.pop() }
+    // The small copy the feed already showed for an item, to fill the screen while loading.
+    function placeholderFor(index, item) {
+        if (index === 0 && (post.kind !== PostListModel.GalleryPost || !post.media || post.media.length < 2))
+            return post.previewUrl || ""
+        const url = String(item.url)
+        if (url.indexOf("/pictrs/image/") >= 0 && url.indexOf("?") < 0 && !/\.gif$/i.test(url))
+            return url + "?thumbnail=640&format=jpg"
+        return item.fallbackUrl || ""
+    }
     function isVideoUrl(u) { return /\.(m3u8|mp4|webm|mov|m4v)(\?|$)/i.test(u) || /HLSPlaylist|DASH_/i.test(u) }
     function toggleFullScreen() {
         const w = Nav.window
@@ -51,7 +60,7 @@ Page {
         model: page.items
         currentIndex: page.startIndex
         interactive: !(currentItem && currentItem.zoomed)
-        cacheBuffer: width
+        cacheBuffer: width * 2   // keep two items ahead alive (see the Loader below)
         Component.onCompleted: positionViewAtIndex(page.startIndex, ListView.Beginning)
 
         delegate: Item {
@@ -67,7 +76,8 @@ Page {
             Loader {
                 id: loader
                 anchors.fill: parent
-                active: Math.abs(slot.index - pager.currentIndex) <= 1
+                // Load ahead (and keep one behind) so swiping through a gallery feels instant.
+                active: slot.index - pager.currentIndex <= 2 && pager.currentIndex - slot.index <= 1
                 sourceComponent: slot.isVideo ? videoComp : imageComp
             }
             Component {
@@ -83,6 +93,7 @@ Page {
                         anchors.fill: parent
                         source: slot.modelData.url
                         fallbackSource: slot.modelData.fallbackUrl || ""
+                        placeholderSource: page.placeholderFor(slot.index, slot.modelData)
                         animated: /\.gif(\?|$)/i.test(slot.modelData.url)
                         onTapped: page.chrome = !page.chrome
                     }

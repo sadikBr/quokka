@@ -194,11 +194,14 @@ Page {
                     previewWidth: m.previewWidth
                     previewHeight: m.previewHeight
                     galleryCount: m.galleryCount
+                    media: m.media
+                    view: list
+                    autoplay: page.active && page.tab === 0 && AppSettings.autoplayFeed
                     saved: Library.savedRevision >= 0 && Library.isSaved(postId)
                     visited: Library.historyRevision >= 0 && Library.isVisited(postId)
                     onToggleSave: Library.toggleSaved(posts.get(rowLoader.index))
                     onOpenPost: Nav.openPost(posts.get(rowLoader.index))
-                    onOpenMedia: Nav.openMedia(posts.get(rowLoader.index), 0)
+                    onOpenMedia: (i) => Nav.openMedia(posts.get(rowLoader.index), i)
                     onOpenSubreddit: (name) => Nav.openSubreddit(name)
                     onOpenLink: (link) => Nav.openLink(link)
                 }

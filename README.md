@@ -81,8 +81,13 @@ export CMAKE_PREFIX_PATH=~/Qt/6.8.3/gcc_64
 (Or use the [Qt Online Installer](https://www.qt.io/download-qt-installer-oss) and tick
 *Qt 6.8 → Desktop gcc 64-bit*, *Qt Multimedia* and *Qt Image Formats*.)
 
-Qt Image Formats adds WebP/AVIF support, which many Lemmy pictures use. Without it Quokka still
+Qt Image Formats adds WebP support, which many Lemmy pictures use. Without it Quokka still
 runs, but those pictures show as "image unavailable" (Quokka prints a hint at start).
+
+Optional: KDE's image format plugins (Fedora `kf6-kimageformats`, Arch `kimageformats`,
+Debian/Ubuntu `kimageformat6-plugins`) let Qt read AVIF, HEIC and JPEG XL, common for phone
+uploads. Without them Quokka converts such pictures through wsrv.nl (Settings → Content). They
+only load into the system Qt, not into a Qt installed with aqt.
 
 ### 2. Build, test and run
 

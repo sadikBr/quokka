@@ -1,5 +1,7 @@
 #include "lemmyparsers.h"
 
+#include <algorithm>
+
 #include "markdown.h"
 #include "medialinks.h"
 
@@ -199,6 +201,19 @@ Post postFromView(const QJsonObject &pv, const QString &webBase)
         if (post.previewUrl.isEmpty())
             for (const MediaItem &m : media::extractFromText(post.selftext, 4))
                 if (!m.video) { post.previewUrl = m.animated ? m.url : sizedImage(m.url, 320); break; }
+    }
+    if (!post.url.isEmpty() && (post.kind == Post::Kind::Image || post.kind == Post::Kind::Video)) {
+        // Pictures and videos linked in the text join the post's own: one gallery, nothing missed.
+        for (const MediaItem &m : media::extractFromText(post.selftext)) {
+            const bool known = std::any_of(post.media.begin(), post.media.end(),
+                                           [&m](const MediaItem &o) { return o.url == m.url; });
+            if (!known && m.url != post.url)
+                post.media.append(m);
+        }
+        if (post.media.size() > 1) {
+            post.kind = Post::Kind::Gallery;
+            post.galleryCount = int(post.media.size());
+        }
     }
     return post;
 }

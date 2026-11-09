@@ -5,6 +5,8 @@
 
 #include <QVariantList>
 
+#include <algorithm>
+
 int postKindValue(quokka::Post::Kind kind)
 {
     using K = quokka::Post::Kind;
@@ -39,9 +41,18 @@ QVariantList mediaToVariantList(const QList<quokka::MediaItem> &items)
 QVariantMap postToVariantMap(const quokka::Post &p)
 {
     const QVariantList media = mediaToVariantList(p.media);
-    // Media linked in the text of posts that already have a link of their own.
-    const QVariantList bodyMedia = p.url.isEmpty() ? QVariantList{}
-                                                   : mediaToVariantList(quokka::media::extractFromText(p.selftext));
+    // Media linked in the text of posts that already have a link of their own (and that is not
+    // already part of the post's own media).
+    QList<quokka::MediaItem> extra;
+    if (!p.url.isEmpty()) {
+        for (const auto &m : quokka::media::extractFromText(p.selftext)) {
+            const bool known = std::any_of(p.media.begin(), p.media.end(),
+                                           [&m](const quokka::MediaItem &o) { return o.url == m.url; });
+            if (!known)
+                extra.append(m);
+        }
+    }
+    const QVariantList bodyMedia = mediaToVariantList(extra);
     return {
         {QStringLiteral("postId"), p.id},
         {QStringLiteral("fullname"), p.fullname},

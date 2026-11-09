@@ -245,9 +245,10 @@ Page {
             previewWidth: page.post.previewWidth || 0
             previewHeight: page.post.previewHeight || 0
             galleryCount: page.post.galleryCount || 0
+            media: page.post.media || []
             spoiler: !!page.post.spoiler
             nsfw: !!page.post.nsfw
-            onActivated: Nav.openMedia(page.post, 0)
+            onActivated: (i) => Nav.openMedia(page.post, i)
         }
 
         // Link card

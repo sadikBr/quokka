@@ -10,6 +10,7 @@ const QString kDimVisited = QStringLiteral("ui/dimVisited");
 const QString kCoverNsfw = QStringLiteral("content/coverNsfw");
 const QString kScrollSpeed = QStringLiteral("ui/scrollSpeed");
 const QString kVideoMuted = QStringLiteral("media/videoMuted");
+const QString kAutoplayFeed = QStringLiteral("media/autoplayFeed");
 const QString kCommentSort = QStringLiteral("browse/commentSort");
 } // namespace
 
@@ -159,4 +160,17 @@ void AppSettings::setScrollSpeed(double speed)
         return;
     m_settings.setValue(kScrollSpeed, speed);
     emit scrollSpeedChanged();
+}
+
+bool AppSettings::autoplayFeed() const
+{
+    return m_settings.value(kAutoplayFeed, true).toBool();
+}
+
+void AppSettings::setAutoplayFeed(bool on)
+{
+    if (on == autoplayFeed())
+        return;
+    m_settings.setValue(kAutoplayFeed, on);
+    emit autoplayFeedChanged();
 }

@@ -22,6 +22,8 @@ class AppSettings : public QObject
     // Cover NSFW pictures and videos until tapped (when NSFW posts are shown at all).
     Q_PROPERTY(bool coverNsfw READ coverNsfw WRITE setCoverNsfw NOTIFY coverNsfwChanged)
     // Multiplier for mouse-wheel / touchpad scrolling distance (1 = normal).
+    // Play videos and GIFs muted in the feed while they're in the middle of the screen.
+    Q_PROPERTY(bool autoplayFeed READ autoplayFeed WRITE setAutoplayFeed NOTIFY autoplayFeedChanged)
     Q_PROPERTY(double scrollSpeed READ scrollSpeed WRITE setScrollSpeed NOTIFY scrollSpeedChanged)
 
 public:
@@ -48,6 +50,8 @@ public:
     void setDimVisited(bool dim);
     bool coverNsfw() const;
     void setCoverNsfw(bool cover);
+    bool autoplayFeed() const;
+    void setAutoplayFeed(bool on);
     double scrollSpeed() const;
     void setScrollSpeed(double speed);
 
@@ -66,6 +70,7 @@ signals:
     void dimVisitedChanged();
     void coverNsfwChanged();
     void scrollSpeedChanged();
+    void autoplayFeedChanged();
 
 private:
     QSettings m_settings;

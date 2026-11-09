@@ -17,6 +17,12 @@ Item {
     property bool active: true
     property bool loop: true
     property bool showControls: true
+    property bool forceMuted: false            // e.g. playing in place in the feed
+    property bool quiet: false                 // no loading or error overlays (the caller has a poster)
+    property alias fillMode: video.fillMode
+    readonly property bool playing: player.playbackState === MediaPlayer.PlayingState && player.hasVideo
+                                    && (player.mediaStatus === MediaPlayer.BufferedMedia
+                                        || player.mediaStatus === MediaPlayer.LoadedMedia)
     signal tapped()
 
     property bool triedFallback: false
@@ -69,7 +75,7 @@ Item {
         source: root.playSource
         loops: root.loop ? MediaPlayer.Infinite : 1
         videoOutput: video
-        audioOutput: AudioOutput { id: audio; muted: AppSettings.videoMuted }
+        audioOutput: AudioOutput { id: audio; muted: root.forceMuted || AppSettings.videoMuted }
         onErrorOccurred: {
             if (!root.triedFallback && root.fallbackSource.toString() !== "") {
                 root.triedFallback = true
@@ -101,16 +107,16 @@ Item {
 
     LoadingDots {
         anchors.centerIn: parent
-        visible: root.resolving || player.mediaStatus === MediaPlayer.LoadingMedia
+        visible: !root.quiet && (root.resolving || player.mediaStatus === MediaPlayer.LoadingMedia
                  || player.mediaStatus === MediaPlayer.BufferingMedia
-                 || player.mediaStatus === MediaPlayer.StalledMedia
+                 || player.mediaStatus === MediaPlayer.StalledMedia)
     }
 
     // Why it can't play, with a retry and a way out to the original page.
     Column {
         anchors.centerIn: parent
         width: parent.width - 48
-        visible: root.failed
+        visible: root.failed && !root.quiet
         spacing: 14
         Icon { anchors.horizontalCenter: parent.horizontalCenter; name: "video-off"; size: 36; color: "white" }
         Text {

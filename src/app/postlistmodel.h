@@ -61,6 +61,7 @@ public:
         PreviewHeightRole,
         VideoUrlRole,
         GalleryCountRole,
+        MediaRole,
     };
 
     explicit PostListModel(QObject *parent = nullptr);

@@ -12,6 +12,8 @@ Flickable {
     readonly property url effectiveSource: attempt < sources.length ? sources[attempt] : ""
     readonly property bool broken: (status === Image.Error && attempt >= sources.length - 1)
                                    || (sources.length === 0 && (source.toString() !== "" || fallbackSource.toString() !== ""))
+    // Shown (already cached from the feed) while the full-size picture loads.
+    property url placeholderSource
     property bool animated: false
     property real zoom: 1
     readonly property real maxZoom: 6
@@ -44,6 +46,15 @@ Flickable {
     }
     function reset() { zoom = 1; contentX = 0; contentY = 0 }
 
+    Image {
+        width: flick.contentWidth
+        height: flick.contentHeight
+        visible: flick.status !== Image.Ready && !flick.broken && status === Image.Ready
+        source: flick.status === Image.Ready ? "" : flick.placeholderSource
+        asynchronous: true
+        fillMode: Image.PreserveAspectFit
+        sourceSize.width: 640
+    }
     Loader {
         id: content
         width: flick.contentWidth

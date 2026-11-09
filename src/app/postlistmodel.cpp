@@ -87,6 +87,7 @@ QVariant PostListModel::postRoleData(const Post &p, int role)
     case PreviewHeightRole: return p.previewHeight;
     case VideoUrlRole: return p.videoUrl;
     case GalleryCountRole: return p.galleryCount;
+    case MediaRole: return mediaToVariantList(p.media);
     default: return {};
     }
 }
@@ -124,6 +125,7 @@ QHash<int, QByteArray> PostListModel::postRoleNames()
         {PreviewHeightRole, "previewHeight"},
         {VideoUrlRole, "videoUrl"},
         {GalleryCountRole, "galleryCount"},
+        {MediaRole, "media"},
     };
 }
 

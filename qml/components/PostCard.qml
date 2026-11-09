@@ -30,18 +30,22 @@ Item {
     required property int previewWidth
     required property int previewHeight
     required property int galleryCount
+    required property var media
 
     property bool highlighted: false   // keyboard selection
     property bool saved: false
     property bool visited: false
     property bool compact: AppSettings.compactCards
+    // The list this card scrolls in: videos and GIFs play in place while near its middle.
+    property Item view: null
+    property bool autoplay: false
     readonly property bool hasMedia: kind === PostListModel.ImagePost || kind === PostListModel.GalleryPost
                                      || kind === PostListModel.VideoPost
     readonly property bool covered: (nsfw && AppSettings.coverNsfw) || spoiler
 
     signal openPost()
     signal toggleSave()
-    signal openMedia()
+    signal openMedia(int mediaIndex)
     signal openSubreddit(string name)
     signal openLink(string link)
 
@@ -53,6 +57,16 @@ Item {
     // Small square picture beside the title: link previews, and media in compact mode.
     readonly property bool hasThumb: previewUrl !== "" && !covered && !hasBigMedia
                                      && (kind === PostListModel.LinkPost || (compact && hasMedia))
+    // True while the big media's middle is in the middle part of the list's viewport.
+    readonly property bool mediaCentered: {
+        if (!autoplay || !view || !hasBigMedia || isYoutube
+                || (kind !== PostListModel.VideoPost && kind !== PostListModel.ImagePost))
+            return false
+        // Dependencies: re-evaluate while scrolling or when the card moves / resizes.
+        const deps = [view.contentY, view.height, card.y, card.height, bigMedia.y, bigMedia.height]
+        const mid = bigMedia.mapToItem(view, 0, bigMedia.height / 2).y
+        return mid > view.height * 0.15 && mid < view.height * 0.85
+    }
     readonly property int columnWidth: Math.min(width - 24, Theme.contentMaxWidth)
     readonly property int vpad: 14
     readonly property color rowColor: highlighted ? Theme.accentSoft : cardHover.hovered ? Theme.hover : Theme.bg
@@ -171,7 +185,7 @@ Item {
                     }
                     TapHandler {
                         gesturePolicy: TapHandler.ReleaseWithinBounds
-                        onTapped: card.hasMedia ? card.openMedia() : card.openLink(card.url)
+                        onTapped: card.hasMedia ? card.openMedia(0) : card.openLink(card.url)
                     }
                     HoverHandler { cursorShape: Qt.PointingHandCursor }
                 }
@@ -212,6 +226,7 @@ Item {
 
             // Big media: image, gallery, video
             PostMedia {
+                id: bigMedia
                 visible: card.hasBigMedia
                 Layout.fillWidth: true
                 Layout.topMargin: 2
@@ -222,10 +237,12 @@ Item {
                 previewWidth: card.previewWidth
                 previewHeight: card.previewHeight
                 galleryCount: card.galleryCount
+                media: card.media || []
+                play: card.mediaCentered
                 spoiler: card.spoiler
                 nsfw: card.nsfw
                 backgroundColor: card.rowColor
-                onActivated: card.isYoutube ? card.openLink(card.url) : card.openMedia()
+                onActivated: (i) => card.isYoutube ? card.openLink(card.url) : card.openMedia(i)
             }
 
             // Self-text excerpt

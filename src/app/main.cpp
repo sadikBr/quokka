@@ -44,6 +44,20 @@ int main(int argc, char *argv[])
         qWarning("Quokka: this Qt cannot decode WebP images, so some pictures won't show. Install Qt's "
                  "image formats plugin (Debian/Ubuntu: qt6-image-formats-plugins, Fedora: "
                  "qt6-qtimageformats, Arch: qt6-imageformats, aqt: -m qtimageformats).");
+    // Phone uploads are often AVIF/HEIC (sometimes behind a .png or .jpg name); KDE's plugin set
+    // reads them directly, so they don't need the wsrv.nl rescue.
+    {
+        const QList<QByteArray> formats = QImageReader::supportedImageFormats();
+        QStringList missing;
+        for (const char *f : {"avif", "heif", "jxl"})
+            if (!formats.contains(f))
+                missing << QString::fromLatin1(f).toUpper();
+        if (!missing.isEmpty())
+            qInfo("Quokka: optional: this Qt can't read %s pictures directly (they are converted through "
+                  "wsrv.nl instead). Install KDE's image format plugins to read them locally (Fedora: "
+                  "kf6-kimageformats, Arch: kimageformats, Debian/Ubuntu: kimageformat6-plugins).",
+                  qPrintable(missing.join(QStringLiteral(", "))));
+    }
 
     QFont uiFont(QStringLiteral("Inter"));
     uiFont.setPixelSize(15);

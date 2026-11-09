@@ -41,11 +41,13 @@ Page {
 
         delegate: PostCard {
             width: list.width
+            view: list
+            autoplay: page.StackView.status === StackView.Active && AppSettings.autoplayFeed
             saved: Library.savedRevision >= 0 && Library.isSaved(postId)
             visited: false
             onToggleSave: Library.toggleSaved(localPosts.get(index))
             onOpenPost: Nav.openPost(localPosts.get(index))
-            onOpenMedia: Nav.openMedia(localPosts.get(index), 0)
+            onOpenMedia: (i) => Nav.openMedia(localPosts.get(index), i)
             onOpenSubreddit: (name) => Nav.openSubreddit(name)
             onOpenLink: (link) => Nav.openLink(link)
         }

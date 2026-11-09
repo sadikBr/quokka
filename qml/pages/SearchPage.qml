@@ -174,11 +174,13 @@ Page {
         }
         delegate: PostCard {
             width: postList.width
+            view: postList
+            autoplay: page.active && postList.visible && AppSettings.autoplayFeed
             saved: Library.savedRevision >= 0 && Library.isSaved(postId)
             visited: Library.historyRevision >= 0 && Library.isVisited(postId)
             onToggleSave: Library.toggleSaved(results.get(index))
             onOpenPost: Nav.openPost(results.get(index))
-            onOpenMedia: Nav.openMedia(results.get(index), 0)
+            onOpenMedia: (i) => Nav.openMedia(results.get(index), i)
             onOpenSubreddit: (name) => Nav.openSubreddit(name)
             onOpenLink: (link) => Nav.openLink(link)
         }

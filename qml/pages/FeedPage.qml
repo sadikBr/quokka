@@ -334,12 +334,14 @@ Page {
 
         delegate: PostCard {
             width: list.width
+            view: list
+            autoplay: page.active && AppSettings.autoplayFeed
             highlighted: index === page.kbIndex
             saved: Library.savedRevision >= 0 && Library.isSaved(postId)
             visited: Library.historyRevision >= 0 && Library.isVisited(postId)
             onToggleSave: Library.toggleSaved(posts.get(index))
             onOpenPost: { page.kbIndex = index; Nav.openPost(posts.get(index)) }
-            onOpenMedia: Nav.openMedia(posts.get(index), 0)
+            onOpenMedia: (i) => Nav.openMedia(posts.get(index), i)
             onOpenSubreddit: (name) => {
                 if (name.toLowerCase() !== posts.feed.toLowerCase())
                     Nav.openSubreddit(name)

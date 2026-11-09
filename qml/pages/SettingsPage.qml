@@ -229,6 +229,12 @@ Page {
                     onToggled: (on) => AppSettings.coverNsfw = on
                 }
                 SwitchRow {
+                    text: qsTr("Play videos and GIFs in the feed")
+                    detail: qsTr("Muted, while they're in the middle of the screen. Tap to watch with sound.")
+                    checked: AppSettings.autoplayFeed
+                    onToggled: (on) => AppSettings.autoplayFeed = on
+                }
+                SwitchRow {
                     text: qsTr("Start videos muted")
                     checked: AppSettings.videoMuted
                     onToggled: (on) => AppSettings.videoMuted = on
